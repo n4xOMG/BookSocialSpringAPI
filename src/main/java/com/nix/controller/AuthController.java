@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nix.config.JwtProvider;
+import com.nix.exception.AccountException;
 import com.nix.models.User;
 import com.nix.request.LoginRequest;
 import com.nix.response.AuthResponse;
@@ -65,25 +66,29 @@ public class AuthController {
 
 	@PostMapping("/auth/signin")
 	public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginReq) {
-		boolean rememberMe = loginReq.isRememberMe();
-		Authentication auth = null;
-		try {
-			auth = authenticate(loginReq.getEmail(), loginReq.getPassword());
-		} catch (BadCredentialsException e) {
-			// Print the error and return 401 Unauthorized
-			System.out.println("Authentication failed: " + e.getMessage());
-			AuthResponse authRes = new AuthResponse(null, "Invalid email/password!");
-			return new ResponseEntity<>(authRes, HttpStatus.UNAUTHORIZED);
-		}
+	    boolean rememberMe = loginReq.isRememberMe();
+	    Authentication auth = null;
+	    try {
+	        auth = authenticate(loginReq.getEmail(), loginReq.getPassword());
+	    } catch (BadCredentialsException e) {
+	        System.out.println("Authentication failed: " + e.getMessage());
+	        AuthResponse authRes = new AuthResponse(null, "Invalid email/password!");
+	        return new ResponseEntity<>(authRes, HttpStatus.FORBIDDEN);
+	    } catch (AccountException e) {
+	        // Handle unverified account exception
+	        System.out.println("Account not verified: " + e.getMessage());
+	        AuthResponse authRes = new AuthResponse(null, e.getMessage());
+	        return new ResponseEntity<>(authRes, HttpStatus.FORBIDDEN);
+	    }
 
-		if (auth == null) {
-			AuthResponse authRes = new AuthResponse(null, "Invalid email/password!");
-			return new ResponseEntity<>(authRes, HttpStatus.UNAUTHORIZED);
-		}
+	    if (auth == null) {
+	        AuthResponse authRes = new AuthResponse(null, "Invalid email/password!");
+	        return new ResponseEntity<>(authRes, HttpStatus.UNAUTHORIZED);
+	    }
 
-		String token = JwtProvider.generateToken(auth, rememberMe);
-		AuthResponse authRes = new AuthResponse(token, "Login succeed!");
-		return ResponseEntity.ok(authRes);
+	    String token = JwtProvider.generateToken(auth, rememberMe);
+	    AuthResponse authRes = new AuthResponse(token, "Login succeeded!");
+	    return ResponseEntity.ok(authRes);
 	}
 
 	@PostMapping("/auth/forgot-password")
@@ -172,7 +177,7 @@ public class AuthController {
 			throw new BadCredentialsException("Invalid Password!");
 		}
 		if (user.getIsVerified() == false || user.getIsVerified() == null) {
-			throw new BadCredentialsException("Account is not verified, please check your mail!");
+			throw new AccountException("Account is not verified, please check your mail!");
 		}
 		return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
