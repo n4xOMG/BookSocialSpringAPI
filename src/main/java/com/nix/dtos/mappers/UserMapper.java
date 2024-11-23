@@ -21,7 +21,13 @@ public class UserMapper implements Mapper<User, UserDTO> {
 		userDTO.setUsername(user.getUsername());
 		userDTO.setEmail(user.getEmail());
 		userDTO.setRole(roleMapper.mapToDTO(user.getRole()));
-
+		userDTO.setCredits(user.getCredits());
+		userDTO.setAvatarUrl(user.getAvatarUrl());
+		userDTO.setFullname(user.getFullname());
+		userDTO.setBio(user.getBio());
+		userDTO.setGender(user.getGender());
+		userDTO.setBanned(user.isBanned());
+		userDTO.setBanReason(user.getBanReason());
 		userDTO.setIsVerified(user.getIsVerified());
 		userDTO.setIsSuspended(user.getIsSuspended());
 

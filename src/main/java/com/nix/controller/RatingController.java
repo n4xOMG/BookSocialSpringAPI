@@ -38,7 +38,7 @@ public class RatingController {
 	@GetMapping("/books/rating/average/{bookId}")
 	public ResponseEntity<?> getAverageBookRating(@PathVariable("bookId") Integer bookId) throws Exception {
 		try {
-			Book book = bookService.findBookById(bookId);
+			Book book = bookService.getBookById(bookId);
 
 			if (book == null) {
 				throw new Exception("Book not found");
@@ -59,7 +59,7 @@ public class RatingController {
 				throw new Exception("User not found");
 			}
 
-			Book book = bookService.findBookById(bookId);
+			Book book = bookService.getBookById(bookId);
 
 			if (book == null) {
 				throw new Exception("Book not found");
@@ -76,7 +76,7 @@ public class RatingController {
 	public ResponseEntity<RatingDTO> rateBook(@RequestHeader("Authorization") String jwt, @PathVariable Integer bookId,
 			@RequestBody Rating rating) throws Exception {
 
-		Book book = bookService.findBookById(bookId);
+		Book book = bookService.getBookById(bookId);
 		if (book == null) {
 			throw new Exception("Book not found");
 		}

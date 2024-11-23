@@ -1,48 +1,49 @@
 package com.nix.service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
+import com.nix.dtos.BookDTO;
 import com.nix.models.Book;
+import com.nix.models.Category;
 import com.nix.models.User;
 
 public interface BookService {
-	public Book findBookById(Integer bookId) throws Exception;
-
-	public Book getBookWithLatestChapter();
-
-	public List<Book> findBookByTitle(String bookTitle);
-
-	public List<Book> findBooksByAuthor(Integer authorId);
-
-	public List<Book> findBooksFollowedByUser(Integer userId);
-
-	public List<Book> findBooksByCategories(Integer categoryId);
-
-	public List<Book> findBookByTags(Integer tagId);
-
-	public List<Book> findRecentBooks(LocalDateTime starTime);
-
-	public List<Book> findTopBooksByViews();
-
-	public List<Book> findTopBooksByLikes();
-
-	public List<Book> findEditorSuggestedBooks();
-
-	public List<Book> findMostPurchaseBooks();
-
-	public List<Book> searchBooks(String query, Integer categoryId, Integer tagId);
-
 	public List<Book> getAllBooks();
 
-	public Book addNewBook(Book book);
+	public Book getBookById(Integer id);
 
-	public Book updateBook(Book book, Integer bookId) throws Exception;
+	public Book createBook(BookDTO bookDTO);
 
-	public String deleteBook(Integer bookId) throws Exception;
+	public Book updateBook(Integer id, BookDTO bookDTO);
+
+	public void deleteBook(Integer id);
+
+	public List<Book> searchBooksByTitle(String title);
+
+	public List<Book> searchBooks(String title, Integer categoryId, List<Integer> tagIds);
+
+	public List<Book> getBooksByAuthor(Integer authorId);
+
+	public List<Book> getBooksBySuggestedStatus(Boolean isSuggested);
+
+	public List<Book> getBooksByStatus(String status);
+
+	List<Book> getBooksByCategoryId(Integer categoryId);
+
+	List<Category> getTopSixCategoriesWithBooks();
+
+	public List<Book> getTop10ViewedBooks();
+
+	public List<Book> getTop10LikedBooks();
+
+	List<Book> getFeaturedBooks();
 
 	public Book markAsFavouriteBook(Book book, User user);
 
-	public void incrementBookViewCount(Integer bookId);
+	public Book incrementViewCount(Integer id);
+
+	List<Book> getFollowedBooksByUserId(Integer id);
+
+	List<Book> getTopRecentChapterBooks(int limit);
 
 }

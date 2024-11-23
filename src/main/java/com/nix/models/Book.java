@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -49,6 +50,7 @@ public class Book implements Serializable {
 	private boolean isSuggested;
 	private String status;
 	private long viewCount;
+
 	@ManyToOne
 	private User author;
 
@@ -56,9 +58,9 @@ public class Book implements Serializable {
 	@OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Chapter> chapters = new ArrayList<>();
 
-	@ManyToMany(cascade = CascadeType.ALL)
-	@JoinTable(name = "book_categories", joinColumns = @JoinColumn(name = "book_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
-	private List<Category> categories = new ArrayList<>();
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "category_id")
+	private Category category;
 
 	@ManyToMany(cascade = CascadeType.ALL)
 	@JoinTable(name = "book_tags", // Renamed join table

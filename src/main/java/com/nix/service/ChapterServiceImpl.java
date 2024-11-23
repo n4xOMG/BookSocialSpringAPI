@@ -8,11 +8,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
 import com.nix.models.Chapter;
+import com.nix.models.ChapterUnlockRecord;
+import com.nix.models.User;
 import com.nix.repository.BookRepository;
 import com.nix.repository.ChapterRepository;
+import com.nix.repository.ChapterUnlockRecordRepository;
 import com.nix.repository.ReadingProgressRepository;
+import com.nix.repository.UserRepository;
 
 @Service
 public class ChapterServiceImpl implements ChapterService {
@@ -24,7 +29,16 @@ public class ChapterServiceImpl implements ChapterService {
 	BookRepository bookRepo;
 
 	@Autowired
+	NotificationService notificationService;
+
+	@Autowired
 	ReadingProgressRepository progressRepo;
+
+	@Autowired
+	private ChapterUnlockRecordRepository unlockRecordRepository;
+
+	@Autowired
+	private UserRepository userRepository;
 
 	@Override
 	public Chapter findChapterById(Integer chapterId) throws Exception {
@@ -58,17 +72,21 @@ public class ChapterServiceImpl implements ChapterService {
 
 	@Override
 	@Transactional
-	public Chapter addNewChapter(Integer bookId, Chapter chapter) throws Exception {
-		Optional<Book> book = bookRepo.findById(bookId);
-		if (!book.isPresent()) {
-			throw new Exception("Book not found");
-		}
+	public Chapter addChapterAndNotifyFollowers(Integer bookId, Chapter chapter) {
+		Book book = bookRepo.findById(bookId)
+				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 
-		chapter.setBook(book.get());
+		chapter.setBook(book);
+		chapter.setUploadDate(LocalDateTime.now());
+		chapter.setDeleted(false);
 		chapter.setUploadDate(LocalDateTime.now());
 
 		Chapter newChapter = chapterRepo.save(chapter);
-
+		List<User> followers = book.getFavoured();
+		String message = "New chapter added to " + book.getTitle() + ": " + chapter.getTitle();
+		for (User user : followers) {
+			notificationService.createNotification(user, message);
+		}
 		return newChapter;
 	}
 
@@ -78,22 +96,11 @@ public class ChapterServiceImpl implements ChapterService {
 		if (editChapter == null) {
 			throw new Exception("Chapter not found");
 		}
-
-		if (chapter.getChapterNum() != null) {
-			editChapter.setChapterNum(chapter.getChapterNum());
-		}
-
-		if (chapter.getTitle() != null) {
-			editChapter.setTitle(chapter.getTitle());
-		}
-
-		if (chapter.getContent() != null) {
-			editChapter.setContent(chapter.getContent());
-		}
-
-		if (chapter.getTranslatorId() != null) {
-			editChapter.setTranslatorId(chapter.getTranslatorId());
-		}
+		editChapter.setChapterNum(chapter.getChapterNum());
+		editChapter.setPrice(chapter.getPrice());
+		editChapter.setTitle(chapter.getTitle());
+		editChapter.setContent(chapter.getContent());
+		editChapter.setLocked(chapter.isLocked());
 
 		return chapterRepo.save(editChapter);
 	}
@@ -108,7 +115,6 @@ public class ChapterServiceImpl implements ChapterService {
 
 		try {
 			deleteChapter.setBook(null);
-			deleteChapter.setTranslatorId(null);
 			progressRepo.deleteByChapterId(chapterId);
 
 			chapterRepo.delete(deleteChapter);
@@ -122,8 +128,44 @@ public class ChapterServiceImpl implements ChapterService {
 	@Override
 	public void incrementChapterViewCount(Integer chapterId) {
 		chapterRepo.incrementViewCount(chapterId);
-		
+
 	}
 
+	@Override
+	public void unlockChapter(Integer userId, Integer chapterId) throws Exception {
+		Chapter chapter = chapterRepo.findById(chapterId).orElseThrow(() -> new Exception("Chapter not found"));
+
+		if (!chapter.isLocked()) {
+			throw new Exception("Chapter is not locked");
+		}
+
+		// Check if already unlocked
+		Optional<ChapterUnlockRecord> existingUnlock = unlockRecordRepository.findByUserIdAndChapterId(userId,
+				chapterId);
+		if (existingUnlock.isPresent()) {
+			throw new Exception("Chapter already unlocked");
+		}
+
+		int unlockCost = chapter.getPrice();
+		User user = userRepository.findById(userId).orElseThrow(() -> new Exception("User not found"));
+
+		if (user.getCredits() >= unlockCost) {
+			// Deduct credits
+			user.setCredits(user.getCredits() - unlockCost);
+			userRepository.save(user);
+
+			// Create unlock record
+			ChapterUnlockRecord unlockRecord = new ChapterUnlockRecord();
+			unlockRecord.setUser(user);
+			unlockRecord.setChapter(chapter);
+			unlockRecord.setUnlockDate(LocalDateTime.now());
+			unlockRecord.setUnlockCost(unlockCost);
+
+			unlockRecordRepository.save(unlockRecord);
+		} else {
+			throw new Exception("Insufficient credits");
+		}
+
+	}
 
 }

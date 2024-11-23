@@ -2,7 +2,6 @@ package com.nix.service;
 
 import java.io.UnsupportedEncodingException;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.nix.config.JwtProvider;
+import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Comment;
 import com.nix.models.Role;
 import com.nix.models.User;
@@ -102,12 +102,10 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public User findUserById(Integer userId) throws Exception {
-		Optional<User> user = userRepo.findById(userId);
-		if (user != null) {
-			return user.get();
-		}
-		throw new Exception("No user found with id: " + userId);
+	public User findUserById(Integer userId) {
+		return userRepo.findById(userId)
+				.orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+
 	}
 
 	@Override
@@ -163,7 +161,7 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	@Transactional
-	public String deleteUser(Integer userId) throws Exception {
+	public String deleteUser(Integer userId) {
 		User user = findUserById(userId);
 		try {
 			if (user != null) {
@@ -239,7 +237,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public User suspendUser(Integer userId) throws Exception {
+	public User suspendUser(Integer userId) {
 		User user = findUserById(userId);
 		user.setIsSuspended(true);
 
@@ -247,15 +245,28 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public User unsuspendUser(Integer userId) throws Exception {
+	public User unsuspendUser(Integer userId) {
 		User user = findUserById(userId);
 		user.setIsSuspended(false);
 
 		return userRepo.save(user);
 	}
-
 	@Override
-	public User updateUser(Integer userId, User user) throws Exception {
+	public User banUser(Integer userId) {
+		User user = findUserById(userId);
+		user.setBanned(true);
+
+		return userRepo.save(user);
+	}
+	@Override
+	public User unbanUser(Integer userId) {
+		User user = findUserById(userId);
+		user.setBanned(true);
+
+		return userRepo.save(user);
+	}
+	@Override
+	public User updateUser(Integer userId, User user) {
 
 		User userUpdate = findUserById(userId);
 
@@ -268,13 +279,25 @@ public class UserServiceImpl implements UserService {
 		if (user.getIsVerified() != null) {
 			userUpdate.setIsVerified(user.getIsVerified());
 		}
-
-		if (user.getRole() != null && user.getRole().getName() != null) {
-			Role role = roleRepo.findByName(user.getRole().getName());
-			userUpdate.setRole(role);
+		
+		if (user.getAvatarUrl()!=null) {
+			userUpdate.setAvatarUrl(user.getAvatarUrl());
 		}
 
 		return userRepo.save(userUpdate);
 	}
+	@Override
+	@Transactional
+    public User updateUserRole(Integer userId, String roleName){
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
+        Role newRole = roleRepo.findByName(roleName);
+        		if(newRole==null) {
+        			throw new ResourceNotFoundException("Role not found with: "+roleName);
+        		}
+
+        user.setRole(newRole);
+        return userRepo.save(user);
+    }
 }

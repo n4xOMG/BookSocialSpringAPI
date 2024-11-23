@@ -16,8 +16,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.nix.models.Role;
 import com.nix.service.RoleService;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -29,18 +31,16 @@ public class JwtValidator extends OncePerRequestFilter {
 
     @Autowired
     RoleService roleService;
-
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        System.out.println("Filter jwt triggered");
         String jwt = request.getHeader(JwtConstant.JWT_HEADER);
         if (jwt != null) {
             try {
                 String email = JwtProvider.getEmailFromJwtToken(jwt);
                 String roleName = JwtProvider.getRoleFromJwtToken(jwt).substring(5);
                 Role role = roleService.findRoleByName(roleName);
-                System.out.println("Role: " + role.getName());
+                System.out.println("User with email: " +email+" has role: " + role.getName());
                 Collection<GrantedAuthority> authorities = new ArrayList<>();
                 if (role != null) {
                     authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName()));

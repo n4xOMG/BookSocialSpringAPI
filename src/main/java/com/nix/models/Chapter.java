@@ -42,9 +42,6 @@ public class Chapter implements Serializable {
 	@Column(columnDefinition = "TEXT")
 	private String content;
 
-	@JoinColumn(name = "translator_id")
-	private Integer translatorId;
-
 	private LocalDateTime uploadDate;
 	private int price;
 	private boolean isLocked;

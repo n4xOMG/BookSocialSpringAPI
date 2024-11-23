@@ -65,7 +65,7 @@ public class CategoryServiceImpl implements CategoryService {
 			Category deleteCategory = findCategoryById(categoryId);
 
 			for (Book book : deleteCategory.getBooks()) {
-				book.getCategories().remove(deleteCategory);
+				book.setCategory(null);
 				deleteCategory.getBooks().remove(book);
 
 				bookRepo.save(book);

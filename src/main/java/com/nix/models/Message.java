@@ -1,7 +1,7 @@
 package com.nix.models;
 
 import java.io.Serializable;
-import java.sql.Date;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -24,15 +24,18 @@ public class Message implements Serializable{
 	 */
 	private static final long serialVersionUID = 1L;
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
-	private String content;
-	private Date timestamp;
-	private boolean isRead;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@ManyToOne
-	private User sender;
+    private String content;
 
-	@ManyToOne
-	private User receiver;
+    private LocalDateTime timestamp;
+
+    private boolean isRead;
+
+    @ManyToOne
+    private User sender;
+
+    @ManyToOne
+    private User receiver;
 }

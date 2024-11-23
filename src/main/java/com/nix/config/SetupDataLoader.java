@@ -39,6 +39,12 @@ public class SetupDataLoader implements ApplicationListener<ContextRefreshedEven
 	        user = new User();
 	        user.setPassword(passEncoder.encode("n/xOMG859"));
 	        user.setEmail("tanlmht859a@gmail.com");
+	        user.setUsername("Admin");
+	        user.setAvatarUrl("https://res.cloudinary.com/ds2ykbawv/image/upload/v1729779030/Chapter_7_reaewqewq/blob_cvrgif.png");
+	        user.setBio("I am admin");
+	        user.setCredits(9999999);
+	        user.setFullname("Duy Tân");
+	        user.setGender("Male");
 	        user.setRole(adminRole);
 	        user.setIsVerified(true);
 	        userRepo.save(user);

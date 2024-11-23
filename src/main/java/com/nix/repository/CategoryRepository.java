@@ -13,4 +13,6 @@ public interface CategoryRepository extends JpaRepository<Category, Integer> {
 	
 	@Query("select c from Category c join c.books b where b.id = :bookId")
 	public List<Category> findByBookId(Integer bookId);
+	
+	List<Category> findTop6ByOrderByNameAsc();
 }

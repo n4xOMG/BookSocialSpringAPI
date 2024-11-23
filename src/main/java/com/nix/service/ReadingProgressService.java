@@ -1,11 +1,12 @@
 package com.nix.service;
 
+import java.io.IOException;
 import java.util.List;
 
 import com.nix.models.ReadingProgress;
 
 public interface ReadingProgressService {
-	public ReadingProgress findReadingProgressById(Integer progressId);
+	public ReadingProgress findReadingProgressById(Integer progressId) throws IOException;
 
 	public ReadingProgress findByUserAndChapter(Integer userId, Integer chapterId);
 
@@ -17,6 +18,6 @@ public interface ReadingProgressService {
 
 	public ReadingProgress updateReadingProgress(Integer progressId, ReadingProgress readingProgress) throws Exception;
 
-	public String deleteReadingProgress(Integer progressId);
+	public String deleteReadingProgress(Integer progressId) throws IOException;
 
 }

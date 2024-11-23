@@ -97,4 +97,43 @@ public class AdminController {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
+
+	@PatchMapping("/users/ban/{userId}")
+	public ResponseEntity<?> banUser(@RequestHeader("Authorization") String jwt, @PathVariable Integer userId)
+			throws Exception {
+		try {
+			User user = userService.findUserByJwt(jwt);
+			if (user == null) {
+				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
+			}
+			return new ResponseEntity<>(userService.banUser(userId), HttpStatus.OK);
+
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@PatchMapping("/users/unban/{userId}")
+	public ResponseEntity<?> unbanUser(@RequestHeader("Authorization") String jwt, @PathVariable Integer userId)
+			throws Exception {
+		try {
+			User user = userService.findUserByJwt(jwt);
+			if (user == null) {
+				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
+			}
+			return new ResponseEntity<>(userService.unbanUser(userId), HttpStatus.OK);
+
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	@PutMapping("/users/{id}/role")
+	public ResponseEntity<?> updateUserRole(@PathVariable("id") Integer userId, @RequestParam String roleName) {
+		try {
+			User updatedUser = userService.updateUserRole(userId, roleName);
+			return ResponseEntity.ok(updatedUser);
+		} catch (Exception e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
 }

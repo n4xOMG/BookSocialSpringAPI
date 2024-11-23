@@ -3,8 +3,6 @@ package com.nix.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,11 +18,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.nix.dtos.BookDTO;
 import com.nix.dtos.mappers.BookMapper;
+import com.nix.dtos.mappers.CategoryMapper;
 import com.nix.dtos.mappers.RatingMapper;
 import com.nix.models.Book;
+import com.nix.models.Category;
 import com.nix.models.User;
-import com.nix.response.ApiResponse;
 import com.nix.service.BookService;
+import com.nix.service.CategoryService;
 import com.nix.service.RatingService;
 import com.nix.service.UserService;
 
@@ -40,34 +40,71 @@ public class BookController {
 	@Autowired
 	RatingService ratingService;
 
+	@Autowired
+	CategoryService categoryService;
+
 	BookMapper bookMapper = new BookMapper();
 
 	RatingMapper ratingMapper = new RatingMapper();
 
+	CategoryMapper categoryMapper = new CategoryMapper();
+
 	@Cacheable("books")
 	@GetMapping("/books")
 	public ResponseEntity<List<BookDTO>> getAllBooks() {
-		List<BookDTO> books = bookMapper.mapToDTOs(bookService.getAllBooks());
-
-		return new ResponseEntity<List<BookDTO>>(books, HttpStatus.ACCEPTED);
+		List<Book> books = bookService.getAllBooks();
+		return ResponseEntity.ok(bookMapper.mapToDTOs(books));
 	}
 
 	@GetMapping("/books/{bookId}")
-	public ResponseEntity<BookDTO> getBookById(@PathVariable("bookId") Integer bookId) throws Exception {
-		BookDTO book = bookMapper.mapToDTO(bookService.findBookById(bookId));
+	public ResponseEntity<BookDTO> getBookById(@PathVariable Integer id) {
+		Book book = bookService.getBookById(id);
+		return ResponseEntity.ok(bookMapper.mapToDTO(book));
+	}
 
-		if (book == null) {
-			throw new Exception("Book not found");
+	@GetMapping("/books/top-views")
+	public ResponseEntity<List<BookDTO>> getTop10BooksByViews() {
+		List<Book> books = bookService.getTop10ViewedBooks();
+		return ResponseEntity.ok(bookMapper.mapToDTOs(books));
+	}
+
+	@GetMapping("/books/top-likes")
+	public ResponseEntity<List<BookDTO>> getTop10BooksByLikes() {
+		List<Book> books = bookService.getTop10LikedBooks();
+		return ResponseEntity.ok(bookMapper.mapToDTOs(books));
+	}
+
+	@GetMapping("/books/featured")
+	public ResponseEntity<?> getFeaturedBooks() {
+		try {
+			List<Book> featuredBooks = bookService.getFeaturedBooks();
+			return ResponseEntity.ok(bookMapper.mapToDTOs(featuredBooks));
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching featured books.");
 		}
-
-		return new ResponseEntity<>(book, HttpStatus.OK);
 	}
 
 	@GetMapping("/books/search")
-	public ResponseEntity<List<BookDTO>> searchBooksByTitle(@RequestParam String query) {
-		List<BookDTO> books = bookMapper.mapToDTOs(bookService.findBookByTitle(query));
+	public ResponseEntity<List<BookDTO>> searchBooks(@RequestParam(required = false) String title,
+			@RequestParam(required = false) Integer categoryId, @RequestParam(required = false) List<Integer> tagIds) {
+		List<Book> books = bookService.searchBooks(title, categoryId, tagIds);
+		return ResponseEntity.ok(bookMapper.mapToDTOs(books));
+	}
 
-		return new ResponseEntity<List<BookDTO>>(books, HttpStatus.ACCEPTED);
+	@GetMapping("/books/author/{authorId}")
+	public ResponseEntity<List<BookDTO>> getBooksByAuthor(@PathVariable Integer authorId) {
+		List<Book> books = bookService.getBooksByAuthor(authorId);
+		return ResponseEntity.ok(bookMapper.mapToDTOs(books));
+	}
+
+	@GetMapping("/top-categories")
+	public ResponseEntity<?> getTopSixCategoriesWithBooks() {
+		try {
+			List<Category> categories = bookService.getTopSixCategoriesWithBooks();
+			return ResponseEntity.ok(categoryMapper.mapToDTOs(categories));
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching categories.");
+		}
 	}
 
 	@GetMapping("/api/books/favoured")
@@ -77,69 +114,52 @@ public class BookController {
 		if (user == null) {
 			throw new Exception("No user found");
 		}
-		List<BookDTO> books = bookMapper.mapToDTOs(bookService.findBooksFollowedByUser(user.getId()));
+		List<BookDTO> books = bookMapper.mapToDTOs(bookService.getFollowedBooksByUserId(user.getId()));
 
 		return new ResponseEntity<List<BookDTO>>(books, HttpStatus.ACCEPTED);
 	}
 
 	@GetMapping("/books/latest-update")
-	public ResponseEntity<?> getBookWithLatestChapter() {
-		Book book = bookService.getBookWithLatestChapter();
-		return book != null ? ResponseEntity.ok(bookMapper.mapToDTO(book)) : ResponseEntity.notFound().build();
+	public ResponseEntity<?> getLatestUpdateBooks(@RequestParam(defaultValue = "5") int limit) {
+		List<Book> recentBooks = bookService.getTopRecentChapterBooks(limit);
+		return ResponseEntity.ok(bookMapper.mapToDTOs(recentBooks));
 	}
 
-	@CacheEvict(value = "books", allEntries = true)
-	@PostMapping("/translator/books")
-	public ResponseEntity<Book> addNewBook(@RequestHeader("Authorization") String jwt, @RequestBody Book book)
-			throws Exception {
-		User user = userService.findUserByJwt(jwt);
-		if (user == null) {
-			throw new Exception("No user found");
-		}
+	@GetMapping("/categories/{categoryId}/books")
+	public ResponseEntity<?> getBooksByCategory(@PathVariable Integer categoryId) {
 		try {
-			Book newBook = bookService.addNewBook(book);
-			System.out.println("User " + user.getUsername() + " added new book " + newBook.getTitle());
-			return new ResponseEntity<>(newBook, HttpStatus.CREATED);
+			List<Book> books = bookService.getBooksByCategoryId(categoryId);
+			return ResponseEntity.ok(bookMapper.mapToDTOs(books));
 		} catch (Exception e) {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
 		}
 	}
 
-	@CachePut(value = "books", key = "#bookId")
-	@PutMapping("/translator/books/{bookId}")
-	public ResponseEntity<BookDTO> editBook(@RequestHeader("Authorization") String jwt,
-			@PathVariable("bookId") Integer bookId, @RequestBody Book book) throws Exception {
-		User user = userService.findUserByJwt(jwt);
-		if (user == null) {
-			throw new Exception("No user found");
-		}
-		try {
-			BookDTO editedBook = bookMapper.mapToDTO(bookService.updateBook(book, bookId));
-			System.out.println("User " + user.getUsername() + " edited book " + editedBook.getTitle());
-			return new ResponseEntity<>(editedBook, HttpStatus.ACCEPTED);
-		} catch (Exception e) {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-		}
+	@PostMapping("/api/books")
+	public ResponseEntity<BookDTO> createBook(@RequestBody BookDTO bookDTO) {
+		Book created = bookService.createBook(bookDTO);
+		return ResponseEntity.ok(bookMapper.mapToDTO(created));
 	}
 
-	@CacheEvict(value = "books", key = "#bookId")
-	@DeleteMapping("/translator/books/{bookId}")
-	public ResponseEntity<ApiResponse> deleteBook(@PathVariable("bookId") Integer bookId) throws Exception {
-		Book book = bookService.findBookById(bookId);
-		if (book == null) {
-			throw new Exception("Book not found");
-		}
-		ApiResponse res = new ApiResponse(bookService.deleteBook(bookId), true);
-		return new ResponseEntity<>(res, HttpStatus.ACCEPTED);
+	@PutMapping("/api/books/{bookId}")
+	public ResponseEntity<BookDTO> updateBook(@PathVariable("bookId") Integer bookId, @RequestBody BookDTO book) {
+		Book updated = bookService.updateBook(bookId, book);
+		return ResponseEntity.ok(bookMapper.mapToDTO(updated));
+	}
+
+	@DeleteMapping("/api/books/{bookId}")
+	public ResponseEntity<Void> deleteBook(@PathVariable("bookId") Integer bookId) {
+		bookService.deleteBook(bookId);
+		return ResponseEntity.noContent().build();
 	}
 
 	@PutMapping("/api/books/follow/{bookId}")
 	public ResponseEntity<BookDTO> markBookAsFavoured(@RequestHeader("Authorization") String jwt,
-			@PathVariable Integer bookId) throws Exception {
+			@PathVariable Integer bookId) {
 		User reqUser = userService.findUserByJwt(jwt);
 		if (reqUser != null) {
 			BookDTO followedBook = bookMapper
-					.mapToDTO(bookService.markAsFavouriteBook(bookService.findBookById(bookId), reqUser));
+					.mapToDTO(bookService.markAsFavouriteBook(bookService.getBookById(bookId), reqUser));
 			return new ResponseEntity<>(followedBook, HttpStatus.ACCEPTED);
 		}
 

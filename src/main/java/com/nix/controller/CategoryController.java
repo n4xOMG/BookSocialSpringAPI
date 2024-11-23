@@ -48,7 +48,7 @@ public class CategoryController {
 	}
 
 	@GetMapping("/books/{bookId}/categories")
-	public ResponseEntity<?> getLanguagesByBook(@PathVariable Integer bookId) throws Exception {
+	public ResponseEntity<?> getCategoriesByBook(@PathVariable Integer bookId) throws Exception {
 		try {
 			List<Category> categories = categoryService.findALlCategoriesByBookId(bookId);
 
