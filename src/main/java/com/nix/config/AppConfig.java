@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -15,7 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
@@ -23,6 +24,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class AppConfig {
 
 	@Autowired
@@ -32,11 +34,12 @@ public class AppConfig {
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
 		http.sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.authorizeHttpRequests(Authorize -> Authorize.requestMatchers("/api/**").authenticated()
+				.authorizeHttpRequests(authorize -> authorize.requestMatchers("/api/**").authenticated()
 						.requestMatchers("/admin/**").hasRole("ADMIN").requestMatchers("/moderator/**")
 						.hasAnyRole("ADMIN", "MODERATOR").anyRequest().permitAll())
-				.addFilterBefore(jwtValidator, BasicAuthenticationFilter.class).csrf(csrf -> csrf.disable())
+				.addFilterBefore(jwtValidator, UsernamePasswordAuthenticationFilter.class).csrf(csrf -> csrf.disable())
 				.cors(cors -> cors.configurationSource(configurationSource()));
+
 		return http.build();
 	}
 
@@ -58,7 +61,7 @@ public class AppConfig {
 	}
 
 	@Bean
-	PasswordEncoder passwordEnconder() {
+	PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
 

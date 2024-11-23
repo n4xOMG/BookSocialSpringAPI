@@ -1,5 +1,6 @@
 package com.nix.service;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -12,8 +13,6 @@ import com.nix.models.ReadingProgress;
 import com.nix.repository.ChapterRepository;
 import com.nix.repository.ReadingProgressRepository;
 import com.nix.repository.UserRepository;
-
-import io.jsonwebtoken.io.IOException;
 
 @Service
 public class ReadingProgressServiceImpl implements ReadingProgressService {
@@ -29,14 +28,10 @@ public class ReadingProgressServiceImpl implements ReadingProgressService {
 
 
 	@Override
-	public ReadingProgress findReadingProgressById(Integer progressId) {
-		try {
-			Optional<ReadingProgress> progress = readingProgressRepo.findById(progressId);
+	public ReadingProgress findReadingProgressById(Integer progressId) throws IOException {
+		Optional<ReadingProgress> progress = readingProgressRepo.findById(progressId);
 
-			return progress.get();
-		} catch (IOException e) {
-			throw new IOException("Error retrieving progress with id: " + progressId + "\n" + e);
-		}
+		return progress.get();
 
 	}
 
@@ -94,7 +89,7 @@ public class ReadingProgressServiceImpl implements ReadingProgressService {
 
 	@Override
 	@Transactional
-	public String deleteReadingProgress(Integer progressId) {
+	public String deleteReadingProgress(Integer progressId) throws IOException {
 		try {
 			ReadingProgress deleteProgress = findReadingProgressById(progressId);
 

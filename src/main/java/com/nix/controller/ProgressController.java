@@ -70,7 +70,7 @@ public class ProgressController {
 				throw new Exception("The user have to log in!");
 			}
 
-			Book book = bookService.findBookById(bookId);
+			Book book = bookService.getBookById(bookId);
 			if (book == null) {
 				throw new Exception("Chapter not found");
 			}
@@ -103,7 +103,7 @@ public class ProgressController {
 			@PathVariable("bookId") Integer bookId, @PathVariable("chapterId") Integer chapterId,
 			@RequestBody ReadingProgress progress) throws Exception {
 
-		Book book = bookService.findBookById(bookId);
+		Book book = bookService.getBookById(bookId);
 		if (book == null) {
 			throw new Exception("Book not found");
 		}

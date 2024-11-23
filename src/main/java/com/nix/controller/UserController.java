@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nix.dtos.UserDTO;
@@ -44,27 +45,31 @@ public class UserController {
 
 			return new ResponseEntity<>(userMapper.mapToDTO(user), HttpStatus.OK);
 		} catch (JwtException e) {
-	        return new ResponseEntity<>("Invalid or expired JWT token", HttpStatus.UNAUTHORIZED);
-		}
-		catch (Exception e) {
+			return new ResponseEntity<>("Invalid or expired JWT token", HttpStatus.UNAUTHORIZED);
+		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
+
 	private String getSiteURL(HttpServletRequest request) {
 		String siteURL = request.getRequestURL().toString();
 		return siteURL.replace(request.getServletPath(), "");
 	}
+
 	@PutMapping("/api/user/profile")
-	public ResponseEntity<?> updateProfile(@RequestHeader("Authorization") String jwt, @RequestBody User user, HttpServletRequest httpRequest)
-			throws Exception {
-		
+	public ResponseEntity<?> updateProfile(@RequestHeader("Authorization") String jwt, @RequestBody User user,
+			HttpServletRequest httpRequest) throws Exception {
+
 		try {
-			UserDTO updateUser = userMapper.mapToDTO(userService.updateCurrentSessionUser(jwt, user, getSiteURL(httpRequest)));
+			UserDTO updateUser = userMapper
+					.mapToDTO(userService.updateCurrentSessionUser(jwt, user, getSiteURL(httpRequest)));
 
 			return new ResponseEntity<>(updateUser, HttpStatus.OK);
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
+
+	
 
 }

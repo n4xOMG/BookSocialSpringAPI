@@ -6,8 +6,10 @@ import java.util.stream.Collectors;
 
 import com.nix.dtos.BookDTO;
 import com.nix.models.Book;
+import com.nix.models.Category;
 import com.nix.models.Chapter;
 import com.nix.models.Rating;
+import com.nix.models.Tag;
 
 public class BookMapper implements Mapper<Book, BookDTO> {
 	CommentMapper commentMapper = new CommentMapper();
@@ -15,8 +17,6 @@ public class BookMapper implements Mapper<Book, BookDTO> {
 	RatingMapper ratingMapper = new RatingMapper();
 
 	ChapterMapper chapterMapper = new ChapterMapper();
-
-	CategoryMapper categoryMapper = new CategoryMapper();
 
 	UserSummaryMapper userSummaryMapper = new UserSummaryMapper();
 
@@ -28,13 +28,14 @@ public class BookMapper implements Mapper<Book, BookDTO> {
 		}
 		bookDTO.setTitle(book.getTitle());
 		bookDTO.setAuthor(userSummaryMapper.mapToDTO(book.getAuthor()));
+		bookDTO.setAuthorName(book.getAuthorName());
 		bookDTO.setArtistName(book.getArtistName());
 		bookDTO.setBookCover(book.getBookCover());
 		bookDTO.setDescription(book.getDescription());
 		bookDTO.setUploadDate(book.getUploadDate());
 		bookDTO.setViewCount(book.getViewCount());
 		bookDTO.setSuggested(book.isSuggested());
-		
+		bookDTO.setStatus(book.getStatus());
 		if (book.getRatings() != null && !book.getRatings().isEmpty()) {
 			double avgRating = book.getRatings().stream().mapToDouble(Rating::getRating).average().orElse(0.0);
 			bookDTO.setAvgRating(avgRating);
@@ -47,11 +48,20 @@ public class BookMapper implements Mapper<Book, BookDTO> {
 			bookDTO.setFavCount(book.getFavoured().size());
 		}
 
-		bookDTO.setCategories(categoryMapper.mapToDTOs(book.getCategories()));
 		bookDTO.setChapterCount(book.getChapters().size());
 		bookDTO.setLanguage(book.getLanguage());
 		book.getChapters().stream().max(Comparator.comparing(Chapter::getUploadDate))
 				.ifPresent(latestChapter -> bookDTO.setLatestChapterNumber(latestChapter.getChapterNum()));
+		// Map categoryIds
+		if (book.getCategory() != null) {
+			bookDTO.setCategoryId(book.getCategory().getId());
+		}
+
+		// Map tagIds
+		if (book.getTags() != null && !book.getTags().isEmpty()) {
+			List<Integer> tagIds = book.getTags().stream().map(Tag::getId).collect(Collectors.toList());
+			bookDTO.setTagIds(tagIds);
+		}
 		return bookDTO;
 	}
 

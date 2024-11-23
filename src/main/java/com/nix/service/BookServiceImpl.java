@@ -1,14 +1,16 @@
 package com.nix.service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.nix.dtos.BookDTO;
+import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
 import com.nix.models.Category;
 import com.nix.models.Tag;
@@ -17,9 +19,7 @@ import com.nix.repository.BookRepository;
 import com.nix.repository.CategoryRepository;
 import com.nix.repository.ChapterRepository;
 import com.nix.repository.TagRepository;
-
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+import com.nix.repository.UserRepository;
 
 @Service
 public class BookServiceImpl implements BookService {
@@ -28,92 +28,16 @@ public class BookServiceImpl implements BookService {
 	BookRepository bookRepo;
 
 	@Autowired
-	CategoryRepository categoryRepo;
-
-	@Autowired
-	TagRepository tagRepo;
-
-	@Autowired
 	ChapterRepository chaptereRepo;
 
-	@PersistenceContext
-	private EntityManager entityManager;
+	@Autowired
+	CategoryRepository categoryRepository;
 
-	@Override
-	public Book findBookById(Integer bookId) throws Exception {
-		Optional<Book> book = bookRepo.findById(bookId);
-		if (book != null) {
-			return book.get();
-		}
-		throw new Exception("No book found with id: " + bookId);
-	}
+	@Autowired
+	TagRepository tagRepository;
 
-	@Override
-	public List<Book> findBooksByCategories(Integer categoryId) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Book> findBookByTags(Integer tagId) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Book> findRecentBooks(LocalDateTime starTime) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Book> findTopBooksByViews() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Book> findTopBooksByLikes() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Book> findEditorSuggestedBooks() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Book> findMostPurchaseBooks() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Book> searchBooks(String query, Integer categoryId, Integer tagId) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Book getBookWithLatestChapter() {
-		return chaptereRepo.findTopByOrderByUploadDateDesc();
-	}
-
-	@Override
-	public List<Book> findBookByTitle(String bookTitle) {
-		List<Book> Books = bookRepo.findByTitle(bookTitle);
-
-		return Books;
-	}
-
-	@Override
-	public List<Book> findBooksByAuthor(Integer authorId) {
-		List<Book> Books = bookRepo.findBooksByAuthor(authorId);
-
-		return Books;
-	}
+	@Autowired
+	UserRepository userRepository;
 
 	@Override
 	public List<Book> getAllBooks() {
@@ -121,139 +45,163 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	@Transactional
-	public Book addNewBook(Book book) {
-		Book newBook = new Book();
-		newBook.setTitle(book.getTitle());
-		newBook.setAuthorName(book.getAuthorName());
-		newBook.setArtistName(book.getArtistName());
-		newBook.setBookCover(book.getBookCover());
-		newBook.setDescription(book.getDescription());
-		newBook.setUploadDate(LocalDateTime.now());
-		newBook.setLanguage(book.getLanguage());
-		newBook.setSuggested(false);
-		newBook.setViewCount(0);
+	public Book getBookById(Integer id) {
+		return bookRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
+	}
 
-		if (book.getCategories() != null) {
-			List<Category> categories = new ArrayList<>();
-			for (Category category : book.getCategories()) {
-				Category managedCategory = categoryRepo.findById(category.getId())
-						.orElseThrow(() -> new RuntimeException("Cannot find category"));
-				managedCategory.getBooks().add(newBook);
-				categories.add(managedCategory);
-			}
-			newBook.setCategories(categories);
+	@Override
+	public List<Book> getBooksByCategoryId(Integer categoryId) {
+		// Fetch the category by ID
+		Optional<Category> categoryOpt = categoryRepository.findById(categoryId);
+		if (!categoryOpt.isPresent()) {
+			throw new ResourceNotFoundException("Category not found with ID: " + categoryId);
 		}
+		Category category = categoryOpt.get();
 
-		if (book.getTags() != null) {
-			List<Tag> tags = new ArrayList<>();
-			for (Tag tag : book.getTags()) {
-				Tag managedTag = tagRepo.findById(tag.getId())
-						.orElseThrow(() -> new RuntimeException("Cannot find category"));
-				managedTag.getBooks().add(newBook);
-				tags.add(managedTag);
-			}
-			newBook.setTags(tags);
-		}
-
-		return bookRepo.save(newBook);
+		// Fetch books associated with the category
+		return bookRepo.findByCategory(category);
 	}
 
 	@Override
 	@Transactional
-	public Book updateBook(Book book, Integer bookId) throws Exception {
-		try {
-			Book updateBook = findBookById(bookId);
+	public Book createBook(BookDTO bookDTO) {
+		User author = userRepository.findById(bookDTO.getAuthor().getId()).orElseThrow(
+				() -> new ResourceNotFoundException("User not found with ID: " + bookDTO.getAuthor().getId()));
 
-			if (book.getTitle() != null) {
-				updateBook.setTitle(book.getTitle());
-			}
+		Book book = new Book();
+		book.setAuthor(author);
+		book.setTitle(bookDTO.getTitle());
+		book.setAuthorName(bookDTO.getAuthorName());
+		book.setArtistName(bookDTO.getArtistName());
+		book.setDescription(bookDTO.getDescription());
+		book.setBookCover(bookDTO.getBookCover());
+		book.setLanguage(bookDTO.getLanguage());
+		book.setStatus(bookDTO.getStatus());
+		book.setViewCount(0);
+		book.setUploadDate(LocalDateTime.now());
+		book.setSuggested(false);
 
-			if (book.getBookCover() != null) {
-				updateBook.setBookCover(book.getBookCover());
-			}
+		Category category = categoryRepository.findById(bookDTO.getCategoryId()).orElseThrow(
+				() -> new ResourceNotFoundException("Category not found with ID: " + bookDTO.getCategoryId()));
 
-			if (book.getAuthorName() != null) {
-				updateBook.setAuthorName(book.getAuthorName());
-			}
-			if (book.getArtistName() != null) {
-				updateBook.setArtistName(book.getArtistName());
-			}
-			if (book.getDescription() != null) {
-				updateBook.setDescription(book.getDescription());
-			}
+		book.setCategory(category);
+		category.getBooks().add(book);
 
-			if (book.getCategories() != null) {
-				List<Category> newCategories = new ArrayList<>();
-				for (Category category : book.getCategories()) {
-					category.getBooks().add(updateBook);
-					newCategories.add(category);
-				}
-				updateBook.setCategories(newCategories);
-			}
-
-			if (book.getTags() != null) {
-				List<Tag> newTags = new ArrayList<>();
-				for (Tag tag : book.getTags()) {
-					tag.getBooks().add(updateBook);
-					newTags.add(tag);
-				}
-				updateBook.setTags(newTags);
-			}
-
-			bookRepo.save(updateBook);
-
-			return updateBook;
-		} catch (Exception e) {
-			throw new Exception("Error updating book " + e);
+		List<Tag> tags = tagRepository.findAllById(bookDTO.getTagIds());
+		if (tags.size() != bookDTO.getTagIds().size()) {
+			throw new ResourceNotFoundException("One or more tags not found.");
 		}
+		book.setTags(tags);
+		for (Tag tag : book.getTags()) {
+			tag.getBooks().add(book);
+		}
+
+		return bookRepo.save(book);
 	}
 
 	@Override
 	@Transactional
-	public String deleteBook(Integer bookId) throws Exception {
-		Book deleteBook = findBookById(bookId);
-		try {
-			if (deleteBook != null) {
-				deleteBook.getFavoured().forEach(user -> user.getFollowedBooks().remove(deleteBook));
-				deleteBook.getFavoured().clear();
+	public Book updateBook(Integer id, BookDTO bookDTO) {
+		Book existingBook = bookRepo.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
+		User author = userRepository.findById(bookDTO.getAuthor().getId()).orElseThrow(
+				() -> new ResourceNotFoundException("User not found with ID: " + bookDTO.getAuthor().getId()));
 
-				deleteBook.setAuthor(null);
-				// Remove categories properly
-				deleteBook.getCategories().forEach(category -> {
-					category.getBooks().remove(deleteBook);
-					entityManager.remove(category);
-				});
-				deleteBook.getCategories().clear();
+		// Update fields
+		existingBook.setAuthor(author);
+		existingBook.setTitle(bookDTO.getTitle());
+		existingBook.setBookCover(bookDTO.getBookCover());
+		existingBook.setAuthorName(bookDTO.getAuthorName());
+		existingBook.setArtistName(bookDTO.getArtistName());
+		existingBook.setDescription(bookDTO.getDescription());
+		existingBook.setLanguage(bookDTO.getLanguage());
+		existingBook.setStatus(bookDTO.getStatus());
+		// Assuming viewCount is not updated via this method
+		existingBook.setSuggested(bookDTO.isSuggested());
+		existingBook.setViewCount(bookDTO.getViewCount());
 
-				deleteBook.getTags().forEach(tag -> {
-					tag.getBooks().remove(deleteBook);
-					entityManager.remove(tag);
-				});
+		Category category = categoryRepository.findById(bookDTO.getCategoryId()).orElseThrow(
+				() -> new ResourceNotFoundException("Category not found with ID: " + bookDTO.getCategoryId()));
+		existingBook.getCategory().getBooks().remove(existingBook);
+		existingBook.setCategory(category);
+		category.getBooks().add(existingBook);
 
-				// Remove chapters
-				deleteBook.getChapters().forEach(chapter -> entityManager.remove(chapter));
-				deleteBook.getChapters().clear();
-
-				entityManager.flush();
-
-				// Remove the book
-				entityManager.remove(deleteBook);
-
-				return "Book deleted successfully!";
-			} else {
-				return "Book not found!";
-			}
-		} catch (Exception e) {
-			System.err.println("Error deleting book: " + e.getMessage());
-			throw new Exception("Error deleting book: " + e.getMessage(), e);
+		// Update Tags
+		List<Tag> newTags = tagRepository.findAllById(bookDTO.getTagIds());
+		if (newTags.size() != bookDTO.getTagIds().size()) {
+			throw new ResourceNotFoundException("One or more tags not found.");
 		}
+		// Remove old associations
+		for (Tag tag : existingBook.getTags()) {
+			tag.getBooks().remove(existingBook);
+		}
+		existingBook.setTags(newTags);
+		for (Tag tag : newTags) {
+			tag.getBooks().add(existingBook);
+		}
+
+		return bookRepo.save(existingBook);
+	}
+
+	@Override
+	@Transactional
+	public void deleteBook(Integer id) {
+		Book existingBook = bookRepo.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
+
+		existingBook.getFavoured().forEach(user -> user.getLikedComments().remove(existingBook));
+		existingBook.getFavoured().clear();
+
+		existingBook.getCategory().getBooks().remove(existingBook);
+
+		// Remove associations with Tags
+		for (Tag tag : existingBook.getTags()) {
+			tag.getBooks().remove(existingBook);
+		}
+		existingBook.getTags().clear();
+
+		bookRepo.delete(existingBook);
+	}
+
+	@Override
+	public List<Book> searchBooksByTitle(String title) {
+		return bookRepo.findByTitleContainingIgnoreCase(title);
+	}
+
+	@Override
+	public List<Book> getBooksByAuthor(Integer authorId) {
+		return bookRepo.findByAuthorId(authorId);
+	}
+
+	@Override
+	public List<Book> getBooksBySuggestedStatus(Boolean isSuggested) {
+		return bookRepo.findByIsSuggested(isSuggested);
+	}
+
+	@Override
+	public List<Book> getBooksByStatus(String status) {
+		return bookRepo.findByStatus(status);
+	}
+
+	@Override
+	public List<Book> getTop10ViewedBooks() {
+		return bookRepo.findTop10ByOrderByViewCountDesc();
+	}
+
+	@Override
+	public List<Book> getTop10LikedBooks() {
+		return bookRepo.findTopBooksByLikes();
+	}
+
+	@Override
+	public List<Book> getTopRecentChapterBooks(int limit) {
+		PageRequest pageRequest = PageRequest.of(0, limit);
+		return bookRepo.findTopBooksWithLatestChapters(pageRequest);
 	}
 
 	@Override
 	@Transactional
 	public Book markAsFavouriteBook(Book book, User user) {
-
 		if (book.getFavoured().contains(user)) {
 			book.getFavoured().remove(user);
 			user.getFollowedBooks().remove(book);
@@ -266,14 +214,32 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	public List<Book> findBooksFollowedByUser(Integer userId) {
-		return bookRepo.findByUserFavoured(userId);
+	public List<Book> getFollowedBooksByUserId(Integer id) {
+		User user = userRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+		return user.getFollowedBooks();
 	}
 
 	@Override
-	public void incrementBookViewCount(Integer bookId) {
-		bookRepo.incrementViewCount(bookId);
+	public Book incrementViewCount(Integer id) {
+		Book book = getBookById(id);
+		book.setViewCount(book.getViewCount() + 1);
+		return bookRepo.save(book);
+	}
 
+	@Override
+	public List<Category> getTopSixCategoriesWithBooks() {
+		return categoryRepository.findTop6ByOrderByNameAsc();
+	}
+
+	@Override
+	public List<Book> getFeaturedBooks() {
+		return bookRepo.findByIsSuggested(true);
+	}
+
+	@Override
+	public List<Book> searchBooks(String title, Integer categoryId, List<Integer> tagIds) {
+		return bookRepo.searchBooks(title, categoryId, tagIds);
 	}
 
 }

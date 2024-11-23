@@ -11,7 +11,7 @@ public interface ChapterService {
 
 	public List<Chapter> getAllChapters();
 
-	public Chapter addNewChapter(Integer bookId, Chapter chapter) throws Exception;
+	public Chapter addChapterAndNotifyFollowers(Integer bookId, Chapter chapter);
 
 	public Chapter editChapter(Integer chapterId, Chapter chapter) throws Exception;
 
@@ -20,5 +20,7 @@ public interface ChapterService {
 	public Chapter findChapterDTOById(Integer chapterId) throws Exception;
 
 	public void incrementChapterViewCount(Integer chapterId);
+
+	public void unlockChapter(Integer userId, Integer chapterId) throws Exception;
 
 }

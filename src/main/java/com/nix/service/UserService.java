@@ -16,23 +16,30 @@ public interface UserService {
 
 	public User sendForgotPasswordMail(User user, String url) throws UnsupportedEncodingException, MessagingException;
 
-	public User findUserById(Integer userId) throws Exception;
+	public User findUserById(Integer userId);
 
 	public User findUserByEmail(String email);
 
 	public User findUserByJwt(String jwt);
 
-	public User updateCurrentSessionUser(String jwt, User user, String url) throws UnsupportedEncodingException, MessagingException;
+	public User updateCurrentSessionUser(String jwt, User user, String url)
+			throws UnsupportedEncodingException, MessagingException;
 
-	public User updateUser(Integer userId, User user) throws Exception;
+	public User updateUserRole(Integer userId, String roleName);
 
-	public String deleteUser(Integer userId) throws Exception;
+	public User updateUser(Integer userId, User user);
+
+	public String deleteUser(Integer userId);
 
 	public User updateUserPassword(String password, User user);
 
 	public User verifyUser(String verificationCode);
 
-	public User suspendUser(Integer userId) throws Exception;
+	public User suspendUser(Integer userId);
 
-	public User unsuspendUser(Integer userId) throws Exception;
+	public User unsuspendUser(Integer userId);
+
+	public User banUser(Integer userId);
+
+	public User unbanUser(Integer userId);
 }

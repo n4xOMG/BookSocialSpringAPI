@@ -17,7 +17,8 @@ public class ChapterDTO {
     private String chapterNum; 
     private String title;
     private String content;
-    private Integer translatorId;
+    private int price;
+    private boolean isLocked;
     private LocalDateTime uploadDate;
     private Integer bookId; 
     private List<CommentDTO> comments;
