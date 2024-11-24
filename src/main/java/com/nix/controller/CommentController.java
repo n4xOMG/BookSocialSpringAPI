@@ -42,6 +42,17 @@ public class CommentController {
 		}
 	}
 
+	@GetMapping("/posts/{postId}/comments")
+	public ResponseEntity<?> getAllPostComments(@PathVariable("postId") Integer postId) {
+		try {
+			List<Comment> comments = commentService.getAllPostComments(postId);
+
+			return ResponseEntity.ok(commentMapper.mapToDTOs(comments));
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
 	@GetMapping("/books/{bookId}/comments")
 	public ResponseEntity<?> getAllBookComments(@PathVariable("bookId") Integer bookId) {
 		try {
@@ -77,7 +88,7 @@ public class CommentController {
 				return new ResponseEntity<>("User is suspended from commenting", HttpStatus.FORBIDDEN);
 			}
 
-			Comment newComment = commentService.createBookComment(comment, bookId, user.getId());
+			Comment newComment = commentService.createBookComment(comment, bookId, user);
 			return ResponseEntity.ok(commentMapper.mapToDTO(newComment));
 
 		} catch (SensitiveWordException e) {
@@ -101,7 +112,31 @@ public class CommentController {
 				return new ResponseEntity<>("User is suspended from commenting", HttpStatus.FORBIDDEN);
 			}
 
-			Comment newComment = commentService.createChapterComment(comment, bookId, chapterId, user.getId());
+			Comment newComment = commentService.createChapterComment(comment, bookId, chapterId, user);
+			return ResponseEntity.ok(commentMapper.mapToDTO(newComment));
+
+		} catch (SensitiveWordException e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_ACCEPTABLE);
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+	}
+
+	@PostMapping("/api/posts/{postId}/comments")
+	public ResponseEntity<?> createPostComment(@RequestHeader("Authorization") String jwt, @RequestBody Comment comment,
+			@PathVariable("postId") Integer postId) throws Exception {
+		try {
+			User user = userService.findUserByJwt(jwt);
+			if (user == null) {
+				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
+			}
+
+			if (user.getIsSuspended()) {
+				return new ResponseEntity<>("User is suspended from commenting", HttpStatus.FORBIDDEN);
+			}
+
+			Comment newComment = commentService.createPostComment(comment, postId, user);
 			return ResponseEntity.ok(commentMapper.mapToDTO(newComment));
 
 		} catch (SensitiveWordException e) {
@@ -120,8 +155,8 @@ public class CommentController {
 			if (user == null) {
 				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
 			}
-			Comment replyComment = commentService.createReplyBookComment(comment, parentCommentId, user.getId());
-			return new ResponseEntity<>(replyComment, HttpStatus.CREATED);
+			Comment replyComment = commentService.createReplyBookComment(comment, parentCommentId, user);
+			return new ResponseEntity<>(commentMapper.mapToDTO(replyComment), HttpStatus.CREATED);
 		} catch (SensitiveWordException e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_ACCEPTABLE);
 		} catch (Exception e) {
@@ -137,8 +172,27 @@ public class CommentController {
 			if (user == null) {
 				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
 			}
-			Comment replyComment = commentService.createReplyChapterComment(comment, parentCommentId, user.getId());
-			return new ResponseEntity<>(replyComment, HttpStatus.CREATED);
+			Comment replyComment = commentService.createReplyChapterComment(comment, parentCommentId, user);
+			return new ResponseEntity<>(commentMapper.mapToDTO(replyComment), HttpStatus.CREATED);
+		} catch (SensitiveWordException e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_ACCEPTABLE);
+		}
+
+		catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@PostMapping("/api/posts/{postId}/comments/{parentCommentId}/reply")
+	public ResponseEntity<?> createReplyPostComment(@RequestBody Comment comment, @PathVariable Integer parentCommentId,
+			@RequestHeader("Authorization") String jwt) {
+		try {
+			User user = userService.findUserByJwt(jwt);
+			if (user == null) {
+				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
+			}
+			Comment replyComment = commentService.createReplyPostComment(comment, parentCommentId, user);
+			return new ResponseEntity<>(commentMapper.mapToDTO(replyComment), HttpStatus.CREATED);
 		} catch (SensitiveWordException e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_ACCEPTABLE);
 		}

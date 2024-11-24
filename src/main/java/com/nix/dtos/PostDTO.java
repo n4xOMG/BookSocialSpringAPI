@@ -13,16 +13,12 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class CommentDTO {
-
+public class PostDTO {
 	private Integer id;
-	private String content;
 	private UserSummaryDTO user;
-	private Integer bookId;
-	private Integer chapterId;
-	private Integer postId;
-	private List<UserSummaryDTO> likedUsers;
-	private LocalDateTime createdAt;
-	private Integer parentCommentId;
-	private List<CommentDTO> replyComment = new ArrayList<>();
+	private String content;
+	private List<String> images = new ArrayList<>();
+	private Integer likes;
+	private Integer comments;
+	private LocalDateTime timestamp;
 }

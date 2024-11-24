@@ -73,39 +73,42 @@ public class User implements Serializable {
 	@ManyToMany(mappedBy = "likedUsers", cascade = CascadeType.ALL)
 	private List<Comment> likedComments = new ArrayList<>();
 
-	@OneToMany(mappedBy = "sender")
+	@OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<FriendRequest> sentFriendRequests;
 
-	@OneToMany(mappedBy = "receiver")
+	@OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<FriendRequest> receivedFriendRequests;
 
-	@OneToMany(mappedBy = "follower")
+	@OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<UserFollow> following;
 
-	@OneToMany(mappedBy = "followed")
+	@OneToMany(mappedBy = "followed", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<UserFollow> followers;
 
-	@OneToMany(mappedBy = "blocker")
+	@OneToMany(mappedBy = "blocker", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<UserBlock> blocking;
 
-	@OneToMany(mappedBy = "blocked")
+	@OneToMany(mappedBy = "blocked", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<UserBlock> blockedBy;
 
-	@OneToMany(mappedBy = "user")
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Purchase> purchases;
 
-	@OneToMany(mappedBy = "author")
+	@OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Book> books;
 
-	@OneToMany(mappedBy = "user")
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Notification> notifications;
 
-	@OneToMany(mappedBy = "reporter")
+	@OneToMany(mappedBy = "reporter", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Report> reports;
 
-	@OneToMany(mappedBy = "sender")
+	@OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Message> sentMessages;
 
-	@OneToMany(mappedBy = "receiver")
+	@OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Message> receivedMessages;
+
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Post> posts = new ArrayList<>();
 }

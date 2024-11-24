@@ -150,6 +150,7 @@ public class BookServiceImpl implements BookService {
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
 
 		existingBook.getFavoured().forEach(user -> user.getLikedComments().remove(existingBook));
+		existingBook.getFavoured().forEach(user -> user.getFollowedBooks().remove(existingBook));
 		existingBook.getFavoured().clear();
 
 		existingBook.getCategory().getBooks().remove(existingBook);

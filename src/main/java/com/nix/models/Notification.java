@@ -2,6 +2,8 @@ package com.nix.models;
 
 import java.io.Serializable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -29,6 +31,7 @@ public class Notification implements Serializable{
 	private boolean isRead;
 	private Long createdDate;
 
+	@JsonIgnore
 	@ManyToOne
 	private User user;
 

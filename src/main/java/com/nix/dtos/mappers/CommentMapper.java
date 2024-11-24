@@ -18,13 +18,21 @@ public class CommentMapper implements Mapper<Comment, CommentDTO> {
 		commentDTO.setContent(comment.getContent());
 
 		commentDTO.setUser(userMapper.mapToDTO(comment.getUser()));
-		commentDTO.setBookId(comment.getBook().getId());
+		if (comment.getBook() != null) {
+			commentDTO.setBookId(comment.getBook().getId());
+		}
 		if (comment.getChapter() != null) {
 			commentDTO.setChapterId(comment.getChapter().getId());
 		}
+		if (comment.getPost() != null) {
+			commentDTO.setPostId(comment.getPost().getId());
+		}
 
 		if (comment.getLikedUsers() != null) {
-			commentDTO.setLikedUsers(comment.getLikedUsers().size());
+			commentDTO.setLikedUsers(userMapper.mapToDTOs(comment.getLikedUsers()));
+		}
+		if (comment.getParentComment() != null) {
+			commentDTO.setParentCommentId(comment.getParentComment().getId());
 		}
 		if (comment.getReplies() != null) {
 			commentDTO.setReplyComment(mapToDTOs(comment.getReplies()));

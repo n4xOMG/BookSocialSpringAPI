@@ -43,6 +43,9 @@ public class Comment implements Serializable {
 
 	@ManyToOne
 	private Chapter chapter;
+	
+	@ManyToOne
+	private Post post;
 
 	@ManyToMany
 	private List<User> likedUsers = new ArrayList<>();
