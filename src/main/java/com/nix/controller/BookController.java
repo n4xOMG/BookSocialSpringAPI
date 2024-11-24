@@ -57,8 +57,8 @@ public class BookController {
 	}
 
 	@GetMapping("/books/{bookId}")
-	public ResponseEntity<BookDTO> getBookById(@PathVariable Integer id) {
-		Book book = bookService.getBookById(id);
+	public ResponseEntity<BookDTO> getBookById(@PathVariable Integer bookId) {
+		Book book = bookService.getBookById(bookId);
 		return ResponseEntity.ok(bookMapper.mapToDTO(book));
 	}
 

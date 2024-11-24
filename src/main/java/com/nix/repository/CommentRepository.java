@@ -23,4 +23,7 @@ public interface CommentRepository extends JpaRepository<Comment, Integer> {
 
 	@Query("SELECT c FROM Comment c WHERE c.parentComment IS NULL AND c.chapter.id = :chapterId")
 	public List<Comment> findParentCommentsByChapterId(@Param("chapterId") Integer chapterId);
+
+	@Query("SELECT c FROM Comment c WHERE c.parentComment IS NULL AND c.post.id = :postId")
+	public List<Comment> findParentCommentsByPostId(@Param("postId") Integer postId);
 }

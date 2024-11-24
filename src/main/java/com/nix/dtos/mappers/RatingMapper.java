@@ -6,18 +6,19 @@ import java.util.stream.Collectors;
 import com.nix.dtos.RatingDTO;
 import com.nix.models.Rating;
 
-public class RatingMapper implements Mapper<Rating, RatingDTO>{
+public class RatingMapper implements Mapper<Rating, RatingDTO> {
 
 	@Override
 	public RatingDTO mapToDTO(Rating rating) {
 		RatingDTO ratingDTO = new RatingDTO();
-		if (rating.getId()!=null) {
-			ratingDTO.setId(rating.getId());
+		if (rating != null) {
+			if (rating.getId() != null) {
+				ratingDTO.setId(rating.getId());
+			}
+			ratingDTO.setBookId(rating.getBook().getId());
+			ratingDTO.setUserId(rating.getUser().getId());
+			ratingDTO.setRating(rating.getRating());
 		}
-		ratingDTO.setBookId(rating.getBook().getId());
-		ratingDTO.setUserId(rating.getUser().getId());
-		ratingDTO.setRating(rating.getRating());
-		
 		return ratingDTO;
 	}
 

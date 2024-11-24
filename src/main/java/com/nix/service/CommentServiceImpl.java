@@ -12,15 +12,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.nix.exception.ResourceNotFoundException;
 import com.nix.exception.SensitiveWordException;
 import com.nix.models.Book;
 import com.nix.models.Chapter;
 import com.nix.models.Comment;
+import com.nix.models.Post;
 import com.nix.models.SensitiveWord;
 import com.nix.models.User;
 import com.nix.repository.BookRepository;
 import com.nix.repository.ChapterRepository;
 import com.nix.repository.CommentRepository;
+import com.nix.repository.PostRepository;
 import com.nix.repository.SensitiveWordRepository;
 import com.nix.repository.UserRepository;
 
@@ -41,6 +44,9 @@ public class CommentServiceImpl implements CommentService {
 
 	@Autowired
 	ChapterRepository chapterRepo;
+
+	@Autowired
+	PostRepository postRepository;
 
 	@Autowired
 	SensitiveWordRepository sensitiveWordRepo;
@@ -69,6 +75,13 @@ public class CommentServiceImpl implements CommentService {
 	public List<Comment> getAllChapterComments(Integer chapterId) {
 		List<Comment> comments = commentRepo.findParentCommentsByChapterId(chapterId);
 		return comments;
+	}
+	
+	@Override
+	public List<Comment> getAllPostComments(Integer postId) {
+		List<Comment> comments = commentRepo.findParentCommentsByPostId(postId);
+		return comments;
+
 	}
 
 	public boolean containsSensitiveWords(String content) {
@@ -128,50 +141,64 @@ public class CommentServiceImpl implements CommentService {
 	}
 
 	@Transactional
-	public Comment createComment(Comment comment, Integer bookId, Integer chapterId, Integer userId,
-			boolean isChapterComment) throws Exception {
+	public Comment createComment(Comment comment, Integer bookId, Integer chapterId, Integer postId, User user,
+	        boolean isBookComment, boolean isChapterComment, boolean isPostComment) throws Exception {
 
-		Optional<Book> book = bookRepo.findById(bookId);
-		if (book == null) {
-			throw new Exception("No book found!");
-		}
+	    if (containsSensitiveWords(comment.getContent())) {
+	        throw new SensitiveWordException("Comment contains sensitive words");
+	    }
+	    
+	    Comment newComment = new Comment();
+	    newComment.setUser(user);
+	    newComment.setContent(comment.getContent());
+	    newComment.setCreatedAt(LocalDateTime.now());
 
-		Optional<User> user = userRepo.findById(userId);
-		if (user == null) {
-			throw new Exception("User not found!");
-		}
-		if (containsSensitiveWords(comment.getContent())) {
-			throw new SensitiveWordException("Comment contains sensitive words");
-		}
-		Comment newComment = new Comment();
-		newComment.setUser(user.get());
-		newComment.setBook(book.get());
-		newComment.setContent(comment.getContent());
-		newComment.setCreatedAt(LocalDateTime.now());
-		if (isChapterComment) {
-			Optional<Chapter> chapter = chapterRepo.findById(chapterId);
-			if (chapter == null) {
-				throw new Exception("No chapter found!");
-			}
-			newComment.setChapter(chapter.get());
-			chapter.get().getComments().add(newComment);
-		}
-		book.get().getComments().add(newComment);
+	    if (isPostComment) {
+	        Post post = postRepository.findById(postId)
+	                .orElseThrow(() -> new ResourceNotFoundException("Post not found with id " + postId));
+	        newComment.setPost(post);
+	        post.getComments().add(newComment);
+	    }
 
-		return commentRepo.save(newComment);
+	    if (isChapterComment) {
+	        Chapter chapter = chapterRepo.findById(chapterId)
+	                .orElseThrow(() -> new ResourceNotFoundException("Chapter not found with id " + chapterId));
+	        newComment.setChapter(chapter);
+
+	        Book chapterBook = chapter.getBook();
+	        if (chapterBook == null) {
+	            throw new Exception("Chapter with id " + chapterId + " is not associated with any book.");
+	        }
+	        newComment.setBook(chapterBook);
+	        chapterBook.getComments().add(newComment);
+	    }
+
+	    if (isBookComment) {
+	        Book book = bookRepo.findById(bookId)
+	                .orElseThrow(() -> new ResourceNotFoundException("Book not found with id " + bookId));
+	        newComment.setBook(book);
+	        book.getComments().add(newComment);
+	    }
+
+	    return commentRepo.save(newComment);
 	}
 
 	@Override
 	@Transactional
-	public Comment createBookComment(Comment comment, Integer bookId, Integer userId) throws Exception {
-		return createComment(comment, bookId, null, userId, false);
+	public Comment createBookComment(Comment comment, Integer bookId, User user) throws Exception {
+		return createComment(comment, bookId, null, null, user, true, false, false);
 	}
 
 	@Override
 	@Transactional
-	public Comment createChapterComment(Comment comment, Integer bookId, Integer chapterId, Integer userId)
+	public Comment createChapterComment(Comment comment, Integer bookId, Integer chapterId, User user)
 			throws Exception {
-		return createComment(comment, bookId, chapterId, userId, true);
+		return createComment(comment, bookId, null, chapterId, user, false, true, false);
+	}
+
+	@Override
+	public Comment createPostComment(Comment comment, Integer postId, User user) throws Exception {
+		return createComment(comment, null, null, postId, user, false, false, true);
 	}
 
 	@Override
@@ -200,53 +227,50 @@ public class CommentServiceImpl implements CommentService {
 	}
 
 	@Override
-	public Comment findCommentById(Integer commentId) throws Exception {
-		Optional<Comment> comment = commentRepo.findById(commentId);
-		if (comment != null) {
-			return comment.get();
-		}
-		throw new Exception("Cannot find comment with id: " + commentId);
+	public Comment findCommentById(Integer commentId) {
+		Comment comment = commentRepo.findById(commentId)
+				.orElseThrow(() -> new ResourceNotFoundException("Comment not found with id " + commentId));
+		return comment;
+
 	}
 
 	@Override
 	@Transactional
 	public String deleteComment(Integer commentId, Integer userId) throws Exception {
-	    Comment comment = findCommentById(commentId);
-	    Optional<User> reqUser = userRepo.findById(userId);
+		Comment comment = findCommentById(commentId);
+		Optional<User> reqUser = userRepo.findById(userId);
 
-	    if (!reqUser.isPresent() || 
-	        (!reqUser.get().getRole().getName().equals("ADMIN") && 
-	         !comment.getUser().getId().equals(userId))) {
-	        return "Cannot delete comment, invalid user!";
-	    }
+		if (!reqUser.isPresent()
+				|| (!reqUser.get().getRole().getName().equals("ADMIN") && !comment.getUser().getId().equals(userId))) {
+			return "Cannot delete comment, invalid user!";
+		}
 
-	    try {
-	        // Ensure the comment is managed
-	        comment = entityManager.merge(comment);
+		try {
+			// Ensure the comment is managed
+			comment = entityManager.merge(comment);
 
-	        // Delete all reply comments one by one
-	        for (Comment reply : comment.getReplies()) {
-	            reply = entityManager.merge(reply); // Ensure it's managed
-	            entityManager.remove(reply); // Remove the reply
-	        }
-	        comment.getReplies().clear(); // Clear the replies list
+			// Delete all reply comments one by one
+			for (Comment reply : comment.getReplies()) {
+				reply = entityManager.merge(reply); // Ensure it's managed
+				entityManager.remove(reply); // Remove the reply
+			}
+			comment.getReplies().clear(); // Clear the replies list
 
-	        // Remove associations with liked users
-	        for (User user : comment.getLikedUsers()) {
-	            user.getLikedComments().remove(comment);
-	        }
-	        comment.getLikedUsers().clear();
+			// Remove associations with liked users
+			for (User user : comment.getLikedUsers()) {
+				user.getLikedComments().remove(comment);
+			}
+			comment.getLikedUsers().clear();
 
-	        // Remove the parent comment
-	        entityManager.remove(comment);
+			// Remove the parent comment
+			entityManager.remove(comment);
 
-	        return "Comment deleted successfully!";
-	    } catch (Exception e) {
-	        System.err.println("Error deleting comment: " + e.getMessage());
-	        throw new Exception("Error deleting comment: " + e.getMessage(), e);
-	    }
+			return "Comment deleted successfully!";
+		} catch (Exception e) {
+			System.err.println("Error deleting comment: " + e.getMessage());
+			throw new Exception("Error deleting comment: " + e.getMessage(), e);
+		}
 	}
-
 
 	@Override
 	public Comment editComment(Integer userId, Integer commentId, Comment comment) throws Exception {
@@ -265,17 +289,12 @@ public class CommentServiceImpl implements CommentService {
 	}
 
 	@Transactional
-	public Comment createReplyComment(Comment comment, Integer parentCommentId, Integer userId,
-			boolean isChapterComment) throws Exception {
+	public Comment createReplyComment(Comment comment, Integer parentCommentId, User user, boolean isBookComment,
+			boolean isChapterComment, boolean isPostComment) throws Exception {
 		Comment parentComment = findCommentById(parentCommentId);
 
 		if (parentComment == null) {
-			throw new Exception("Parent comment not found!");
-		}
-
-		Optional<User> user = userRepo.findById(userId);
-		if (user.isEmpty()) {
-			throw new Exception("User not found!");
+			throw new ResourceNotFoundException("Parent comment not found!");
 		}
 
 		if (containsSensitiveWords(comment.getContent())) {
@@ -283,14 +302,21 @@ public class CommentServiceImpl implements CommentService {
 		}
 
 		Comment newComment = new Comment();
-		newComment.setUser(user.get());
+		newComment.setUser(user);
 		newComment.setContent(comment.getContent());
 		newComment.setCreatedAt(LocalDateTime.now());
 		newComment.setParentComment(parentComment);
-		newComment.setBook(parentComment.getBook());
+		if (isBookComment) {
+			newComment.setBook(parentComment.getBook());
+		}
 
 		if (isChapterComment) {
+			newComment.setBook(parentComment.getBook());
 			newComment.setChapter(parentComment.getChapter());
+		}
+
+		if (isPostComment) {
+			newComment.setPost(parentComment.getPost());
 		}
 
 		parentComment.getReplies().add(newComment);
@@ -300,14 +326,20 @@ public class CommentServiceImpl implements CommentService {
 
 	@Override
 	@Transactional
-	public Comment createReplyBookComment(Comment comment, Integer parentCommentId, Integer userId) throws Exception {
-		return createReplyComment(comment, parentCommentId, userId, false);
+	public Comment createReplyBookComment(Comment comment, Integer parentCommentId, User user) throws Exception {
+		return createReplyComment(comment, parentCommentId, user, true, false, false);
 	}
 
 	@Override
 	@Transactional
-	public Comment createReplyChapterComment(Comment comment, Integer parentCommentId, Integer userId)
-			throws Exception {
-		return createReplyComment(comment, parentCommentId, userId, true);
+	public Comment createReplyChapterComment(Comment comment, Integer parentCommentId, User user) throws Exception {
+		return createReplyComment(comment, parentCommentId, user, false, true, false);
 	}
+
+	@Override
+	@Transactional
+	public Comment createReplyPostComment(Comment comment, Integer parentCommentId, User user) throws Exception {
+		return createReplyComment(comment, parentCommentId, user, false, false, true);
+	}
+
 }
