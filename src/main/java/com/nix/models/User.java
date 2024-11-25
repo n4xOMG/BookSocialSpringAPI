@@ -63,9 +63,11 @@ public class User implements Serializable {
 	@ManyToMany
 	private List<Book> followedBooks = new ArrayList<>();
 
+	@JsonIgnore
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Rating> ratings = new ArrayList<>();
 
+	@JsonIgnore
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ReadingProgress> readingProgresses = new ArrayList<>();
 
@@ -73,42 +75,55 @@ public class User implements Serializable {
 	@ManyToMany(mappedBy = "likedUsers", cascade = CascadeType.ALL)
 	private List<Comment> likedComments = new ArrayList<>();
 
+	@JsonIgnore
 	@OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<FriendRequest> sentFriendRequests;
 
+	@JsonIgnore
 	@OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<FriendRequest> receivedFriendRequests;
 
+	@JsonIgnore
 	@OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<UserFollow> following;
 
+	@JsonIgnore
 	@OneToMany(mappedBy = "followed", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<UserFollow> followers;
 
+	@JsonIgnore
 	@OneToMany(mappedBy = "blocker", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<UserBlock> blocking;
 
+	@JsonIgnore
 	@OneToMany(mappedBy = "blocked", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<UserBlock> blockedBy;
 
+	@JsonIgnore
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Purchase> purchases;
 
+	@JsonIgnore
 	@OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Book> books;
 
+	@JsonIgnore
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Notification> notifications;
 
+	@JsonIgnore
 	@OneToMany(mappedBy = "reporter", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Report> reports;
 
+	@JsonIgnore
 	@OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Message> sentMessages;
 
+	@JsonIgnore
 	@OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Message> receivedMessages;
 
+	@JsonIgnore
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Post> posts = new ArrayList<>();
 }
