@@ -1,5 +1,6 @@
 package com.nix.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,7 @@ public class NotificationServiceImpl implements NotificationService {
 		notification.setUser(user);
 		notification.setMessage(message);
 		notification.setRead(false);
-		notification.setCreatedDate(System.currentTimeMillis());
+		notification.setCreatedDate(LocalDateTime.now());
 		notificationRepository.save(notification);
 		
 		messagingTemplate.convertAndSendToUser(user.getUsername(), "/topic/notifications", notification);

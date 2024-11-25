@@ -2,6 +2,7 @@ package com.nix.models;
 
 import java.io.Serializable;
 import java.sql.Date;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -27,7 +28,8 @@ public class Purchase implements Serializable{
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private int amount;
-	private Date purchaseDate;
+	private LocalDateTime purchaseDate;
+	private String paymentIntentId;
 
 	@ManyToOne
 	private User user;

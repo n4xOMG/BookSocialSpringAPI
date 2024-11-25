@@ -7,6 +7,8 @@ import com.nix.models.User;
 
 public interface PostService {
 	List<Post> getAllPosts();
+	
+	List<Post> getPostsByUser(User user);
 
 	Post createPost(User user, Post post);
 

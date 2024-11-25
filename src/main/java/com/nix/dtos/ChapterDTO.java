@@ -22,4 +22,5 @@ public class ChapterDTO {
     private LocalDateTime uploadDate;
     private Integer bookId; 
     private List<CommentDTO> comments;
+    private boolean isUnlockedByUser=false; 
 }

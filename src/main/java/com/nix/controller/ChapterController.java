@@ -1,7 +1,6 @@
 package com.nix.controller;
 
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nix.dtos.ChapterDTO;
-import com.nix.dtos.CreditPurchaseDTO;
 import com.nix.dtos.mappers.ChapterMapper;
 import com.nix.models.Book;
 import com.nix.models.Chapter;
@@ -27,8 +25,6 @@ import com.nix.service.ChapterService;
 import com.nix.service.PaymentService;
 import com.nix.service.ReadingProgressService;
 import com.nix.service.UserService;
-import com.stripe.exception.StripeException;
-import com.stripe.model.PaymentIntent;
 
 @RestController
 public class ChapterController {
@@ -58,16 +54,37 @@ public class ChapterController {
 	}
 
 	@GetMapping("/books/{bookId}/chapters")
-	public ResponseEntity<List<ChapterDTO>> getAllChaptersByBookId(@PathVariable("bookId") Integer bookId) {
-		List<Chapter> chapters = chapterService.findChaptersByBookId(bookId);
+	public ResponseEntity<List<ChapterDTO>> getAllChaptersByBookId(@PathVariable("bookId") Integer bookId,
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
+		User user = null;
+		if (jwt != null) {
+			user = userService.findUserByJwt(jwt);
+		}
+		List<Chapter> chapters = chapterService.findChaptersByBookIdWithUnlockStatus(bookId,
+				user != null ? user.getId() : null);
 
 		return ResponseEntity.ok(chapterMapper.mapToDTOs(chapters));
 	}
 
 	@GetMapping("/books/{bookId}/chapters/{chapterId}")
-	public ResponseEntity<ChapterDTO> getChapterById(@PathVariable("chapterId") Integer chapterId) throws Exception {
-		Chapter chapter = chapterService.findChapterDTOById(chapterId);
-		return ResponseEntity.ok(chapterMapper.mapToDTO(chapter));
+	public ResponseEntity<ChapterDTO> getChapterById(@PathVariable("chapterId") Integer chapterId,
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
+		Chapter chapter = chapterService.findChapterById(chapterId);
+		ChapterDTO chapterDTO = chapterMapper.mapToDTO(chapter);
+
+		if (jwt != null) {
+
+			User user = userService.findUserByJwt(jwt);
+			if (!chapterService.isChapterUnlockedByUser(user.getId(), chapterId)) {
+				return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+			}
+			if (user != null) {
+				boolean isUnlocked = chapterService.isChapterUnlockedByUser(user.getId(), chapterId);
+				System.out.print(isUnlocked);
+				chapterDTO.setUnlockedByUser(isUnlocked);
+			}
+		}
+		return ResponseEntity.ok(chapterDTO);
 	}
 
 	@PostMapping("/api/books/{bookId}/chapters")
@@ -117,36 +134,6 @@ public class ChapterController {
 			return ResponseEntity.ok("Chapter unlocked successfully");
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-		}
-	}
-
-	// Endpoint to initiate credit purchase
-	@PostMapping("/api/purchase-credits")
-	public ResponseEntity<?> purchaseCredits(@RequestBody CreditPurchaseDTO purchaseDTO,
-			@RequestHeader("Authorization") String jwt) {
-		try {
-			// Create Stripe Payment Intent
-			PaymentIntent paymentIntent = paymentService.createPaymentIntent(purchaseDTO.getAmount() * 100L, "usd"); // assuming
-																														// USD
-
-			// Return client secret to frontend
-			return ResponseEntity.ok(paymentIntent.getClientSecret());
-		} catch (StripeException e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Stripe error: " + e.getMessage());
-		}
-	}
-
-	// Endpoint to handle successful payment
-	@PostMapping("/payment-success")
-	public ResponseEntity<?> handlePaymentSuccess(@RequestBody Map<String, String> payload) {
-		try {
-			Integer userId = Integer.parseInt(payload.get("userId"));
-			Integer creditsPurchased = Integer.parseInt(payload.get("creditsPurchased"));
-
-			paymentService.handleSuccessfulPayment(userId, creditsPurchased);
-			return ResponseEntity.ok("Credits added successfully");
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Payment handling error: " + e.getMessage());
 		}
 	}
 

@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.nix.models.CreditPackage;
 
-public interface CreditPackageRepository extends JpaRepository<CreditPackage, Integer> {
+public interface CreditPackageRepository extends JpaRepository<CreditPackage, Long> {
 	List<CreditPackage> findByIsActiveTrue();
 
 	List<CreditPackage> findByIsActiveFalse();

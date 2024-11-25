@@ -26,7 +26,7 @@ public class CreditPackageServiceImpl implements CreditPackageService {
 	}
 
 	@Override
-	public CreditPackage getCreditPackageById(Integer id) {
+	public CreditPackage getCreditPackageById(Long id) {
 		return creditPackageRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("CreditPackage not found with ID: " + id));
 	}
@@ -42,7 +42,7 @@ public class CreditPackageServiceImpl implements CreditPackageService {
 	}
 
 	@Override
-	public CreditPackage updateCreditPackage(Integer id, CreditPackage updatedPackage) {
+	public CreditPackage updateCreditPackage(Long id, CreditPackage updatedPackage) {
 		CreditPackage existingPackage = getCreditPackageById(id);
 
 		// Update fields
@@ -55,7 +55,7 @@ public class CreditPackageServiceImpl implements CreditPackageService {
 	}
 
 	@Override
-	public void deleteCreditPackage(Integer id) {
+	public void deleteCreditPackage(Long id) {
 		CreditPackage existingPackage = creditPackageRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("CreditPackage not found with ID: " + id));
 		creditPackageRepository.delete(existingPackage);
@@ -78,14 +78,14 @@ public class CreditPackageServiceImpl implements CreditPackageService {
 	}
 
 	@Override
-	public CreditPackage activateCreditPackage(Integer id) {
+	public CreditPackage activateCreditPackage(Long id) {
 		CreditPackage creditPackage = getCreditPackageById(id);
 		creditPackage.setActive(true);
 		return creditPackageRepository.save(creditPackage);
 	}
 
 	@Override
-	public CreditPackage deactivateCreditPackage(Integer id) {
+	public CreditPackage deactivateCreditPackage(Long id) {
 		CreditPackage creditPackage = getCreditPackageById(id);
 		creditPackage.setActive(false);
 		return creditPackageRepository.save(creditPackage);

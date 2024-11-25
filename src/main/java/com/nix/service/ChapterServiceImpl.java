@@ -41,23 +41,10 @@ public class ChapterServiceImpl implements ChapterService {
 	private UserRepository userRepository;
 
 	@Override
-	public Chapter findChapterById(Integer chapterId) throws Exception {
-		Optional<Chapter> chapter = chapterRepo.findById(chapterId);
-
-		if (chapter != null) {
-			return chapter.get();
-		}
-		throw new Exception("No chapter found with id: " + chapterId);
-	}
-
-	@Override
-	public Chapter findChapterDTOById(Integer chapterId) throws Exception {
-		Optional<Chapter> chapter = chapterRepo.findById(chapterId);
-
-		if (chapter != null) {
-			return chapter.get();
-		}
-		throw new Exception("No chapter found with id: " + chapterId);
+	public Chapter findChapterById(Integer chapterId) {
+		Chapter chapter = chapterRepo.findById(chapterId)
+				.orElseThrow(() -> new ResourceNotFoundException("Cannot found chapter with id: " + chapterId));
+		return chapter;
 	}
 
 	@Override
@@ -147,7 +134,7 @@ public class ChapterServiceImpl implements ChapterService {
 		}
 
 		int unlockCost = chapter.getPrice();
-		User user = userRepository.findById(userId).orElseThrow(() -> new Exception("User not found"));
+		User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
 		if (user.getCredits() >= unlockCost) {
 			// Deduct credits
@@ -166,6 +153,34 @@ public class ChapterServiceImpl implements ChapterService {
 			throw new Exception("Insufficient credits");
 		}
 
+	}
+
+	@Override
+	public boolean isChapterUnlockedByUser(Integer userId, Integer chapterId) {
+		Optional<ChapterUnlockRecord> unlockRecord = unlockRecordRepository.findByUserIdAndChapterId(userId, chapterId);
+		return unlockRecord.isPresent();
+	}
+
+	@Override
+	public List<Chapter> findChaptersByBookIdWithUnlockStatus(Integer bookId, Integer userId) {
+		List<Chapter> chapters = chapterRepo.findByBookId(bookId);
+
+		chapters.forEach(chapter -> {
+			if (chapter.getPrice() <= 0) {
+				// Free chapters are always unlocked
+				chapter.setUnlockedByUser(true);
+			} else if (userId != null) {
+				List<Integer> unlockedChapterIds = unlockRecordRepository.findChapterIdsByUserId(userId);
+				if (unlockedChapterIds.contains(chapter.getId())) {
+					chapter.setUnlockedByUser(true);
+				}
+
+			} else {
+				chapter.setUnlockedByUser(false);
+			}
+		});
+
+		return chapters;
 	}
 
 }

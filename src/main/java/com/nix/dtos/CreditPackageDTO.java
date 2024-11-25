@@ -9,8 +9,10 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class CreditPurchaseDTO {
-	private Integer amount; // Number of credits to purchase
-    private String paymentMethodId; // Stripe Payment Method ID
-
+public class CreditPackageDTO {
+	private Long id;
+	private String name;
+	private int creditAmount;
+	private double price;
+	private boolean isActive;
 }

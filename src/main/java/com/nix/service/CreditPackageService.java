@@ -9,13 +9,13 @@ public interface CreditPackageService {
 
 	public List<CreditPackage> getActiveCreditPackages();
 
-	public CreditPackage getCreditPackageById(Integer id);
+	public CreditPackage getCreditPackageById(Long id);
 
 	public CreditPackage createCreditPackage(CreditPackage creditPackage);
 
-	public CreditPackage updateCreditPackage(Integer id, CreditPackage updatedPackage);
+	public CreditPackage updateCreditPackage(Long id, CreditPackage updatedPackage);
 
-	public void deleteCreditPackage(Integer id);
+	public void deleteCreditPackage(Long id);
 
 	public List<CreditPackage> searchCreditPackagesByName(String name);
 
@@ -23,7 +23,7 @@ public interface CreditPackageService {
 
 	public List<CreditPackage> getCreditPackagesSortedByCreditAmountDesc();
 
-	public CreditPackage activateCreditPackage(Integer id);
+	public CreditPackage activateCreditPackage(Long id);
 
-	public CreditPackage deactivateCreditPackage(Integer id);
+	public CreditPackage deactivateCreditPackage(Long id);
 }

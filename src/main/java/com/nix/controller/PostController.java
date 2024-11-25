@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.nix.dtos.PostDTO;
 import com.nix.dtos.mappers.PostMapper;
+import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Post;
 import com.nix.models.User;
 import com.nix.service.PostService;
@@ -27,12 +28,22 @@ public class PostController {
 
 	@Autowired
 	private UserService userService;
-	
+
 	PostMapper postMapper = new PostMapper();
-	
+
 	@GetMapping("/posts")
 	public ResponseEntity<List<PostDTO>> getAllPosts() {
 		List<Post> posts = postService.getAllPosts();
+		return ResponseEntity.ok(postMapper.mapToDTOs(posts));
+	}
+
+	@GetMapping("/posts/{userId}")
+	public ResponseEntity<List<PostDTO>> getPostsByUser(@PathVariable("userId") Integer userId) {
+		User user = userService.findUserById(userId);
+		if (user == null) {
+			throw new ResourceNotFoundException("Cannot find user with id: " + userId);
+		}
+		List<Post> posts = postService.getPostsByUser(user);
 		return ResponseEntity.ok(postMapper.mapToDTOs(posts));
 	}
 
@@ -75,5 +86,5 @@ public class PostController {
 		Post likedPost = postService.likePost(id);
 		return ResponseEntity.ok(postMapper.mapToDTO(likedPost));
 	}
-	
+
 }
