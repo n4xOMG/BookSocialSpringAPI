@@ -1,15 +1,19 @@
 package com.nix.models;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,30 +24,23 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Message implements Serializable {
-	/**
-	 * 
-	 */
+public class Chat implements Serializable {
+
 	private static final long serialVersionUID = 1L;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	private String content;
+	// One chat has two participants
+	@ManyToOne
+	private User userOne;
 
-	private LocalDateTime timestamp;
-	private String imageUrl;
-	private boolean isRead;
-	
-	@JsonIgnore
 	@ManyToOne
-	private User sender;
-	
-	@JsonIgnore
-	@ManyToOne
-	private User receiver;
+	private User userTwo;
 
 	@JsonIgnore
-	@ManyToOne
-	private Chat chat;
+	@OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+	private List<Message> messages = new ArrayList<>();
+
 }

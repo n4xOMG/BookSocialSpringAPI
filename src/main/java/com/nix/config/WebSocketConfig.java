@@ -2,6 +2,8 @@ package com.nix.config;
 
 import java.security.Principal;
 
+import javax.crypto.SecretKey;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,79 +20,95 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
-import com.nix.models.User;
 import com.nix.service.UserService;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+	private static SecretKey key = Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
+	@Autowired
+	private JwtValidator jwtValidator;
 
-    @Autowired
-    JwtValidator jwtValidator;
+	@Autowired
+	private UserService userService;
 
-    @Autowired
-    UserService userService;
+	@Override
+	public void configureMessageBroker(MessageBrokerRegistry config) {
+		config.enableSimpleBroker("/topic", "/queue"); // In-memory broker
+		config.setApplicationDestinationPrefixes("/app"); // Prefix for @MessageMapping
+		config.setUserDestinationPrefix("/user"); // Prefix for user-specific queues
+	}
 
-    @Override
-    public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic", "/queue"); // In-memory broker
-        config.setApplicationDestinationPrefixes("/app"); // Prefix for @MessageMapping
-        config.setUserDestinationPrefix("/user"); // Prefix for user-specific queues
-    }
+	@Override
+	public void registerStompEndpoints(StompEndpointRegistry registry) {
+		registry.addEndpoint("/ws-chat").setAllowedOrigins("http://localhost:3000", "https://tenshiblog.org/") // Adjust
+																												// as
+																												// needed
+				.withSockJS();
+	}
 
-    @Override
-    public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws-chat")
-                .setAllowedOrigins("http://localhost:3000", "https://tenshiblog.org/")
-                .withSockJS();
-    }
+	@Override
+	public void configureClientInboundChannel(ChannelRegistration registration) {
+		registration.interceptors(authChannelInterceptorAdapter());
+	}
 
-    @Override
-    public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(authChannelInterceptorAdapter());
-    }
+	@Bean
+	public AuthChannelInterceptorAdapter authChannelInterceptorAdapter() {
+		return new AuthChannelInterceptorAdapter();
+	}
 
-    @Bean
-    public AuthChannelInterceptorAdapter authChannelInterceptorAdapter() {
-        return new AuthChannelInterceptorAdapter();
-    }
+	// --- Auth Channel Interceptor ---
 
-    // --- Auth Channel Interceptor ---
+	public class AuthChannelInterceptorAdapter implements ChannelInterceptor {
 
-    public class AuthChannelInterceptorAdapter implements ChannelInterceptor {
+		@Override
+		public Message<?> preSend(Message<?> message, MessageChannel channel) {
+			StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
-        @Override
-        public Message<?> preSend(Message<?> message, MessageChannel channel) {
-            StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+			if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
+				String token = accessor.getFirstNativeHeader("Authorization");
 
-            if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
-                String token = accessor.getFirstNativeHeader("Authorization");
-                if (token != null && token.startsWith("Bearer ")) {
-                    token = token.substring(7);
-                }
-                User getUser = userService.findUserByJwt(token);
-                if (token != null && getUser!=null) {
-                    Principal user = new StompPrincipal(getUser.getId().toString());
-                    accessor.setUser(user);
-                } else {
-                    throw new MessagingException("Authentication failed for WebSocket connection.");
-                }
-            }
+				if (token != null && token.startsWith("Bearer ")) {
+					token = token.substring(7).trim();
+				} else {
+					throw new MessagingException("Missing or invalid Authorization header.");
+				}
 
-            return message;
-        }
+				try {
+					Claims claims = Jwts.parser().setSigningKey(key).build().parseClaimsJws(token).getBody();
 
-        public class StompPrincipal implements Principal {
-            private String name;
+					String email = claims.get("email", String.class);
+					System.out.println("Authenticated user: " + email);
 
-            public StompPrincipal(String name) {
-                this.name = name;
-            }
+					// Set user details in WebSocket session
+					Principal user = new StompPrincipal(email);
+					accessor.setUser(user);
 
-            @Override
-            public String getName() {
-                return name;
-            }
-        }
-    }
+				} catch (JwtException e) {
+					System.err.println("JWT validation error: " + e.getMessage());
+					throw new MessagingException("Invalid JWT token.");
+				}
+			}
+
+			return message;
+		}
+
+		public class StompPrincipal implements Principal {
+			private String name;
+
+			public StompPrincipal(String name) {
+				this.name = name;
+			}
+
+			@Override
+			public String getName() {
+				return name;
+			}
+		}
+	}
 }

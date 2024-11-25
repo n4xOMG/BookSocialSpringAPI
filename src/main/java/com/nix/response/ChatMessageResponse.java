@@ -16,6 +16,7 @@ public class ChatMessageResponse {
     private Integer senderId;
     private Integer receiverId;
     private String content;
+    private String imageUrl;
     private LocalDateTime timestamp;
     private boolean isRead;
 }

@@ -13,8 +13,10 @@ import lombok.Setter;
 @NoArgsConstructor
 public class MessageDTO {
 	private Long id;
+	private Long chatId;
 	private UserSummaryDTO sender;
 	private UserSummaryDTO receiver;
+	private String imageUrl;
 	private String content;
 	private LocalDateTime timestamp;
 	private boolean isRead;
