@@ -1,10 +1,16 @@
 package com.nix.service;
 
-import com.stripe.exception.StripeException;
-import com.stripe.model.PaymentIntent;
+import java.util.List;
+
+import com.nix.models.CreditPackage;
 
 public interface PaymentService {
-	public PaymentIntent createPaymentIntent(Long amount, String currency) throws StripeException;
-	
-	public void handleSuccessfulPayment(Integer userId, Integer creditsPurchased) throws Exception;
+	String createPaymentIntent(long amount, String currency, Integer userId, Long creditPackageId) throws Exception;
+
+	List<CreditPackage> getAllActiveCreditPackages();
+
+	CreditPackage getCreditPackageById(Long id);
+
+	void confirmPayment(Integer userId, Long creditPackageId, String paymentIntentId) throws Exception;
+
 }

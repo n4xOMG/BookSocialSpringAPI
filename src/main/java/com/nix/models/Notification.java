@@ -1,6 +1,7 @@
 package com.nix.models;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -29,7 +30,7 @@ public class Notification implements Serializable{
 	private Long id;
 	private String message;
 	private boolean isRead;
-	private Long createdDate;
+	private LocalDateTime createdDate;
 
 	@JsonIgnore
 	@ManyToOne

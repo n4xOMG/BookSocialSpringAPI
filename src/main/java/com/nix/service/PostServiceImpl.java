@@ -22,6 +22,11 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
+	public List<Post> getPostsByUser(User user) {
+		return postRepository.findByUser(user);
+	}
+
+	@Override
 	public Post createPost(User user, Post post) {
 		post.setUser(user);
 		post.setTimestamp(java.time.LocalDateTime.now());

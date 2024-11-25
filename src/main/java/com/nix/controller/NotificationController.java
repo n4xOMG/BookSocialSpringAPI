@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nix.dtos.NotificationDTO;
+import com.nix.dtos.mappers.NotificationMapper;
 import com.nix.models.Notification;
 import com.nix.models.User;
 import com.nix.service.NotificationService;
@@ -20,60 +22,62 @@ import com.nix.service.UserService;
 @RestController
 public class NotificationController {
 	@Autowired
-    private NotificationService notificationService;
-    
-    @Autowired
-    private UserService userService;
-    
-    @GetMapping("/notifications")
-    public ResponseEntity<List<Notification>> getUserNotifications(@RequestHeader("Authorization") String jwt) {
-        User user = userService.findUserByJwt(jwt);
-        if (user == null) {
-            return ResponseEntity.status(401).build();
-        }
-        List<Notification> notifications = notificationService.getUserNotifications(user);
-        return ResponseEntity.ok(notifications);
-    }
+	private NotificationService notificationService;
 
-    /**
-     * Get unread notifications for the authenticated user.
-     */
-    @GetMapping("/notifications/unread")
-    public ResponseEntity<List<Notification>> getUnreadNotifications(@RequestHeader("Authorization") String jwt) {
-        User user = userService.findUserByJwt(jwt);
-        if (user == null) {
-            return ResponseEntity.status(401).build();
-        }
-        List<Notification> unreadNotifications = notificationService.getUnreadNotifications(user);
-        return ResponseEntity.ok(unreadNotifications);
-    }
+	@Autowired
+	private UserService userService;
 
-    /**
-     * Mark a notification as read.
-     */
-    @PutMapping("/notifications/{id}/read")
-    public ResponseEntity<Void> markAsRead(@PathVariable Long id, @RequestHeader("Authorization") String jwt) {
-        User user = userService.findUserByJwt(jwt);
-        if (user == null) {
-            return ResponseEntity.status(401).build();
-        }
-                
-        notificationService.markAsRead(id);
-        return ResponseEntity.ok().build();
-    }
+	NotificationMapper notificationMapper = new NotificationMapper();
 
-    /**
-     * Endpoint for admins to create global announcements.
-     */
-    @PostMapping("/admin/notifications/announce")
-    public ResponseEntity<Void> createGlobalAnnouncement(@RequestHeader("Authorization") String jwt,
-                                                          @RequestBody String message) {
-        User admin = userService.findUserByJwt(jwt);
-        if (admin == null || !admin.getRole().getName().equals("ADMIN")) {
-            return ResponseEntity.status(403).build();
-        }
-        
-        notificationService.createGlobalAnnouncement(message);
-        return ResponseEntity.ok().build();
-    }
+	@GetMapping("/api/notifications")
+	public ResponseEntity<List<NotificationDTO>> getUserNotifications(@RequestHeader("Authorization") String jwt) {
+		User user = userService.findUserByJwt(jwt);
+		if (user == null) {
+			return ResponseEntity.status(401).build();
+		}
+		List<Notification> notifications = notificationService.getUserNotifications(user);
+		return ResponseEntity.ok(notificationMapper.mapToDTOs(notifications));
+	}
+
+	/**
+	 * Get unread notifications for the authenticated user.
+	 */
+	@GetMapping("/api/notifications/unread")
+	public ResponseEntity<List<NotificationDTO>> getUnreadNotifications(@RequestHeader("Authorization") String jwt) {
+		User user = userService.findUserByJwt(jwt);
+		if (user == null) {
+			return ResponseEntity.status(401).build();
+		}
+		List<Notification> unreadNotifications = notificationService.getUnreadNotifications(user);
+		return ResponseEntity.ok(notificationMapper.mapToDTOs(unreadNotifications));
+	}
+
+	/**
+	 * Mark a notification as read.
+	 */
+	@PutMapping("/api/notifications/{id}/read")
+	public ResponseEntity<Void> markAsRead(@PathVariable Long id, @RequestHeader("Authorization") String jwt) {
+		User user = userService.findUserByJwt(jwt);
+		if (user == null) {
+			return ResponseEntity.status(401).build();
+		}
+
+		notificationService.markAsRead(id);
+		return ResponseEntity.ok().build();
+	}
+
+	/**
+	 * Endpoint for admins to create global announcements.
+	 */
+	@PostMapping("/admin/notifications/announce")
+	public ResponseEntity<Void> createGlobalAnnouncement(@RequestHeader("Authorization") String jwt,
+			@RequestBody String message) {
+		User admin = userService.findUserByJwt(jwt);
+		if (admin == null || !admin.getRole().getName().equals("ADMIN")) {
+			return ResponseEntity.status(403).build();
+		}
+
+		notificationService.createGlobalAnnouncement(message);
+		return ResponseEntity.ok().build();
+	}
 }

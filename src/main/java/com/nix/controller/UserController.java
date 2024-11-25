@@ -26,7 +26,7 @@ public class UserController {
 
 	UserMapper userMapper = new UserMapper();
 
-	@GetMapping("/api/user/profile/{userId}")
+	@GetMapping("/user/profile/{userId}")
 	public ResponseEntity<?> getUserProfile(@PathVariable("userId") Integer userId) throws Exception {
 		try {
 			User user = userService.findUserById(userId);
