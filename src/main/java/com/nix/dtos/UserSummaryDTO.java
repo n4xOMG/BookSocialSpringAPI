@@ -1,5 +1,6 @@
 package com.nix.dtos;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 
 import lombok.AllArgsConstructor;
@@ -11,7 +12,11 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserSummaryDTO {
+public class UserSummaryDTO implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private Integer id;
 	private String username;
 	private String email;

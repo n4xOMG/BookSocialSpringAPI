@@ -16,10 +16,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.nix.models.Role;
 import com.nix.service.RoleService;
 
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

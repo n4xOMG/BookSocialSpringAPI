@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nix.dtos.ChapterDTO;
+import com.nix.dtos.ChapterSummaryDTO;
 import com.nix.dtos.mappers.ChapterMapper;
+import com.nix.dtos.mappers.ChapterSummaryMapper;
 import com.nix.models.Book;
 import com.nix.models.Chapter;
 import com.nix.models.User;
@@ -45,6 +47,8 @@ public class ChapterController {
 	PaymentService paymentService;
 
 	ChapterMapper chapterMapper = new ChapterMapper();
+	
+	ChapterSummaryMapper chapterSummaryMapper = new ChapterSummaryMapper();
 
 	@GetMapping("/chapters")
 	public ResponseEntity<List<ChapterDTO>> getAllChapters() {
@@ -54,7 +58,7 @@ public class ChapterController {
 	}
 
 	@GetMapping("/books/{bookId}/chapters")
-	public ResponseEntity<List<ChapterDTO>> getAllChaptersByBookId(@PathVariable("bookId") Integer bookId,
+	public ResponseEntity<List<ChapterSummaryDTO>> getAllChaptersByBookId(@PathVariable("bookId") Integer bookId,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		User user = null;
 		if (jwt != null) {
@@ -63,11 +67,11 @@ public class ChapterController {
 		List<Chapter> chapters = chapterService.findChaptersByBookIdWithUnlockStatus(bookId,
 				user != null ? user.getId() : null);
 
-		return ResponseEntity.ok(chapterMapper.mapToDTOs(chapters));
+		return ResponseEntity.ok(chapterSummaryMapper.mapToDTOs(chapters));
 	}
 
 	@GetMapping("/books/{bookId}/chapters/{chapterId}")
-	public ResponseEntity<ChapterDTO> getChapterById(@PathVariable("chapterId") Integer chapterId,
+	public ResponseEntity<?> getChapterById(@PathVariable("chapterId") Integer chapterId,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		Chapter chapter = chapterService.findChapterById(chapterId);
 		ChapterDTO chapterDTO = chapterMapper.mapToDTO(chapter);
@@ -75,8 +79,8 @@ public class ChapterController {
 		if (jwt != null) {
 
 			User user = userService.findUserByJwt(jwt);
-			if (!chapterService.isChapterUnlockedByUser(user.getId(), chapterId)) {
-				return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+			if (!chapterService.isChapterUnlockedByUser(user.getId(), chapterId) && chapter.getPrice()>0) {
+				return ResponseEntity.ok(chapterSummaryMapper.mapToDTO(chapter));
 			}
 			if (user != null) {
 				boolean isUnlocked = chapterService.isChapterUnlockedByUser(user.getId(), chapterId);

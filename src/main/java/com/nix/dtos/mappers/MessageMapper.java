@@ -13,16 +13,18 @@ public class MessageMapper implements Mapper<Message, MessageDTO> {
 	@Override
 	public MessageDTO mapToDTO(Message m) {
 		MessageDTO messageDTO = new MessageDTO();
-		if (m.getId() != null) {
-			messageDTO.setId(m.getId());
+		if (m!=null) {
+			if (m.getId() != null) {
+				messageDTO.setId(m.getId());
+			}
+			messageDTO.setChatId(m.getChat().getId());
+			messageDTO.setSender(userSummaryMapper.mapToDTO(m.getSender()));
+			messageDTO.setReceiver(userSummaryMapper.mapToDTO(m.getSender()));
+			messageDTO.setContent(m.getContent());
+			messageDTO.setImageUrl(m.getImageUrl());
+			messageDTO.setTimestamp(m.getTimestamp());
+			messageDTO.setRead(m.isRead());
 		}
-		messageDTO.setChatId(m.getChat().getId());
-		messageDTO.setSender(userSummaryMapper.mapToDTO(m.getSender()));
-		messageDTO.setReceiver(userSummaryMapper.mapToDTO(m.getSender()));
-		messageDTO.setContent(m.getContent());
-		messageDTO.setImageUrl(m.getImageUrl());
-		messageDTO.setTimestamp(m.getTimestamp());
-		messageDTO.setRead(m.isRead());
 		return messageDTO;
 	}
 
