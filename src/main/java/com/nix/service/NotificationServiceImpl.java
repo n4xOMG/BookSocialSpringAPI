@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import com.nix.models.Notification;
@@ -21,8 +20,6 @@ public class NotificationServiceImpl implements NotificationService {
 	@Autowired
 	UserRepository userRepository;
 
-	@Autowired
-	private SimpMessagingTemplate messagingTemplate;
 
 	@Override
 	public void createNotification(User user, String message) {
@@ -33,7 +30,6 @@ public class NotificationServiceImpl implements NotificationService {
 		notification.setCreatedDate(LocalDateTime.now());
 		notificationRepository.save(notification);
 		
-		messagingTemplate.convertAndSendToUser(user.getUsername(), "/topic/notifications", notification);
 	}
 
 	@Override

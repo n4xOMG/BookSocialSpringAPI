@@ -300,4 +300,9 @@ public class UserServiceImpl implements UserService {
         user.setRole(newRole);
         return userRepo.save(user);
     }
+
+	@Override
+	public List<User> findUserByUsername(String username) {
+		return userRepo.findByUsername(username);
+	}
 }

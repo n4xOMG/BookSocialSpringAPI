@@ -1,6 +1,7 @@
 package com.nix.service;
 
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 
@@ -21,6 +22,8 @@ public interface UserService {
 	public User findUserByEmail(String email);
 
 	public User findUserByJwt(String jwt);
+	
+	public List<User> findUserByUsername(String username);
 
 	public User updateCurrentSessionUser(String jwt, User user, String url)
 			throws UnsupportedEncodingException, MessagingException;

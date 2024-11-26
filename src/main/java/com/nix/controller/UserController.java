@@ -1,5 +1,7 @@
 package com.nix.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -70,6 +72,16 @@ public class UserController {
 		}
 	}
 
-	
+	@GetMapping("/api/user/search")
+	public ResponseEntity<?> searchUser(@RequestParam("query") String query) throws Exception {
+
+		try {
+			List<UserDTO> foundUsers = userMapper.mapToDTOs(userService.findUserByUsername(query));
+
+			return new ResponseEntity<>(foundUsers, HttpStatus.OK);
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 
 }

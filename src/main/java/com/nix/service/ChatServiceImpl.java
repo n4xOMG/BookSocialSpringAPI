@@ -64,12 +64,16 @@ public class ChatServiceImpl implements ChatService {
 		newMessage.setSender(sender);
 		newMessage.setReceiver(receiver);
 		newMessage.setContent(message.getContent());
+		if (message.getImageUrl()!=null) {
+			newMessage.setImageUrl(message.getImageUrl());
+		}
+		;
 		newMessage.setRead(false);
 		newMessage.setTimestamp(LocalDateTime.now());
 		chat.getMessages().add(newMessage);
 		chatRepository.save(chat);
 
-		return messageRepository.save(newMessage);
+		return newMessage;
 	}
 
 }
