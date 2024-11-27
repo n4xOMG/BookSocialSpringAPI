@@ -47,7 +47,7 @@ public class ChapterController {
 	PaymentService paymentService;
 
 	ChapterMapper chapterMapper = new ChapterMapper();
-	
+
 	ChapterSummaryMapper chapterSummaryMapper = new ChapterSummaryMapper();
 
 	@GetMapping("/chapters")
@@ -70,6 +70,13 @@ public class ChapterController {
 		return ResponseEntity.ok(chapterSummaryMapper.mapToDTOs(chapters));
 	}
 
+	@GetMapping("/api/books/{bookId}/chapters")
+	public ResponseEntity<List<ChapterDTO>> manageChaptersByBookId(@PathVariable("bookId") Integer bookId) {
+		List<Chapter> chapters = chapterService.findChaptersByBookId(bookId);
+
+		return ResponseEntity.ok(chapterMapper.mapToDTOs(chapters));
+	}
+
 	@GetMapping("/books/{bookId}/chapters/{chapterId}")
 	public ResponseEntity<?> getChapterById(@PathVariable("chapterId") Integer chapterId,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
@@ -79,7 +86,7 @@ public class ChapterController {
 		if (jwt != null) {
 
 			User user = userService.findUserByJwt(jwt);
-			if (!chapterService.isChapterUnlockedByUser(user.getId(), chapterId) && chapter.getPrice()>0) {
+			if (chapter.isLocked()&& !chapterService.isChapterUnlockedByUser(user.getId(), chapterId) && chapter.getPrice() > 0) {
 				return ResponseEntity.ok(chapterSummaryMapper.mapToDTO(chapter));
 			}
 			if (user != null) {

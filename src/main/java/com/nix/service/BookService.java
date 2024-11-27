@@ -41,6 +41,8 @@ public interface BookService {
 	public Book markAsFavouriteBook(Book book, User user);
 
 	public Book incrementViewCount(Integer id);
+	
+	public Book setEditorChoice(Integer id, BookDTO bookDTO);
 
 	List<Book> getFollowedBooksByUserId(Integer id);
 

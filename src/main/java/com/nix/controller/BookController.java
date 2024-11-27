@@ -166,4 +166,10 @@ public class BookController {
 		return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
 	}
 
+	@PutMapping("/api/books/{bookId}/editor-choice")
+	public ResponseEntity<BookDTO> setEditorChoice(@RequestBody BookDTO book, @PathVariable Integer bookId) {
+		BookDTO editorChoiceBook = bookMapper.mapToDTO(bookService.setEditorChoice(bookId, book));
+		return new ResponseEntity<>(editorChoiceBook, HttpStatus.ACCEPTED);
+	}
+
 }
