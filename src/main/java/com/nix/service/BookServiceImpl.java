@@ -243,4 +243,14 @@ public class BookServiceImpl implements BookService {
 		return bookRepo.searchBooks(title, categoryId, tagIds);
 	}
 
+	@Override
+	public Book setEditorChoice(Integer id, BookDTO bookDTO) {
+		Book existingBook = bookRepo.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
+		existingBook.setSuggested(!existingBook.isSuggested());
+
+		return bookRepo.save(existingBook);
+
+	}
+
 }
