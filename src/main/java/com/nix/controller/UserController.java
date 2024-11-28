@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -14,7 +15,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nix.dtos.UserDTO;
+import com.nix.dtos.UserSummaryDTO;
 import com.nix.dtos.mappers.UserMapper;
+import com.nix.dtos.mappers.UserSummaryMapper;
+import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.User;
 import com.nix.service.UserService;
 
@@ -28,15 +32,29 @@ public class UserController {
 
 	UserMapper userMapper = new UserMapper();
 
-	@GetMapping("/user/profile/{userId}")
-	public ResponseEntity<?> getUserProfile(@PathVariable("userId") Integer userId) throws Exception {
-		try {
-			User user = userService.findUserById(userId);
+	UserSummaryMapper userSummaryMapper = new UserSummaryMapper();
 
-			return new ResponseEntity<>(userMapper.mapToDTO(user), HttpStatus.OK);
-		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+	UserSummaryMapper userSummaryDTO = new UserSummaryMapper();
+
+	@GetMapping("/user/profile/{userId}")
+	public ResponseEntity<?> getUserProfile(
+	        @PathVariable("userId") Integer userId,
+	        @RequestHeader(value = "Authorization", required = false) String jwt) {
+	    try {
+	        User otherUser = userService.findUserById(userId);
+	        UserSummaryDTO userSummaryDTO = userSummaryMapper.mapToDTO(otherUser);
+
+	        if (jwt != null && !jwt.isEmpty()) {
+	            User currentUser = userService.findUserByJwt(jwt);
+
+	            boolean isFollowing = userService.isFollowedByCurrentUser(currentUser, otherUser);
+	            userSummaryDTO.setFollowedByCurrentUser(isFollowing);
+	        }
+
+	        return new ResponseEntity<>(userSummaryDTO, HttpStatus.OK);
+	    } catch (Exception e) {
+	        return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+	    }
 	}
 
 	@GetMapping("/api/user/profile")
@@ -81,6 +99,46 @@ public class UserController {
 			return new ResponseEntity<>(foundUsers, HttpStatus.OK);
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@PostMapping("/follow/{userIdToFollow}")
+	public ResponseEntity<?> followUser(@RequestHeader("Authorization") String jwt,
+			@PathVariable Integer userIdToFollow) {
+		try {
+			UserSummaryDTO userSummaryDTO = new UserSummaryDTO();
+			User currentUser = userService.findUserByJwt(jwt);
+			User updatedUser = userService.followUser(currentUser.getId(), userIdToFollow);
+			if (updatedUser != null) {
+				userSummaryDTO = userSummaryMapper.mapToDTO(updatedUser);
+				userSummaryDTO.setFollowedByCurrentUser(true);
+			}
+			else {
+				userSummaryDTO.setFollowedByCurrentUser(false);
+				}
+			return ResponseEntity.ok(userSummaryDTO);
+		} catch (IllegalArgumentException | IllegalStateException ex) {
+			return ResponseEntity.badRequest().body(ex.getMessage());
+		}
+	}
+
+	@PostMapping("/unfollow/{userIdToUnfollow}")
+	public ResponseEntity<?> unFollowUser(@RequestHeader("Authorization") String jwt,
+			@PathVariable Integer userIdToUnfollow) {
+		try {
+			UserSummaryDTO userSummaryDTO = new UserSummaryDTO();
+			User currentUser = userService.findUserByJwt(jwt);
+			User updatedUser = userService.unFollowUser(currentUser.getId(), userIdToUnfollow);
+			if (updatedUser != null) {
+				userSummaryDTO = userSummaryMapper.mapToDTO(updatedUser);
+				userSummaryDTO.setFollowedByCurrentUser(false);
+			}
+			else {
+			userSummaryDTO.setFollowedByCurrentUser(true);
+			}
+			return ResponseEntity.ok(userSummaryDTO);
+		} catch (IllegalArgumentException | IllegalStateException | ResourceNotFoundException ex) {
+			return ResponseEntity.badRequest().body(ex.getMessage());
 		}
 	}
 

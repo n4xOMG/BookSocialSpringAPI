@@ -22,7 +22,7 @@ public interface UserService {
 	public User findUserByEmail(String email);
 
 	public User findUserByJwt(String jwt);
-	
+
 	public List<User> findUserByUsername(String username);
 
 	public User updateCurrentSessionUser(String jwt, User user, String url)
@@ -45,4 +45,10 @@ public interface UserService {
 	public User banUser(Integer userId);
 
 	public User unbanUser(Integer userId);
+
+	public User followUser(Integer currentUserId, Integer followedUserId);
+
+	public User unFollowUser(Integer currentUserId, Integer unfollowedUserId);
+	
+	public boolean isFollowedByCurrentUser(User currentUser, User otherUser);
 }

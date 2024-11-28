@@ -126,4 +126,8 @@ public class User implements Serializable {
 	@JsonIgnore
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Post> posts = new ArrayList<>();
+	
+	@JsonIgnore
+	@ManyToMany(mappedBy = "likedUsers")
+	private List<Post> likedPosts = new ArrayList<>();
 }

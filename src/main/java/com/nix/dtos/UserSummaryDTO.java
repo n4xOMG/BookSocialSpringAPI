@@ -25,4 +25,5 @@ public class UserSummaryDTO implements Serializable {
 	private LocalDate birthdate;
 	private String avatarUrl;
 	private String bio;
+	private boolean isFollowedByCurrentUser;
 }

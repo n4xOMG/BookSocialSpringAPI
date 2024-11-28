@@ -2,6 +2,7 @@ package com.nix.models;
 
 import java.io.Serializable;
 import java.sql.Date;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -26,7 +27,7 @@ public class UserFollow implements Serializable{
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	private Date followDate;
+	private LocalDateTime followDate;
 
 	@ManyToOne
 	private User follower;

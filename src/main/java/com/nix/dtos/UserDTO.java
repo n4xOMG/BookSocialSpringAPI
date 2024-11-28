@@ -30,4 +30,5 @@ public class UserDTO {
 	private int credits;
 	private List<BookDTO> book = new ArrayList<>();
 	private List<CommentDTO> comment = new ArrayList<>();
+	private List<PostDTO> post = new ArrayList<>();
 }
