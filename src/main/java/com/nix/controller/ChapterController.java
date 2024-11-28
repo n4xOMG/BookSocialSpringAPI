@@ -83,19 +83,23 @@ public class ChapterController {
 		Chapter chapter = chapterService.findChapterById(chapterId);
 		ChapterDTO chapterDTO = chapterMapper.mapToDTO(chapter);
 
-		if (jwt != null) {
+		if (chapter.getPrice() > 0) {
+			if (jwt != null) {
 
-			User user = userService.findUserByJwt(jwt);
-			if (chapter.isLocked()&& !chapterService.isChapterUnlockedByUser(user.getId(), chapterId) && chapter.getPrice() > 0) {
-				return ResponseEntity.ok(chapterSummaryMapper.mapToDTO(chapter));
-			}
-			if (user != null) {
+				User user = userService.findUserByJwt(jwt);
+				if (chapter.isLocked() && !chapterService.isChapterUnlockedByUser(user.getId(), chapterId)) {
+					return ResponseEntity.ok(chapterSummaryMapper.mapToDTO(chapter));
+				}
 				boolean isUnlocked = chapterService.isChapterUnlockedByUser(user.getId(), chapterId);
 				System.out.print(isUnlocked);
 				chapterDTO.setUnlockedByUser(isUnlocked);
+				return ResponseEntity.ok(chapterDTO);
+			} else {
+				return ResponseEntity.ok(chapterSummaryMapper.mapToDTO(chapter));
 			}
 		}
 		return ResponseEntity.ok(chapterDTO);
+
 	}
 
 	@PostMapping("/api/books/{bookId}/chapters")

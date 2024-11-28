@@ -4,17 +4,22 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Post;
 import com.nix.models.User;
 import com.nix.repository.PostRepository;
+import com.nix.repository.UserRepository;
 
 @Service
 public class PostServiceImpl implements PostService {
 
 	@Autowired
 	private PostRepository postRepository;
+
+	@Autowired
+	private UserRepository userRepository;
 
 	@Override
 	public List<Post> getAllPosts() {
@@ -48,6 +53,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
+	@Transactional
 	public void deletePost(User user, Integer postId) {
 		Post post = postRepository.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post not found with id " + postId));
@@ -55,16 +61,25 @@ public class PostServiceImpl implements PostService {
 		if (!post.getUser().getId().equals(user.getId())) {
 			throw new ResourceNotFoundException("User is not authorized to delete this post.");
 		}
-
+		for (User likedUser : post.getLikedUsers()) {
+			likedUser.getLikedPosts().remove(post);
+			userRepository.save(user);
+		}
 		postRepository.delete(post);
 	}
 
 	@Override
-	public Post likePost(Integer postId) {
+	public Post likePost(Integer postId, User user) {
 		Post post = postRepository.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post not found with id " + postId));
+		if (post.getLikedUsers().contains(user)) {
+			post.getLikedUsers().remove(user);
+			post.setLikes(post.getLikes() - 1);
+		} else {
+			post.getLikedUsers().add(user);
+			post.setLikes(post.getLikes() + 1);
+		}
 
-		post.setLikes(post.getLikes() + 1);
 		return postRepository.save(post);
 	}
 

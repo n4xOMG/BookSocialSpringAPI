@@ -14,6 +14,8 @@ public class UserMapper implements Mapper<User, UserDTO> {
 
 	CommentMapper commentMapper = new CommentMapper();
 
+	PostMapper postMapper = new PostMapper();
+
 	@Override
 	public UserDTO mapToDTO(User user) {
 		UserDTO userDTO = new UserDTO();
@@ -36,6 +38,9 @@ public class UserMapper implements Mapper<User, UserDTO> {
 		}
 		if (user.getLikedComments() != null) {
 			userDTO.setComment(commentMapper.mapToDTOs(user.getLikedComments()));
+		}
+		if (user.getLikedPosts() != null) {
+			userDTO.setPost(postMapper.mapToDTOs(user.getLikedPosts()));
 		}
 
 		return userDTO;

@@ -81,9 +81,13 @@ public class PostController {
 	/**
 	 * Like a post
 	 */
-	@PostMapping("/api/posts/{id}/like")
-	public ResponseEntity<PostDTO> likePost(@PathVariable Integer id) {
-		Post likedPost = postService.likePost(id);
+	@PostMapping("/api/posts/{postId}/like")
+	public ResponseEntity<PostDTO> likePost(@PathVariable Integer postId, @RequestHeader("Authorization") String jwt) {
+		User user = userService.findUserByJwt(jwt);
+		if (user==null) {
+			throw new ResourceNotFoundException("Cannot find user");
+		}
+		Post likedPost = postService.likePost(postId, user);
 		return ResponseEntity.ok(postMapper.mapToDTO(likedPost));
 	}
 

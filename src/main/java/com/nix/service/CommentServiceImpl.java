@@ -193,7 +193,7 @@ public class CommentServiceImpl implements CommentService {
 	@Transactional
 	public Comment createChapterComment(Comment comment, Integer bookId, Integer chapterId, User user)
 			throws Exception {
-		return createComment(comment, bookId, null, chapterId, user, false, true, false);
+		return createComment(comment, bookId, chapterId, null, user, false, true, false);
 	}
 
 	@Override

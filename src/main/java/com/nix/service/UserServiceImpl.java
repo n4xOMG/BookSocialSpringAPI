@@ -1,7 +1,9 @@
 package com.nix.service;
 
 import java.io.UnsupportedEncodingException;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +21,10 @@ import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Comment;
 import com.nix.models.Role;
 import com.nix.models.User;
+import com.nix.models.UserFollow;
 import com.nix.repository.CommentRepository;
 import com.nix.repository.RoleRepository;
+import com.nix.repository.UserFollowRepository;
 import com.nix.repository.UserRepository;
 
 import jakarta.mail.MessagingException;
@@ -36,6 +40,9 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	UserRepository userRepo;
+
+	@Autowired
+	UserFollowRepository userFollowRepository;
 
 	@Autowired
 	RoleRepository roleRepo;
@@ -63,9 +70,10 @@ public class UserServiceImpl implements UserService {
 		newUser.setGender(user.getGender());
 		newUser.setAvatarUrl(user.getAvatarUrl());
 		newUser.setIsVerified(false);
+		newUser.setIsSuspended(false);
 		newUser.setBanned(false);
 		newUser.setBirthdate(user.getBirthdate());
-		newUser.setBio(null);
+		newUser.setBio(user.getBio());
 		newUser.setBanReason(null);
 		newUser.setPassword(passEncoder.encode(user.getPassword()));
 
@@ -251,6 +259,7 @@ public class UserServiceImpl implements UserService {
 
 		return userRepo.save(user);
 	}
+
 	@Override
 	public User banUser(Integer userId) {
 		User user = findUserById(userId);
@@ -258,6 +267,7 @@ public class UserServiceImpl implements UserService {
 
 		return userRepo.save(user);
 	}
+
 	@Override
 	public User unbanUser(Integer userId) {
 		User user = findUserById(userId);
@@ -265,6 +275,7 @@ public class UserServiceImpl implements UserService {
 
 		return userRepo.save(user);
 	}
+
 	@Override
 	public User updateUser(Integer userId, User user) {
 
@@ -279,30 +290,97 @@ public class UserServiceImpl implements UserService {
 		if (user.getIsVerified() != null) {
 			userUpdate.setIsVerified(user.getIsVerified());
 		}
-		
-		if (user.getAvatarUrl()!=null) {
+
+		if (user.getAvatarUrl() != null) {
 			userUpdate.setAvatarUrl(user.getAvatarUrl());
 		}
 
 		return userRepo.save(userUpdate);
 	}
+
 	@Override
 	@Transactional
-    public User updateUserRole(Integer userId, String roleName){
-        User user = userRepo.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+	public User updateUserRole(Integer userId, String roleName) {
+		User user = userRepo.findById(userId)
+				.orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
-        Role newRole = roleRepo.findByName(roleName);
-        		if(newRole==null) {
-        			throw new ResourceNotFoundException("Role not found with: "+roleName);
-        		}
+		Role newRole = roleRepo.findByName(roleName);
+		if (newRole == null) {
+			throw new ResourceNotFoundException("Role not found with: " + roleName);
+		}
 
-        user.setRole(newRole);
-        return userRepo.save(user);
-    }
+		user.setRole(newRole);
+		return userRepo.save(user);
+	}
 
 	@Override
 	public List<User> findUserByUsername(String username) {
 		return userRepo.findByUsername(username);
+	}
+
+	@Override
+	@Transactional
+	public User followUser(Integer currentUserId, Integer followedUserId) {
+		if (currentUserId.equals(followedUserId)) {
+			throw new IllegalArgumentException("Users cannot follow themselves.");
+		}
+
+		User currentUser = userRepo.findById(currentUserId)
+				.orElseThrow(() -> new ResourceNotFoundException("Current user not found."));
+		User followedUser = userRepo.findById(followedUserId)
+				.orElseThrow(() -> new ResourceNotFoundException("User to follow not found."));
+
+		// Check if already following
+		boolean isAlreadyFollowing = userFollowRepository.findByFollowerAndFollowed(currentUser, followedUser)
+				.isPresent();
+		if (isAlreadyFollowing) {
+			throw new IllegalStateException("Already following this user.");
+		}
+
+		// Create new UserFollow
+		UserFollow userFollow = new UserFollow();
+		userFollow.setFollower(currentUser);
+		userFollow.setFollowed(followedUser);
+		userFollow.setFollowDate(LocalDateTime.now());
+
+		// Save the follow relationship
+		userFollowRepository.save(userFollow);
+
+		currentUser.getFollowing().add(userFollow);
+		followedUser.getFollowers().add(userFollow);
+
+		return userRepo.save(currentUser);
+	}
+
+	@Override
+	@Transactional
+	public User unFollowUser(Integer currentUserId, Integer unfollowedUserId) {
+		if (currentUserId.equals(unfollowedUserId)) {
+			throw new IllegalArgumentException("Users cannot unfollow themselves.");
+		}
+
+		User currentUser = userRepo.findById(currentUserId)
+				.orElseThrow(() -> new ResourceNotFoundException("Current user not found."));
+		User unfollowedUser = userRepo.findById(unfollowedUserId)
+				.orElseThrow(() -> new ResourceNotFoundException("Followed user not found."));
+
+		// Find the existing follow relationship
+		UserFollow userFollow = userFollowRepository.findByFollowerAndFollowed(currentUser, unfollowedUser)
+				.orElseThrow(() -> new IllegalStateException("Not following this user."));
+
+		// Remove the follow relationship
+		userFollowRepository.delete(userFollow);
+
+		// Optionally, update the followers and following lists
+		currentUser.getFollowing().remove(userFollow);
+		unfollowedUser.getFollowers().remove(userFollow);
+
+		return userRepo.save(currentUser);
+	}
+
+	@Override
+	public boolean isFollowedByCurrentUser(User currentUser, User otherUser) {
+	    Optional<UserFollow> user = userFollowRepository.findByFollowerAndFollowed(currentUser, otherUser);
+	    return user.isPresent();
 	}
 }
