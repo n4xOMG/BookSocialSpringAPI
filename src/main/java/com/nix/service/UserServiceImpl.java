@@ -2,9 +2,13 @@ package com.nix.service;
 
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -17,12 +21,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.nix.config.JwtProvider;
+import com.nix.dtos.CategoryDTO;
+import com.nix.dtos.TagDTO;
+import com.nix.dtos.UserDTO;
 import com.nix.exception.ResourceNotFoundException;
+import com.nix.models.Book;
+import com.nix.models.Category;
 import com.nix.models.Comment;
+import com.nix.models.Rating;
+import com.nix.models.ReadingProgress;
 import com.nix.models.Role;
+import com.nix.models.Tag;
 import com.nix.models.User;
 import com.nix.models.UserFollow;
+import com.nix.repository.BookRepository;
 import com.nix.repository.CommentRepository;
+import com.nix.repository.RatingRepository;
+import com.nix.repository.ReadingProgressRepository;
 import com.nix.repository.RoleRepository;
 import com.nix.repository.UserFollowRepository;
 import com.nix.repository.UserRepository;
@@ -49,6 +64,15 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	CommentRepository commentRepo;
+
+	@Autowired
+	ReadingProgressRepository readingProgressRepository;
+
+	@Autowired
+	RatingRepository ratingRepository;
+
+	@Autowired
+	BookRepository bookRepository;
 
 	@Override
 	public Page<User> getAllUsers(int page, int size, String searchTerm) {
@@ -380,7 +404,77 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public boolean isFollowedByCurrentUser(User currentUser, User otherUser) {
-	    Optional<UserFollow> user = userFollowRepository.findByFollowerAndFollowed(currentUser, otherUser);
-	    return user.isPresent();
+		Optional<UserFollow> user = userFollowRepository.findByFollowerAndFollowed(currentUser, otherUser);
+		return user.isPresent();
+	}
+
+	@Override
+	public UserDTO getUserPreferences(Integer userId) {
+		User user = userRepo.findById(userId)
+				.orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+
+		// Fetch reading progresses
+		List<ReadingProgress> progresses = readingProgressRepository.findByUserId(userId);
+
+		// Map to store total progress per book
+		Map<Integer, Double> bookProgressMap = new HashMap<>();
+
+		for (ReadingProgress progress : progresses) {
+			Integer bookId = progress.getChapter().getBook().getId();
+			Double chapterProgress = progress.getProgress(); // Assuming 0.0 to 100.0
+
+			// Normalize chapter progress to 0.0 - 1.0
+			Double normalizedProgress = chapterProgress / 100.0;
+
+			// Sum normalized progress per book
+			bookProgressMap.merge(bookId, normalizedProgress, Double::sum);
+		}
+
+		// Fetch books based on aggregated progress
+		Set<Integer> bookIds = bookProgressMap.keySet();
+		List<Book> books = bookRepository.findAllById(bookIds);
+
+		// Calculate preferred categories
+		Map<Category, Double> categoryWeight = new HashMap<>();
+		for (Book book : books) {
+			Double progress = bookProgressMap.getOrDefault(book.getId(), 0.0);
+			// Weight can be adjusted based on requirements
+			// For example, progress could be multiplied by a factor
+			Double weight = progress;
+
+			categoryWeight.merge(book.getCategory(), weight, Double::sum);
+		}
+
+		List<CategoryDTO> preferredCategories = categoryWeight.entrySet().stream()
+				.sorted(Map.Entry.<Category, Double>comparingByValue().reversed()).limit(5) // Top 5 categories
+				.map(entry -> new CategoryDTO(entry.getKey().getId(), entry.getKey().getName(),
+						entry.getKey().getDescription()))
+				.collect(Collectors.toList());
+
+		// Calculate preferred tags
+		Map<Tag, Double> tagWeight = new HashMap<>();
+		for (Book book : books) {
+			Double progress = bookProgressMap.getOrDefault(book.getId(), 0.0);
+			Double weight = progress;
+
+			for (Tag tag : book.getTags()) {
+				tagWeight.merge(tag, weight, Double::sum);
+			}
+		}
+
+		List<TagDTO> preferredTags = tagWeight.entrySet().stream()
+				.sorted(Map.Entry.<Tag, Double>comparingByValue().reversed()).limit(10) // Top 10 tags
+				.map(entry -> new TagDTO(entry.getKey().getId(), entry.getKey().getName()))
+				.collect(Collectors.toList());
+		// Map to UserDTO
+		UserDTO userDTO = new UserDTO();
+		userDTO.setId(user.getId());
+		userDTO.setFullname(user.getFullname());
+		// ... set other User fields as needed
+
+		userDTO.setPreferredCategories(preferredCategories);
+		userDTO.setPreferredTags(preferredTags);
+
+		return userDTO;
 	}
 }

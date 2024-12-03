@@ -14,6 +14,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ChapterDTO {
     private Integer id;
+    private String roomId;
     private String chapterNum; 
     private String title;
     private String content;

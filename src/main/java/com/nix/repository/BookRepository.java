@@ -51,4 +51,9 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
 	@Query("UPDATE Book b SET b.viewCount = b.viewCount + 1 WHERE b.id = :bookId")
 	public void incrementViewCount(@Param("bookId") Integer bookId);
 
+	@Query("SELECT DISTINCT b FROM Book b JOIN b.tags t WHERE b.category.id = :categoryId "
+			+ "AND b.id <> :bookId AND t.id IN :tagIds")
+	List<Book> findRelatedBooks(@Param("categoryId") Integer categoryId, @Param("tagIds") List<Integer> tagIds,
+			@Param("bookId") Integer bookId, Pageable pageable);
+
 }

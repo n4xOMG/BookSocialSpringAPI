@@ -57,11 +57,14 @@ public class BookMapper implements Mapper<Book, BookDTO> {
 			bookDTO.setCategoryId(book.getCategory().getId());
 		}
 
-		// Map tagIds
+		// Map tagIds and tagNames
 		if (book.getTags() != null && !book.getTags().isEmpty()) {
 			List<Integer> tagIds = book.getTags().stream().map(Tag::getId).collect(Collectors.toList());
 			bookDTO.setTagIds(tagIds);
+			List<String> tagNames = book.getTags().stream().map(tag -> tag.getName()).collect(Collectors.toList());
+			bookDTO.setTagNames(tagNames);
 		}
+
 		return bookDTO;
 	}
 

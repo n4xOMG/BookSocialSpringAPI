@@ -26,7 +26,9 @@ public class BookDTO {
 	private String status;
 	private LocalDateTime uploadDate;
 	private Integer categoryId;
+	private String categoryName;
 	private List<Integer> tagIds;
+	private List<String> tagNames;
 	private Integer favCount;
 	private Double avgRating;
 	private Integer ratingCount;

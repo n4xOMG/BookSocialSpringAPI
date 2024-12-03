@@ -47,5 +47,7 @@ public interface BookService {
 	List<Book> getFollowedBooksByUserId(Integer id);
 
 	List<Book> getTopRecentChapterBooks(int limit);
+	
+	List<Book> getRelatedBooks(Integer bookId, List<Integer> tagIds);
 
 }

@@ -26,4 +26,6 @@ public interface ChapterRepository extends JpaRepository<Chapter, Integer> {
 	@Transactional
 	@Query("UPDATE Chapter c SET c.viewCount = c.viewCount + 1 WHERE c.id = :chapterId")
 	void incrementViewCount(@Param("chapterId") Integer chapterId);
+	
+	Optional<Chapter> findByRoomId(String roomId);
 }

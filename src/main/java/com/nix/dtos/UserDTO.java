@@ -31,4 +31,6 @@ public class UserDTO {
 	private List<BookDTO> book = new ArrayList<>();
 	private List<CommentDTO> comment = new ArrayList<>();
 	private List<PostDTO> post = new ArrayList<>();
+	private List<CategoryDTO> preferredCategories;
+	private List<TagDTO> preferredTags;
 }

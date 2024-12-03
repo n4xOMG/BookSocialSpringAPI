@@ -15,5 +15,4 @@ public class CategoryDTO {
 	private Integer id;
 	private String name;
 	private String description;
-	private List<BookDTO> books;
 }

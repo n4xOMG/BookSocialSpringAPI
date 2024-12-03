@@ -102,6 +102,24 @@ public class ChapterController {
 
 	}
 
+	@GetMapping("/api/chapters/room/{roomId}")
+	public ResponseEntity<ChapterDTO> getChapterByRoomId(@PathVariable String roomId) {
+		Chapter chapter = chapterService.getChapterByRoomId(roomId);
+		return ResponseEntity.ok(chapterMapper.mapToDTO(chapter));
+	}
+
+	@PostMapping("/api/books/{bookId}/chapters/draft")
+	public ResponseEntity<Chapter> createDraftChapter(@PathVariable("bookId") Integer bookId,
+			@RequestBody Chapter chapter) throws Exception {
+		Book book = bookService.getBookById(bookId);
+		if (book == null) {
+			throw new Exception("Book not found");
+		}
+
+		Chapter newChapter = chapterService.createDraftChapter(bookId, chapter);
+		return new ResponseEntity<Chapter>(newChapter, HttpStatus.CREATED);
+	}
+
 	@PostMapping("/api/books/{bookId}/chapters")
 	public ResponseEntity<Chapter> addNewChapter(@PathVariable("bookId") Integer bookId, @RequestBody Chapter chapter)
 			throws Exception {
