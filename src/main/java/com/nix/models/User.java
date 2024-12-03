@@ -1,7 +1,7 @@
 package com.nix.models;
 
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +36,7 @@ public class User implements Serializable {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 	private String fullname;
-	private LocalDate birthdate;
+	private LocalDateTime birthdate;
 	private String gender;
 	private String username;
 	private String email;
@@ -118,7 +118,7 @@ public class User implements Serializable {
 	@JsonIgnore
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Post> posts = new ArrayList<>();
-	
+
 	@JsonIgnore
 	@ManyToMany(mappedBy = "likedUsers")
 	private List<Post> likedPosts = new ArrayList<>();

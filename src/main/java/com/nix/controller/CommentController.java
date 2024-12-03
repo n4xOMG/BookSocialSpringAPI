@@ -224,6 +224,24 @@ public class CommentController {
 		}
 	}
 
+	@PutMapping("/api/comments/{commentId}")
+	public ResponseEntity<?> editComment(@RequestHeader("Authorization") String jwt,
+			@PathVariable("commentId") Integer commentId, @RequestBody Comment comment) throws Exception {
+
+		try {
+			User user = userService.findUserByJwt(jwt);
+			if (user == null) {
+				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
+			}
+			Comment editedComment = commentService.editComment(user.getId(), commentId, comment);
+			return new ResponseEntity<>(commentMapper.mapToDTO(editedComment), HttpStatus.OK);
+
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+	}
+
 	@DeleteMapping("/api/comments/{commentId}")
 	public ResponseEntity<?> deleteComment(@RequestHeader("Authorization") String jwt,
 			@PathVariable("commentId") Integer commentId) throws Exception {

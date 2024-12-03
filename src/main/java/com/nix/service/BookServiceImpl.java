@@ -117,15 +117,22 @@ public class BookServiceImpl implements BookService {
 		existingBook.setDescription(bookDTO.getDescription());
 		existingBook.setLanguage(bookDTO.getLanguage());
 		existingBook.setStatus(bookDTO.getStatus());
-		// Assuming viewCount is not updated via this method
 		existingBook.setSuggested(bookDTO.isSuggested());
 		existingBook.setViewCount(bookDTO.getViewCount());
 
-		Category category = categoryRepository.findById(bookDTO.getCategoryId()).orElseThrow(
+		// Change Category
+		Category newCategory = categoryRepository.findById(bookDTO.getCategoryId()).orElseThrow(
 				() -> new ResourceNotFoundException("Category not found with ID: " + bookDTO.getCategoryId()));
-		existingBook.getCategory().getBooks().remove(existingBook);
-		existingBook.setCategory(category);
-		category.getBooks().add(existingBook);
+
+		// Remove from old category
+		Category oldCategory = existingBook.getCategory();
+		if (oldCategory != null) {
+			oldCategory.getBooks().remove(existingBook);
+		}
+
+		// Set new category
+		existingBook.setCategory(newCategory);
+		newCategory.getBooks().add(existingBook);
 
 		// Update Tags
 		List<Tag> newTags = tagRepository.findAllById(bookDTO.getTagIds());
@@ -257,22 +264,20 @@ public class BookServiceImpl implements BookService {
 	@Override
 	public List<Book> getRelatedBooks(Integer bookId, List<Integer> tagIds) {
 		Book currentBook = bookRepo.findById(bookId)
-                .orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
+				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 
-        Integer categoryId = currentBook.getCategory().getId();
+		Integer categoryId = currentBook.getCategory().getId();
 
-        // If tagIds are not provided, use the current book's tags
-        if (tagIds == null || tagIds.isEmpty()) {
-            tagIds = currentBook.getTags().stream()
-                    .map(tag -> tag.getId())
-                    .collect(Collectors.toList());
-        }
+		// If tagIds are not provided, use the current book's tags
+		if (tagIds == null || tagIds.isEmpty()) {
+			tagIds = currentBook.getTags().stream().map(tag -> tag.getId()).collect(Collectors.toList());
+		}
 
-        // Fetch related books excluding the current book
-        List<Book> relatedBooks = bookRepo.findRelatedBooks(categoryId, tagIds, bookId, PageRequest.of(0, 5));
+		// Fetch related books excluding the current book
+		List<Book> relatedBooks = bookRepo.findRelatedBooks(categoryId, tagIds, bookId, PageRequest.of(0, 5));
 
-        // Map to DTOs
-        return relatedBooks;
+		// Map to DTOs
+		return relatedBooks;
 	}
 
 }

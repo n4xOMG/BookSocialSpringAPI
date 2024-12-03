@@ -171,7 +171,7 @@ public class UserServiceImpl implements UserService {
 			userUpdate.setUsername(user.getUsername());
 		}
 		if (user.getFullname() != null) {
-			userUpdate.setUsername(user.getUsername());
+			userUpdate.setFullname(user.getFullname());
 		}
 		if (user.getGender() != null) {
 			userUpdate.setGender(user.getGender());
