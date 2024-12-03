@@ -3,6 +3,7 @@ package com.nix.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -251,6 +252,27 @@ public class BookServiceImpl implements BookService {
 
 		return bookRepo.save(existingBook);
 
+	}
+
+	@Override
+	public List<Book> getRelatedBooks(Integer bookId, List<Integer> tagIds) {
+		Book currentBook = bookRepo.findById(bookId)
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
+
+        Integer categoryId = currentBook.getCategory().getId();
+
+        // If tagIds are not provided, use the current book's tags
+        if (tagIds == null || tagIds.isEmpty()) {
+            tagIds = currentBook.getTags().stream()
+                    .map(tag -> tag.getId())
+                    .collect(Collectors.toList());
+        }
+
+        // Fetch related books excluding the current book
+        List<Book> relatedBooks = bookRepo.findRelatedBooks(categoryId, tagIds, bookId, PageRequest.of(0, 5));
+
+        // Map to DTOs
+        return relatedBooks;
 	}
 
 }

@@ -3,6 +3,7 @@ package com.nix.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -88,7 +89,7 @@ public class ChapterServiceImpl implements ChapterService {
 		editChapter.setTitle(chapter.getTitle());
 		editChapter.setContent(chapter.getContent());
 		editChapter.setLocked(chapter.isLocked());
-
+		editChapter.setDraft(chapter.isDraft());
 		return chapterRepo.save(editChapter);
 	}
 
@@ -103,7 +104,6 @@ public class ChapterServiceImpl implements ChapterService {
 		try {
 			deleteChapter.setBook(null);
 			progressRepo.deleteByChapterId(chapterId);
-
 			chapterRepo.delete(deleteChapter);
 
 			return "Chapter deleted successfully!";
@@ -181,6 +181,26 @@ public class ChapterServiceImpl implements ChapterService {
 		});
 
 		return chapters;
+	}
+
+	@Override
+	public Chapter createDraftChapter(Integer bookId, Chapter chapter) {
+		Book book = bookRepo.findById(bookId)
+				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
+
+		chapter.setBook(book);
+		chapter.setUploadDate(LocalDateTime.now());
+		chapter.setDeleted(false);
+		chapter.setUploadDate(LocalDateTime.now());
+		chapter.setRoomId(UUID.randomUUID().toString());
+		chapter.setDraft(true);
+
+		return chapterRepo.save(chapter);
+	}
+
+	@Override
+	public Chapter getChapterByRoomId(String roomId) {
+		return chapterRepo.findByRoomId(roomId).get();
 	}
 
 }

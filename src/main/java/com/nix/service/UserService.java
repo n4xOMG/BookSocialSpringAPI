@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 
+import com.nix.dtos.UserDTO;
 import com.nix.models.User;
 
 import jakarta.mail.MessagingException;
@@ -51,4 +52,6 @@ public interface UserService {
 	public User unFollowUser(Integer currentUserId, Integer unfollowedUserId);
 	
 	public boolean isFollowedByCurrentUser(User currentUser, User otherUser);
+	
+	public UserDTO getUserPreferences(Integer userId);
 }

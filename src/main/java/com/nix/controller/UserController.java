@@ -37,24 +37,23 @@ public class UserController {
 	UserSummaryMapper userSummaryDTO = new UserSummaryMapper();
 
 	@GetMapping("/user/profile/{userId}")
-	public ResponseEntity<?> getUserProfile(
-	        @PathVariable("userId") Integer userId,
-	        @RequestHeader(value = "Authorization", required = false) String jwt) {
-	    try {
-	        User otherUser = userService.findUserById(userId);
-	        UserSummaryDTO userSummaryDTO = userSummaryMapper.mapToDTO(otherUser);
+	public ResponseEntity<?> getUserProfile(@PathVariable("userId") Integer userId,
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
+		try {
+			User otherUser = userService.findUserById(userId);
+			UserSummaryDTO userSummaryDTO = userSummaryMapper.mapToDTO(otherUser);
 
-	        if (jwt != null && !jwt.isEmpty()) {
-	            User currentUser = userService.findUserByJwt(jwt);
+			if (jwt != null && !jwt.isEmpty()) {
+				User currentUser = userService.findUserByJwt(jwt);
 
-	            boolean isFollowing = userService.isFollowedByCurrentUser(currentUser, otherUser);
-	            userSummaryDTO.setFollowedByCurrentUser(isFollowing);
-	        }
+				boolean isFollowing = userService.isFollowedByCurrentUser(currentUser, otherUser);
+				userSummaryDTO.setFollowedByCurrentUser(isFollowing);
+			}
 
-	        return new ResponseEntity<>(userSummaryDTO, HttpStatus.OK);
-	    } catch (Exception e) {
-	        return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-	    }
+			return new ResponseEntity<>(userSummaryDTO, HttpStatus.OK);
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	@GetMapping("/api/user/profile")
@@ -112,10 +111,9 @@ public class UserController {
 			if (updatedUser != null) {
 				userSummaryDTO = userSummaryMapper.mapToDTO(updatedUser);
 				userSummaryDTO.setFollowedByCurrentUser(true);
-			}
-			else {
+			} else {
 				userSummaryDTO.setFollowedByCurrentUser(false);
-				}
+			}
 			return ResponseEntity.ok(userSummaryDTO);
 		} catch (IllegalArgumentException | IllegalStateException ex) {
 			return ResponseEntity.badRequest().body(ex.getMessage());
@@ -132,14 +130,24 @@ public class UserController {
 			if (updatedUser != null) {
 				userSummaryDTO = userSummaryMapper.mapToDTO(updatedUser);
 				userSummaryDTO.setFollowedByCurrentUser(false);
-			}
-			else {
-			userSummaryDTO.setFollowedByCurrentUser(true);
+			} else {
+				userSummaryDTO.setFollowedByCurrentUser(true);
 			}
 			return ResponseEntity.ok(userSummaryDTO);
 		} catch (IllegalArgumentException | IllegalStateException | ResourceNotFoundException ex) {
 			return ResponseEntity.badRequest().body(ex.getMessage());
 		}
+	}
+
+	@GetMapping("/user/preferences")
+	public ResponseEntity<UserDTO> getUserPreferences(@RequestHeader("Authorization") String jwt) {
+		if (jwt != null) {
+			User user = userService.findUserByJwt(jwt);
+			UserDTO userPreferences = userService.getUserPreferences(user.getId());
+			return ResponseEntity.ok(userPreferences);
+		}
+		return null;
+
 	}
 
 }

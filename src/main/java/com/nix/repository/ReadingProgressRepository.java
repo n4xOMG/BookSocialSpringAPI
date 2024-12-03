@@ -11,7 +11,7 @@ import com.nix.models.ReadingProgress;
 public interface ReadingProgressRepository extends JpaRepository<ReadingProgress, Integer> {
 	public List<ReadingProgress> findByUserId(Integer userId);
 
-	public ReadingProgress deleteByChapterId(Integer chapterId);
+	public void deleteByChapterId(Integer chapterId);
 
 	@Query("select rp from ReadingProgress rp where rp.chapter.id=:chapterId and rp.user.id=:userId")
 	public ReadingProgress findReadingProgressByChapterAndUserId(@Param(value = "chapterId") Integer chapterId,

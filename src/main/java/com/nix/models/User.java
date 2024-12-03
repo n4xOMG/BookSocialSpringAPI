@@ -76,14 +76,6 @@ public class User implements Serializable {
 	private List<Comment> likedComments = new ArrayList<>();
 
 	@JsonIgnore
-	@OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<FriendRequest> sentFriendRequests;
-
-	@JsonIgnore
-	@OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<FriendRequest> receivedFriendRequests;
-
-	@JsonIgnore
 	@OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<UserFollow> following;
 

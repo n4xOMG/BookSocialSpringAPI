@@ -20,6 +20,7 @@ import com.nix.dtos.BookDTO;
 import com.nix.dtos.mappers.BookMapper;
 import com.nix.dtos.mappers.CategoryMapper;
 import com.nix.dtos.mappers.RatingMapper;
+import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
 import com.nix.models.Category;
 import com.nix.models.User;
@@ -81,6 +82,19 @@ public class BookController {
 			return ResponseEntity.ok(bookMapper.mapToDTOs(featuredBooks));
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching featured books.");
+		}
+	}
+
+	@GetMapping("/books/{bookId}/related")
+	public ResponseEntity<?> getRelatedBooks(@PathVariable("bookId") Integer bookId,
+			@RequestParam(value = "tagIds", required = false) List<Integer> tagIds) {
+		try {
+			List<Book> relatedBooks = bookService.getRelatedBooks(bookId, tagIds);
+			return new ResponseEntity<>(bookMapper.mapToDTOs(relatedBooks), HttpStatus.OK);
+		} catch (IllegalArgumentException | ResourceNotFoundException ex) {
+			return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+		} catch (Exception e) {
+			return new ResponseEntity<>("Failed to fetch related books.", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
