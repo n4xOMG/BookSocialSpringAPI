@@ -1,6 +1,6 @@
 package com.nix.dtos;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class UserDTO {
 	private String email;
 	private String fullname;
 	private String gender;
-	private LocalDate birthdate;
+	private LocalDateTime birthdate;
 	private String avatarUrl;
 	private String bio;
 	private Boolean isVerified;

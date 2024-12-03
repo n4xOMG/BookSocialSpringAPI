@@ -277,7 +277,7 @@ public class CommentServiceImpl implements CommentService {
 		Comment editComment = findCommentById(commentId);
 
 		if (editComment.getUser().getId() != userId) {
-			throw new Exception("Cannot delete comment, invaid user!");
+			throw new Exception("Cannot edit comment, invaid user!");
 		}
 
 		if (comment.getContent() != null) {

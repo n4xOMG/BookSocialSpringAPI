@@ -92,7 +92,7 @@ public class RatingController {
 			newRating.setRating(rating.getRating());
 			return new ResponseEntity<>(ratingMapper.mapToDTO(ratingService.addNewRating(newRating)), HttpStatus.OK);
 		} else {
-			return new ResponseEntity<>(ratingMapper.mapToDTO(ratingService.editRating(rating.getId(), rating)),
+			return new ResponseEntity<>(ratingMapper.mapToDTO(ratingService.editRating(isRatedByUser.getId(), rating)),
 					HttpStatus.OK);
 		}
 	}

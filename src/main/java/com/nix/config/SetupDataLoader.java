@@ -1,6 +1,7 @@
 package com.nix.config;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
@@ -51,7 +52,7 @@ public class SetupDataLoader implements ApplicationListener<ContextRefreshedEven
 	        user.setIsVerified(true);
 	        user.setIsSuspended(false);
 	        user.setBanned(false);
-	        user.setBirthdate(LocalDate.now());
+	        user.setBirthdate(LocalDateTime.now());
 	        userRepo.save(user);
 	    }
 

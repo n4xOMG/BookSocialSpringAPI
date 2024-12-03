@@ -1,6 +1,7 @@
 package com.nix.models;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -26,7 +27,7 @@ public class Report implements Serializable{
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private String reason;
-	private Long reportedDate;
+	private LocalDateTime reportedDate;
 	private boolean isResolved;
 
 	@ManyToOne
