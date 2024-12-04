@@ -8,14 +8,16 @@ public interface ChapterService {
 	public Chapter findChapterById(Integer chapterId);
 
 	public List<Chapter> findChaptersByBookId(Integer bookId);
+	
+	public List<Chapter> findNotDraftedChaptersByBookId(Integer bookId);
 
 	public List<Chapter> getAllChapters();
 
 	public Chapter getChapterByRoomId(String roomId);
 
 	public Chapter createDraftChapter(Integer bookId, Chapter chapter);
-
-	public Chapter addChapterAndNotifyFollowers(Integer bookId, Chapter chapter);
+	
+	public Chapter publishChapter(Integer bookId, Chapter chapter);
 
 	public Chapter editChapter(Integer chapterId, Chapter chapter) throws Exception;
 
@@ -28,5 +30,11 @@ public interface ChapterService {
 	public boolean isChapterUnlockedByUser(Integer userId, Integer chapterId);
 
 	public List<Chapter> findChaptersByBookIdWithUnlockStatus(Integer bookId, Integer userId);
+
+	public Chapter likeChapter(Integer userId, Integer chapterId) throws Exception;
+
+	public Chapter unlikeChapter(Integer userId, Integer chapterId) throws Exception;
+
+	public boolean isChapterLikedByUser(Integer userId, Integer chapterId);
 
 }

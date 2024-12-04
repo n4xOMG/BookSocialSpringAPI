@@ -14,6 +14,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
@@ -46,7 +47,6 @@ public class Chapter implements Serializable {
 	private LocalDateTime uploadDate;
 	private int price;
 	private boolean isLocked;
-	private boolean isDeleted;
 	private int viewCount;
 	private boolean isUnlockedByUser = false;
 	@JsonIgnore
@@ -62,5 +62,7 @@ public class Chapter implements Serializable {
 
 	@OneToMany(mappedBy = "chapter", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ChapterUnlockRecord> unlockRecords = new ArrayList<>();
-
+	@JsonIgnore
+	@ManyToMany(mappedBy = "likedChapters")
+	private List<User> likedUsers = new ArrayList<>();
 }

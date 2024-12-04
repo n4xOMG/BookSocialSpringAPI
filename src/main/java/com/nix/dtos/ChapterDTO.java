@@ -13,15 +13,16 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChapterDTO {
-    private Integer id;
-    private String roomId;
-    private String chapterNum; 
-    private String title;
-    private String content;
-    private int price;
-    private boolean isLocked;
-    private LocalDateTime uploadDate;
-    private Integer bookId; 
-    private List<CommentDTO> comments;
-    private boolean isUnlockedByUser=false; 
+	private Integer id;
+	private String roomId;
+	private String chapterNum;
+	private String title;
+	private String content;
+	private int price;
+	private boolean isLocked;
+	private LocalDateTime uploadDate;
+	private Integer bookId;
+	private List<CommentDTO> comments;
+	private boolean isUnlockedByUser = false;
+	private boolean isLikedByCurrentUser = false;
 }

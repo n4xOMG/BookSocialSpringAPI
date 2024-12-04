@@ -1,6 +1,7 @@
 package com.nix.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,28 +55,44 @@ public class ChapterServiceImpl implements ChapterService {
 	}
 
 	@Override
+	public List<Chapter> findNotDraftedChaptersByBookId(Integer bookId) {
+		return chapterRepo.findNotDraftedChaptersByBookId(bookId);
+	}
+
+	@Override
 	public List<Chapter> getAllChapters() {
 		return chapterRepo.findAll();
 	}
 
 	@Override
-	@Transactional
-	public Chapter addChapterAndNotifyFollowers(Integer bookId, Chapter chapter) {
+	public Chapter createDraftChapter(Integer bookId, Chapter chapter) {
 		Book book = bookRepo.findById(bookId)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 
 		chapter.setBook(book);
 		chapter.setUploadDate(LocalDateTime.now());
-		chapter.setDeleted(false);
-		chapter.setUploadDate(LocalDateTime.now());
+		chapter.setRoomId(UUID.randomUUID().toString());
+		chapter.setDraft(true);
 
-		Chapter newChapter = chapterRepo.save(chapter);
+		return chapterRepo.save(chapter);
+	}
+
+	@Override
+	@Transactional
+	public Chapter publishChapter(Integer bookId, Chapter chapter) {
+		Book book = bookRepo.findById(bookId)
+				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
+
+		chapter.setBook(book);
+		chapter.setComments(new ArrayList<>());
+		chapter.setDraft(false);
+		chapter.setUploadDate(LocalDateTime.now());
 		List<User> followers = book.getFavoured();
 		String message = "New chapter added to " + book.getTitle() + ": " + chapter.getTitle();
 		for (User user : followers) {
 			notificationService.createNotification(user, message);
 		}
-		return newChapter;
+		return chapterRepo.save(chapter);
 	}
 
 	@Override
@@ -87,7 +104,6 @@ public class ChapterServiceImpl implements ChapterService {
 		editChapter.setChapterNum(chapter.getChapterNum());
 		editChapter.setPrice(chapter.getPrice());
 		editChapter.setTitle(chapter.getTitle());
-		editChapter.setContent(chapter.getContent());
 		editChapter.setLocked(chapter.isLocked());
 		editChapter.setDraft(chapter.isDraft());
 		return chapterRepo.save(editChapter);
@@ -184,23 +200,52 @@ public class ChapterServiceImpl implements ChapterService {
 	}
 
 	@Override
-	public Chapter createDraftChapter(Integer bookId, Chapter chapter) {
-		Book book = bookRepo.findById(bookId)
-				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
-
-		chapter.setBook(book);
-		chapter.setUploadDate(LocalDateTime.now());
-		chapter.setDeleted(false);
-		chapter.setUploadDate(LocalDateTime.now());
-		chapter.setRoomId(UUID.randomUUID().toString());
-		chapter.setDraft(true);
-
-		return chapterRepo.save(chapter);
+	public Chapter getChapterByRoomId(String roomId) {
+		return chapterRepo.findByRoomId(roomId).get();
 	}
 
 	@Override
-	public Chapter getChapterByRoomId(String roomId) {
-		return chapterRepo.findByRoomId(roomId).get();
+	@Transactional
+	public Chapter likeChapter(Integer userId, Integer chapterId) throws Exception {
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+		Chapter chapter = chapterRepo.findById(chapterId)
+				.orElseThrow(() -> new ResourceNotFoundException("Chapter not found with ID: " + chapterId));
+
+		if (!user.getLikedChapters().contains(chapter)) {
+			user.getLikedChapters().add(chapter);
+			chapter.getLikedUsers().add(user);
+			userRepository.save(user);
+			return chapterRepo.save(chapter);
+		}
+		return chapter;
+	}
+
+	@Override
+	@Transactional
+	public Chapter unlikeChapter(Integer userId, Integer chapterId) throws Exception {
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+		Chapter chapter = chapterRepo.findById(chapterId)
+				.orElseThrow(() -> new ResourceNotFoundException("Chapter not found with ID: " + chapterId));
+
+		if (user.getLikedChapters().contains(chapter)) {
+			user.getLikedChapters().remove(chapter);
+			chapter.getLikedUsers().remove(user);
+			userRepository.save(user);
+			return chapterRepo.save(chapter);
+		}
+		return chapter;
+	}
+
+	@Override
+	public boolean isChapterLikedByUser(Integer userId, Integer chapterId) {
+		Optional<User> userOpt = userRepository.findById(userId);
+		Optional<Chapter> chapterOpt = chapterRepo.findById(chapterId);
+		if (userOpt.isPresent() && chapterOpt.isPresent()) {
+			return userOpt.get().getLikedChapters().contains(chapterOpt.get());
+		}
+		return false;
 	}
 
 }

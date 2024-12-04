@@ -24,11 +24,11 @@ import com.nix.config.JwtProvider;
 import com.nix.dtos.CategoryDTO;
 import com.nix.dtos.TagDTO;
 import com.nix.dtos.UserDTO;
+import com.nix.dtos.mappers.UserMapper;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
 import com.nix.models.Category;
 import com.nix.models.Comment;
-import com.nix.models.Rating;
 import com.nix.models.ReadingProgress;
 import com.nix.models.Role;
 import com.nix.models.Tag;
@@ -476,5 +476,27 @@ public class UserServiceImpl implements UserService {
 		userDTO.setPreferredTags(preferredTags);
 
 		return userDTO;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<User> getUserFollowers(Integer userId) throws ResourceNotFoundException {
+
+		List<UserFollow> followerRelations = userFollowRepository.findByFollowedId(userId);
+
+		List<User> followers = followerRelations.stream().map(UserFollow::getFollower).collect(Collectors.toList());
+
+		return followers;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<User> getUserFollowing(Integer userId) throws ResourceNotFoundException {
+
+		List<UserFollow> followingRelations = userFollowRepository.findByFollowerId(userId);
+
+		List<User> following = followingRelations.stream().map(UserFollow::getFollowed).collect(Collectors.toList());
+
+		return following;
 	}
 }

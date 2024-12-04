@@ -150,4 +150,34 @@ public class UserController {
 
 	}
 
+	@GetMapping("/api/user/{userId}/followers")
+	public ResponseEntity<?> getFollowers(@PathVariable Integer userId) {
+		try {
+
+			List<User> followers = userService.getUserFollowers(userId);
+			return ResponseEntity.ok(userSummaryMapper.mapToDTOs(followers));
+		} catch (ResourceNotFoundException ex) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+		} catch (Exception ex) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching followers.");
+		}
+	}
+
+	@GetMapping("/api/user/{userId}/following")
+	public ResponseEntity<?> getFollowing(@RequestHeader("Authorization") String jwt, @PathVariable Integer userId) {
+		try {
+			User currentUser = userService.findUserByJwt(jwt);
+			if (!currentUser.getId().equals(userId)) {
+				return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied.");
+			}
+
+			List<User> following = userService.getUserFollowing(userId);
+			return ResponseEntity.ok(userSummaryMapper.mapToDTOs(following));
+		} catch (ResourceNotFoundException ex) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+		} catch (Exception ex) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching following.");
+		}
+	}
+
 }

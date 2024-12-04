@@ -18,6 +18,7 @@ import com.nix.dtos.ChapterDTO;
 import com.nix.dtos.ChapterSummaryDTO;
 import com.nix.dtos.mappers.ChapterMapper;
 import com.nix.dtos.mappers.ChapterSummaryMapper;
+import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
 import com.nix.models.Chapter;
 import com.nix.models.User;
@@ -58,14 +59,8 @@ public class ChapterController {
 	}
 
 	@GetMapping("/books/{bookId}/chapters")
-	public ResponseEntity<List<ChapterSummaryDTO>> getAllChaptersByBookId(@PathVariable("bookId") Integer bookId,
-			@RequestHeader(value = "Authorization", required = false) String jwt) {
-		User user = null;
-		if (jwt != null) {
-			user = userService.findUserByJwt(jwt);
-		}
-		List<Chapter> chapters = chapterService.findChaptersByBookIdWithUnlockStatus(bookId,
-				user != null ? user.getId() : null);
+	public ResponseEntity<List<ChapterSummaryDTO>> getAllChaptersByBookId(@PathVariable("bookId") Integer bookId) {
+		List<Chapter> chapters = chapterService.findNotDraftedChaptersByBookId(bookId);
 
 		return ResponseEntity.ok(chapterSummaryMapper.mapToDTOs(chapters));
 	}
@@ -91,8 +86,9 @@ public class ChapterController {
 					return ResponseEntity.ok(chapterSummaryMapper.mapToDTO(chapter));
 				}
 				boolean isUnlocked = chapterService.isChapterUnlockedByUser(user.getId(), chapterId);
-				System.out.print(isUnlocked);
+				Boolean isLiked = chapterService.isChapterLikedByUser(user.getId(), chapterId);
 				chapterDTO.setUnlockedByUser(isUnlocked);
+				chapterDTO.setLikedByCurrentUser(isLiked);
 				return ResponseEntity.ok(chapterDTO);
 			} else {
 				return ResponseEntity.ok(chapterSummaryMapper.mapToDTO(chapter));
@@ -121,14 +117,14 @@ public class ChapterController {
 	}
 
 	@PostMapping("/api/books/{bookId}/chapters")
-	public ResponseEntity<Chapter> addNewChapter(@PathVariable("bookId") Integer bookId, @RequestBody Chapter chapter)
+	public ResponseEntity<Chapter> publishChapter(@PathVariable("bookId") Integer bookId, @RequestBody Chapter chapter)
 			throws Exception {
 		Book book = bookService.getBookById(bookId);
 		if (book == null) {
 			throw new Exception("Book not found");
 		}
 
-		Chapter newChapter = chapterService.addChapterAndNotifyFollowers(bookId, chapter);
+		Chapter newChapter = chapterService.publishChapter(bookId, chapter);
 		return new ResponseEntity<Chapter>(newChapter, HttpStatus.CREATED);
 	}
 
@@ -167,6 +163,56 @@ public class ChapterController {
 			return ResponseEntity.ok("Chapter unlocked successfully");
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+		}
+	}
+
+	@PostMapping("/api/chapters/{chapterId}/like")
+	public ResponseEntity<?> likeChapter(@RequestHeader("Authorization") String jwt, @PathVariable Integer chapterId) {
+		try {
+			User user = userService.findUserByJwt(jwt);
+			Chapter chapter = chapterService.likeChapter(user.getId(), chapterId);
+			ChapterDTO chapterDTO = chapterMapper.mapToDTO(chapter);
+			chapterDTO.setLikedByCurrentUser(true);
+			return ResponseEntity.ok(chapterDTO);
+
+		} catch (ResourceNotFoundException ex) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+		} catch (Exception ex) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error liking chapter.");
+		}
+	}
+
+	/**
+	 * Endpoint to unlike a chapter.
+	 */
+	@DeleteMapping("/api/chapters/{chapterId}/like")
+	public ResponseEntity<?> unlikeChapter(@RequestHeader("Authorization") String jwt,
+			@PathVariable Integer chapterId) {
+		try {
+			User user = userService.findUserByJwt(jwt);
+			Chapter chapter = chapterService.unlikeChapter(user.getId(), chapterId);
+			ChapterDTO chapterDTO = chapterMapper.mapToDTO(chapter);
+			chapterDTO.setLikedByCurrentUser(false);
+			return ResponseEntity.ok(chapterDTO);
+		} catch (ResourceNotFoundException ex) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+		} catch (Exception ex) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error unliking chapter.");
+		}
+	}
+
+	/**
+	 * Endpoint to check if a chapter is liked by the user.
+	 */
+	@GetMapping("/api/chapters/{chapterId}/isLiked")
+	public ResponseEntity<Boolean> isChapterLiked(@RequestHeader("Authorization") String jwt,
+			@PathVariable Integer chapterId) {
+		try {
+			User user = userService.findUserByJwt(jwt);
+			boolean isLiked = chapterService.isChapterLikedByUser(user.getId(), chapterId);
+			return ResponseEntity.ok(isLiked);
+		} catch (Exception ex) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
 		}
 	}
 

@@ -50,8 +50,13 @@ public interface UserService {
 	public User followUser(Integer currentUserId, Integer followedUserId);
 
 	public User unFollowUser(Integer currentUserId, Integer unfollowedUserId);
-	
+
 	public boolean isFollowedByCurrentUser(User currentUser, User otherUser);
-	
+
 	public UserDTO getUserPreferences(Integer userId);
+
+	public List<User> getUserFollowers(Integer userId);
+	
+	public List<User> getUserFollowing(Integer userId);
+	
 }
