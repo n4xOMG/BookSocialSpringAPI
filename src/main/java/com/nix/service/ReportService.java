@@ -6,6 +6,8 @@ import com.nix.models.Report;
 
 public interface ReportService {
 	Report createReport(Report report) throws Exception;
+	
+	Report saveReport(Report report);
 
 	List<Report> getAllReports();
 

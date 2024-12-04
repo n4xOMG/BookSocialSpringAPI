@@ -47,4 +47,9 @@ public class ReportServiceImpl implements ReportService {
 		reportRepository.delete(report);
 	}
 
+	@Override
+	public Report saveReport(Report report) {
+		return reportRepository.save(report);
+	}
+
 }

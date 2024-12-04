@@ -1,6 +1,7 @@
 package com.nix.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,12 +19,14 @@ import com.nix.models.Book;
 import com.nix.models.Chapter;
 import com.nix.models.Comment;
 import com.nix.models.Post;
+import com.nix.models.Report;
 import com.nix.models.SensitiveWord;
 import com.nix.models.User;
 import com.nix.repository.BookRepository;
 import com.nix.repository.ChapterRepository;
 import com.nix.repository.CommentRepository;
 import com.nix.repository.PostRepository;
+import com.nix.repository.ReportRepository;
 import com.nix.repository.SensitiveWordRepository;
 import com.nix.repository.UserRepository;
 
@@ -50,6 +53,9 @@ public class CommentServiceImpl implements CommentService {
 
 	@Autowired
 	SensitiveWordRepository sensitiveWordRepo;
+	
+	@Autowired
+	ReportRepository reportRepository;
 
 	@PersistenceContext
 	private EntityManager entityManager;
@@ -235,42 +241,49 @@ public class CommentServiceImpl implements CommentService {
 	}
 
 	@Override
-	@Transactional
-	public String deleteComment(Integer commentId, Integer userId) throws Exception {
-		Comment comment = findCommentById(commentId);
-		Optional<User> reqUser = userRepo.findById(userId);
+    @Transactional
+    public String deleteComment(Integer commentId, Integer userId) throws Exception {
+        Comment comment = findCommentById(commentId);
+        User requestingUser = userRepo.findById(userId)
+                .orElseThrow(() -> new Exception("User not found"));
 
-		if (!reqUser.isPresent()
-				|| (!reqUser.get().getRole().getName().equals("ADMIN") && !comment.getUser().getId().equals(userId))) {
-			return "Cannot delete comment, invalid user!";
-		}
+        // Authorization check: Only ADMIN or the comment owner can delete
+        if (!requestingUser.getRole().getName().equals("ADMIN") 
+                && !comment.getUser().getId().equals(userId)) {
+            throw new Exception("Cannot delete comment, invalid user!");
+        }
 
-		try {
-			// Ensure the comment is managed
-			comment = entityManager.merge(comment);
+        try {
+            // Remove associations in Reports to prevent FK constraints
+            List<Report> reports = reportRepository.findByCommentId(commentId);
+            for (Report report : reports) {
+                report.setComment(null);
+                reportRepository.save(report);
+            }
 
-			// Delete all reply comments one by one
-			for (Comment reply : comment.getReplies()) {
-				reply = entityManager.merge(reply); // Ensure it's managed
-				entityManager.remove(reply); // Remove the reply
-			}
-			comment.getReplies().clear(); // Clear the replies list
+            // Remove associations with liked users
+            for (User user : new ArrayList<>(comment.getLikedUsers())) {
+                user.getLikedComments().remove(comment);
+            }
+            comment.getLikedUsers().clear();
 
-			// Remove associations with liked users
-			for (User user : comment.getLikedUsers()) {
-				user.getLikedComments().remove(comment);
-			}
-			comment.getLikedUsers().clear();
+            // Remove the comment from its parent if it has one
+            if (comment.getParentComment() != null) {
+                Comment parent = comment.getParentComment();
+                parent.getReplies().remove(comment);
+                comment.setParentComment(null);
+                entityManager.merge(parent);
+            }
 
-			// Remove the parent comment
-			entityManager.remove(comment);
+            // Delete the comment; child comments will be deleted due to cascade
+            entityManager.remove(entityManager.contains(comment) ? comment : entityManager.merge(comment));
 
-			return "Comment deleted successfully!";
-		} catch (Exception e) {
-			System.err.println("Error deleting comment: " + e.getMessage());
-			throw new Exception("Error deleting comment: " + e.getMessage(), e);
-		}
-	}
+            return "Comment deleted successfully!";
+        } catch (Exception e) {
+            System.err.println("Error deleting comment: " + e.getMessage());
+            throw new Exception("Error deleting comment: " + e.getMessage(), e);
+        }
+    }
 
 	@Override
 	public Comment editComment(Integer userId, Integer commentId, Comment comment) throws Exception {

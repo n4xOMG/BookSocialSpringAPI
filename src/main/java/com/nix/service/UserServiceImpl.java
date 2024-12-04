@@ -295,7 +295,7 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public User unbanUser(Integer userId) {
 		User user = findUserById(userId);
-		user.setBanned(true);
+		user.setBanned(false);
 
 		return userRepo.save(user);
 	}
