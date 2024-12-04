@@ -76,7 +76,8 @@ public class AdminController {
 			if (user == null) {
 				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
 			}
-			return new ResponseEntity<>(userService.suspendUser(userId), HttpStatus.OK);
+			User suspendedUser = userService.suspendUser(userId);
+			return new ResponseEntity<>(userMapper.mapToDTO(suspendedUser), HttpStatus.OK);
 
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -91,7 +92,8 @@ public class AdminController {
 			if (user == null) {
 				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
 			}
-			return new ResponseEntity<>(userService.unsuspendUser(userId), HttpStatus.OK);
+			User unsuspendedUser = userService.unsuspendUser(userId);
+			return new ResponseEntity<>(userMapper.mapToDTO(unsuspendedUser), HttpStatus.OK);
 
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -106,7 +108,8 @@ public class AdminController {
 			if (user == null) {
 				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
 			}
-			return new ResponseEntity<>(userService.banUser(userId), HttpStatus.OK);
+			User bannedUser = userService.banUser(userId);
+			return new ResponseEntity<>(userMapper.mapToDTO(bannedUser), HttpStatus.OK);
 
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -121,7 +124,8 @@ public class AdminController {
 			if (user == null) {
 				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
 			}
-			return new ResponseEntity<>(userService.unbanUser(userId), HttpStatus.OK);
+			User unbannedUser = userService.unbanUser(userId);
+			return new ResponseEntity<>(userMapper.mapToDTO(unbannedUser), HttpStatus.OK);
 
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -131,7 +135,7 @@ public class AdminController {
 	public ResponseEntity<?> updateUserRole(@PathVariable("id") Integer userId, @RequestParam String roleName) {
 		try {
 			User updatedUser = userService.updateUserRole(userId, roleName);
-			return ResponseEntity.ok(updatedUser);
+			return ResponseEntity.ok(userMapper.mapToDTO(updatedUser));
 		} catch (Exception e) {
 			return ResponseEntity.badRequest().body(e.getMessage());
 		}

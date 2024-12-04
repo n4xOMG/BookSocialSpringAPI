@@ -77,25 +77,25 @@ public class ChapterController {
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		Chapter chapter = chapterService.findChapterById(chapterId);
 		ChapterDTO chapterDTO = chapterMapper.mapToDTO(chapter);
+		boolean isUnlocked = false;
+		boolean isLiked = false;
 
-		if (chapter.getPrice() > 0) {
-			if (jwt != null) {
-
-				User user = userService.findUserByJwt(jwt);
-				if (chapter.isLocked() && !chapterService.isChapterUnlockedByUser(user.getId(), chapterId)) {
-					return ResponseEntity.ok(chapterSummaryMapper.mapToDTO(chapter));
-				}
-				boolean isUnlocked = chapterService.isChapterUnlockedByUser(user.getId(), chapterId);
-				Boolean isLiked = chapterService.isChapterLikedByUser(user.getId(), chapterId);
-				chapterDTO.setUnlockedByUser(isUnlocked);
-				chapterDTO.setLikedByCurrentUser(isLiked);
-				return ResponseEntity.ok(chapterDTO);
-			} else {
-				return ResponseEntity.ok(chapterSummaryMapper.mapToDTO(chapter));
-			}
+		// Check JWT and retrieve user if available
+		if (jwt != null) {
+			User user = userService.findUserByJwt(jwt);
+			isUnlocked = chapterService.isChapterUnlockedByUser(user.getId(), chapterId);
+			isLiked = chapterService.isChapterLikedByUser(user.getId(), chapterId);
+			chapterDTO.setUnlockedByUser(isUnlocked);
+			chapterDTO.setLikedByCurrentUser(isLiked);
 		}
-		return ResponseEntity.ok(chapterDTO);
 
+		// For locked chapters with a price, return the summary if not unlocked
+		if (chapter.getPrice() > 0 && chapter.isLocked() && !isUnlocked) {
+			return ResponseEntity.ok(chapterSummaryMapper.mapToDTO(chapter));
+		}
+
+		// Return the full DTO for free or unlocked chapters
+		return ResponseEntity.ok(chapterDTO);
 	}
 
 	@GetMapping("/api/chapters/room/{roomId}")

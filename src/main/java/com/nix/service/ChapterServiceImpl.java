@@ -14,11 +14,13 @@ import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
 import com.nix.models.Chapter;
 import com.nix.models.ChapterUnlockRecord;
+import com.nix.models.Report;
 import com.nix.models.User;
 import com.nix.repository.BookRepository;
 import com.nix.repository.ChapterRepository;
 import com.nix.repository.ChapterUnlockRecordRepository;
 import com.nix.repository.ReadingProgressRepository;
+import com.nix.repository.ReportRepository;
 import com.nix.repository.UserRepository;
 
 @Service
@@ -35,6 +37,9 @@ public class ChapterServiceImpl implements ChapterService {
 
 	@Autowired
 	ReadingProgressRepository progressRepo;
+	
+	@Autowired
+	ReportRepository reportRepository;
 
 	@Autowired
 	private ChapterUnlockRecordRepository unlockRecordRepository;
@@ -112,20 +117,41 @@ public class ChapterServiceImpl implements ChapterService {
 	@Override
 	@Transactional
 	public String deleteChapter(Integer chapterId) throws Exception {
-		Chapter deleteChapter = findChapterById(chapterId);
-		if (deleteChapter == null) {
-			throw new Exception("Chapter not found");
-		}
+	    Chapter deleteChapter = findChapterById(chapterId);
+	    if (deleteChapter == null) {
+	        throw new Exception("Chapter not found");
+	    }
 
-		try {
-			deleteChapter.setBook(null);
-			progressRepo.deleteByChapterId(chapterId);
-			chapterRepo.delete(deleteChapter);
+	    try {
+	        // Step 1: Disassociate chapter from its book
+	        deleteChapter.setBook(null);
 
-			return "Chapter deleted successfully!";
-		} catch (Exception e) {
-			return "Error deleting chapter: " + e.getMessage();
-		}
+	        // Step 2: Remove all progress related to this chapter
+	        progressRepo.deleteByChapterId(chapterId);
+
+	        // Step 3: Disassociate chapter from all users who liked it
+	        List<User> users = deleteChapter.getLikedUsers();
+	        for (User user : users) {
+	            user.getLikedChapters().remove(deleteChapter);
+	        }
+	        deleteChapter.getLikedUsers().clear(); // Clear the list to prevent memory leaks
+
+	        // Step 4: Handle Reports referencing this chapter, if applicable
+	        List<Report> reports = reportRepository.findByChapterId(chapterId);
+	        for (Report report : reports) {
+	            report.setChapter(null);
+	            reportRepository.save(report);
+	        }
+
+	        // Step 5: Proceed to delete the chapter
+	        chapterRepo.delete(deleteChapter);
+
+	        return "Chapter deleted successfully!";
+	    } catch (Exception e) {
+	        // Log the error for debugging purposes
+	        System.err.println("Error deleting chapter: " + e.getMessage());
+	        throw new Exception("Error deleting chapter: " + e.getMessage(), e);
+	    }
 	}
 
 	@Override

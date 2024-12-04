@@ -68,24 +68,24 @@ public class ReportController {
 			report.setResolved(false);
 
 			// Associate the report with the relevant entity
-			if (reportDTO.getCommentId() != null) {
-				Comment comment = commentService.findCommentById(reportDTO.getCommentId());
+			if (reportDTO.getComment() != null) {
+				Comment comment = commentService.findCommentById(reportDTO.getComment().getId());
 				if (comment == null) {
 					return new ResponseEntity<>("Comment not found!", HttpStatus.BAD_REQUEST);
 				}
 				report.setComment(comment);
 			}
 
-			if (reportDTO.getBookId() != null) {
-				Book book = bookService.getBookById(reportDTO.getBookId());
+			if (reportDTO.getBook() != null) {
+				Book book = bookService.getBookById(reportDTO.getBook().getId());
 				if (book == null) {
 					return new ResponseEntity<>("Book not found!", HttpStatus.BAD_REQUEST);
 				}
 				report.setBook(book);
 			}
 
-			if (reportDTO.getChapterId() != null) {
-				Chapter chapter = chapterService.findChapterById(reportDTO.getChapterId());
+			if (reportDTO.getChapter() != null) {
+				Chapter chapter = chapterService.findChapterById(reportDTO.getChapter().getId());
 				if (chapter == null) {
 					return new ResponseEntity<>("Chapter not found!", HttpStatus.BAD_REQUEST);
 				}
@@ -138,6 +138,39 @@ public class ReportController {
 		try {
 			reportService.deleteReport(id);
 			return new ResponseEntity<>("Report deleted successfully.", HttpStatus.NO_CONTENT);
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+		}
+	}
+
+	@DeleteMapping("/{id}/delete-object")
+	public ResponseEntity<?> deleteReportedObject(@PathVariable Long id, @RequestHeader("Authorization") String jwt) {
+		try {
+			User user = userService.findUserByJwt(jwt);
+			Report report = reportService.getReportById(id);
+			if (report != null) {
+				if (report.getBook() != null) {
+					Integer bookId = report.getBook().getId();
+					report.setBook(null);
+					reportService.saveReport(report);
+					bookService.deleteBook(bookId);
+				}
+				if (report.getChapter() != null) {
+					Integer chapterId = report.getChapter().getId();
+					report.setChapter(null);
+					reportService.saveReport(report);
+					chapterService.deleteChapter(chapterId);
+				}
+				if (report.getComment() != null) {
+					Integer commentId = report.getComment().getId();
+					report.setComment(null);
+					reportService.saveReport(report);
+					commentService.deleteComment(commentId, user.getId());
+				}
+				resolveReport(id);
+				reportService.deleteReport(id);
+			}
+			return new ResponseEntity<>("Reported object deleted successfully.", HttpStatus.NO_CONTENT);
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
 		}
