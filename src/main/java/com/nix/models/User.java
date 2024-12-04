@@ -13,6 +13,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -62,6 +64,11 @@ public class User implements Serializable {
 	@JsonIgnore
 	@ManyToMany
 	private List<Book> followedBooks = new ArrayList<>();
+
+	@JsonIgnore
+	@ManyToMany
+	@JoinTable(name = "user_liked_chapters", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "chapter_id"))
+	private List<Chapter> likedChapters = new ArrayList<>();
 
 	@JsonIgnore
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

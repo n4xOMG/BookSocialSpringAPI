@@ -17,6 +17,9 @@ public interface ChapterRepository extends JpaRepository<Chapter, Integer> {
 
 	public List<Chapter> findByBookId(Integer bookId);
 
+	@Query("select c from Chapter c where c.isDraft=false and c.book.id=:bookId")
+	public List<Chapter> findNotDraftedChaptersByBookId(Integer bookId);
+
 	Optional<Chapter> findByIdAndIsLocked(Integer id, boolean isLocked);
 
 	@Query("select c.book b from Chapter c order by c.uploadDate DESC limit 5 ")
@@ -26,6 +29,6 @@ public interface ChapterRepository extends JpaRepository<Chapter, Integer> {
 	@Transactional
 	@Query("UPDATE Chapter c SET c.viewCount = c.viewCount + 1 WHERE c.id = :chapterId")
 	void incrementViewCount(@Param("chapterId") Integer chapterId);
-	
+
 	Optional<Chapter> findByRoomId(String roomId);
 }
