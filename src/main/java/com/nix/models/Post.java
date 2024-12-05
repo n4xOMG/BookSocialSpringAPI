@@ -63,4 +63,9 @@ public class Post implements Serializable {
 	@ManyToMany
 	@JoinTable(name = "post_likes", joinColumns = @JoinColumn(name = "post_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
 	private List<User> likedUsers = new ArrayList<>();
+	
+	// New field to reference the original shared post
+	@ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shared_post_id")
+    private Post sharedPost;
 }

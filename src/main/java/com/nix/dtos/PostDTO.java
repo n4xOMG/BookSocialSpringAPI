@@ -17,8 +17,12 @@ public class PostDTO {
 	private Integer id;
 	private UserSummaryDTO user;
 	private String content;
+	private Integer sharedPostId;
 	private List<String> images = new ArrayList<>();
 	private Integer likes;
-	private Integer comments;
+	private List<CommentDTO> comments;
 	private LocalDateTime timestamp;
+	private UserSummaryDTO sharedPostUser;
+	private List<String> sharePostImages = new ArrayList<>();
+    private String sharedPostContent;
 }

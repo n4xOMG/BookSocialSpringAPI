@@ -37,7 +37,13 @@ public class PostController {
 		return ResponseEntity.ok(postMapper.mapToDTOs(posts));
 	}
 
-	@GetMapping("/posts/{userId}")
+	@GetMapping("/posts/{postId}")
+	public ResponseEntity<?> getPostById(@PathVariable Integer postId) {
+		Post post = postService.getPostById(postId);
+		return ResponseEntity.ok(postMapper.mapToDTO(post));
+	}
+
+	@GetMapping("/posts/user/{userId}")
 	public ResponseEntity<List<PostDTO>> getPostsByUser(@PathVariable("userId") Integer userId) {
 		User user = userService.findUserById(userId);
 		if (user == null) {
@@ -51,7 +57,7 @@ public class PostController {
 	 * Create a new post
 	 */
 	@PostMapping("/api/posts")
-	public ResponseEntity<PostDTO> createPost(@RequestBody Post post, @RequestHeader("Authorization") String jwt) {
+	public ResponseEntity<PostDTO> createPost(@RequestBody PostDTO post, @RequestHeader("Authorization") String jwt) {
 		User user = userService.findUserByJwt(jwt);
 		Post createdPost = postService.createPost(user, post);
 		return ResponseEntity.ok(postMapper.mapToDTO(createdPost));
@@ -84,7 +90,7 @@ public class PostController {
 	@PostMapping("/api/posts/{postId}/like")
 	public ResponseEntity<PostDTO> likePost(@PathVariable Integer postId, @RequestHeader("Authorization") String jwt) {
 		User user = userService.findUserByJwt(jwt);
-		if (user==null) {
+		if (user == null) {
 			throw new ResourceNotFoundException("Cannot find user");
 		}
 		Post likedPost = postService.likePost(postId, user);

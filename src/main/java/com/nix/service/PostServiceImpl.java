@@ -1,11 +1,13 @@
 package com.nix.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.nix.dtos.PostDTO;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Post;
 import com.nix.models.User;
@@ -32,10 +34,21 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
-	public Post createPost(User user, Post post) {
-		post.setUser(user);
-		post.setTimestamp(java.time.LocalDateTime.now());
-		return postRepository.save(post);
+	public Post createPost(User user, PostDTO post) {
+		Post newPost = new Post();
+		newPost.setUser(user);
+		newPost.setContent(post.getContent());
+		if (post.getImages() != null) {
+			newPost.setImages(post.getImages());
+		}
+		newPost.setLikes(0);
+		newPost.setTimestamp(LocalDateTime.now());
+		if (post.getSharedPostId() != null) {
+			Post sharedPost = postRepository.findById(post.getSharedPostId()).orElseThrow(
+					() -> new ResourceNotFoundException("Cannot find shared post with id: " + post.getSharedPostId()));
+			newPost.setSharedPost(sharedPost);
+		}
+		return postRepository.save(newPost);
 	}
 
 	@Override
@@ -81,6 +94,12 @@ public class PostServiceImpl implements PostService {
 		}
 
 		return postRepository.save(post);
+	}
+
+	@Override
+	public Post getPostById(Integer postId) {
+		return postRepository.findById(postId)
+				.orElseThrow(() -> new ResourceNotFoundException("Post not found with id " + postId));
 	}
 
 }
