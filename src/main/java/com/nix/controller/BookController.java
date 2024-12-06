@@ -63,12 +63,6 @@ public class BookController {
 		return ResponseEntity.ok(bookMapper.mapToDTO(book));
 	}
 
-	@GetMapping("/books/top-views")
-	public ResponseEntity<List<BookDTO>> getTop10BooksByViews() {
-		List<Book> books = bookService.getTop10ViewedBooks();
-		return ResponseEntity.ok(bookMapper.mapToDTOs(books));
-	}
-
 	@GetMapping("/books/top-likes")
 	public ResponseEntity<List<BookDTO>> getTop10BooksByLikes() {
 		List<Book> books = bookService.getTop10LikedBooks();

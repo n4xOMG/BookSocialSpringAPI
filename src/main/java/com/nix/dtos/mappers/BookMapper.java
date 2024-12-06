@@ -33,7 +33,6 @@ public class BookMapper implements Mapper<Book, BookDTO> {
 		bookDTO.setBookCover(book.getBookCover());
 		bookDTO.setDescription(book.getDescription());
 		bookDTO.setUploadDate(book.getUploadDate());
-		bookDTO.setViewCount(book.getViewCount());
 		bookDTO.setSuggested(book.isSuggested());
 		bookDTO.setStatus(book.getStatus());
 		if (book.getRatings() != null && !book.getRatings().isEmpty()) {

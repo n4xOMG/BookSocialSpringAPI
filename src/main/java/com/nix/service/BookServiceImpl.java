@@ -78,7 +78,6 @@ public class BookServiceImpl implements BookService {
 		book.setBookCover(bookDTO.getBookCover());
 		book.setLanguage(bookDTO.getLanguage());
 		book.setStatus(bookDTO.getStatus());
-		book.setViewCount(0);
 		book.setUploadDate(LocalDateTime.now());
 		book.setSuggested(false);
 
@@ -118,7 +117,6 @@ public class BookServiceImpl implements BookService {
 		existingBook.setLanguage(bookDTO.getLanguage());
 		existingBook.setStatus(bookDTO.getStatus());
 		existingBook.setSuggested(bookDTO.isSuggested());
-		existingBook.setViewCount(bookDTO.getViewCount());
 
 		// Change Category
 		Category newCategory = categoryRepository.findById(bookDTO.getCategoryId()).orElseThrow(
@@ -193,11 +191,6 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	public List<Book> getTop10ViewedBooks() {
-		return bookRepo.findTop10ByOrderByViewCountDesc();
-	}
-
-	@Override
 	public List<Book> getTop10LikedBooks() {
 		return bookRepo.findTopBooksByLikes();
 	}
@@ -227,13 +220,6 @@ public class BookServiceImpl implements BookService {
 		User user = userRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 		return user.getFollowedBooks();
-	}
-
-	@Override
-	public Book incrementViewCount(Integer id) {
-		Book book = getBookById(id);
-		book.setViewCount(book.getViewCount() + 1);
-		return bookRepo.save(book);
 	}
 
 	@Override

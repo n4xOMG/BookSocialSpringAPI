@@ -3,9 +3,7 @@ package com.nix.dtos.mappers;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.nix.dtos.BookDTO;
 import com.nix.dtos.ChapterSummaryDTO;
-import com.nix.models.Book;
 import com.nix.models.Chapter;
 
 public class ChapterSummaryMapper implements Mapper<Chapter, ChapterSummaryDTO> {
@@ -21,7 +19,6 @@ public class ChapterSummaryMapper implements Mapper<Chapter, ChapterSummaryDTO> 
 			chapterSummaryDTO.setChapterNum(c.getChapterNum());
 			chapterSummaryDTO.setLocked(c.isLocked());
 			chapterSummaryDTO.setPrice(c.getPrice());
-			chapterSummaryDTO.setUnlockedByUser(c.isUnlockedByUser());
 			chapterSummaryDTO.setTitle(c.getTitle());
 			chapterSummaryDTO.setUploadDate(c.getUploadDate());
 			return chapterSummaryDTO;

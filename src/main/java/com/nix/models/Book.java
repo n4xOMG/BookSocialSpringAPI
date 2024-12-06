@@ -49,7 +49,6 @@ public class Book implements Serializable {
 	private String language;
 	private boolean isSuggested;
 	private String status;
-	private long viewCount;
 
 	@ManyToOne
 	private User author;
