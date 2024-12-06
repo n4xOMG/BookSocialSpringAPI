@@ -47,8 +47,7 @@ public class Chapter implements Serializable {
 	private LocalDateTime uploadDate;
 	private int price;
 	private boolean isLocked;
-	private int viewCount;
-	private boolean isUnlockedByUser = false;
+
 	@JsonIgnore
 	@ManyToOne
 	@JoinColumn(name = "book_id")

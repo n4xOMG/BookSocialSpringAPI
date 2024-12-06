@@ -32,22 +32,18 @@ public interface BookService {
 
 	List<Category> getTopSixCategoriesWithBooks();
 
-	public List<Book> getTop10ViewedBooks();
-
 	public List<Book> getTop10LikedBooks();
 
 	List<Book> getFeaturedBooks();
 
 	public Book markAsFavouriteBook(Book book, User user);
 
-	public Book incrementViewCount(Integer id);
-	
 	public Book setEditorChoice(Integer id, BookDTO bookDTO);
 
 	List<Book> getFollowedBooksByUserId(Integer id);
 
 	List<Book> getTopRecentChapterBooks(int limit);
-	
+
 	List<Book> getRelatedBooks(Integer bookId, List<Integer> tagIds);
 
 }

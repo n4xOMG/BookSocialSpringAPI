@@ -156,12 +156,6 @@ public class ChapterServiceImpl implements ChapterService {
 	}
 
 	@Override
-	public void incrementChapterViewCount(Integer chapterId) {
-		chapterRepo.incrementViewCount(chapterId);
-
-	}
-
-	@Override
 	public void unlockChapter(Integer userId, Integer chapterId) throws Exception {
 		Chapter chapter = chapterRepo.findById(chapterId).orElseThrow(() -> new Exception("Chapter not found"));
 
@@ -204,27 +198,6 @@ public class ChapterServiceImpl implements ChapterService {
 		return unlockRecord.isPresent();
 	}
 
-	@Override
-	public List<Chapter> findChaptersByBookIdWithUnlockStatus(Integer bookId, Integer userId) {
-		List<Chapter> chapters = chapterRepo.findByBookId(bookId);
-
-		chapters.forEach(chapter -> {
-			if (chapter.getPrice() <= 0) {
-				// Free chapters are always unlocked
-				chapter.setUnlockedByUser(true);
-			} else if (userId != null) {
-				List<Integer> unlockedChapterIds = unlockRecordRepository.findChapterIdsByUserId(userId);
-				if (unlockedChapterIds.contains(chapter.getId())) {
-					chapter.setUnlockedByUser(true);
-				}
-
-			} else {
-				chapter.setUnlockedByUser(false);
-			}
-		});
-
-		return chapters;
-	}
 
 	@Override
 	public Chapter getChapterByRoomId(String roomId) {

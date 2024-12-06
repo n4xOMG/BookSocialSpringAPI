@@ -34,7 +34,6 @@ public class ChapterMapper implements Mapper<Chapter, ChapterDTO> {
 			chapterDTO.setBookId(chapter.getBook().getId());
 			chapterDTO.setContent(chapter.getContent());
 			chapterDTO.setUploadDate(chapter.getUploadDate());
-			chapterDTO.setUnlockedByUser(chapter.isUnlockedByUser());
 			return chapterDTO;
 		}
 		return null;
