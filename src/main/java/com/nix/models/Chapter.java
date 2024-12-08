@@ -56,7 +56,7 @@ public class Chapter implements Serializable {
 	@OneToMany(mappedBy = "chapter", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Comment> comments = new ArrayList<>();
 
-	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(mappedBy = "chapter", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ReadingProgress> progresses = new ArrayList<>();
 
 	@OneToMany(mappedBy = "chapter", cascade = CascadeType.ALL, orphanRemoval = true)
