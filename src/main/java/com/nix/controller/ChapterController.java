@@ -59,10 +59,35 @@ public class ChapterController {
 	}
 
 	@GetMapping("/books/{bookId}/chapters")
-	public ResponseEntity<List<ChapterSummaryDTO>> getAllChaptersByBookId(@PathVariable("bookId") Integer bookId) {
-		List<Chapter> chapters = chapterService.findNotDraftedChaptersByBookId(bookId);
+	public ResponseEntity<List<ChapterSummaryDTO>> getAllChaptersByBookId(
+	        @PathVariable("bookId") Integer bookId,
+	        @RequestHeader(value = "Authorization", required = false) String jwt) {
+	    List<Chapter> chapters = chapterService.findNotDraftedChaptersByBookId(bookId);
+	    List<ChapterSummaryDTO> chapterDTOs = chapterSummaryMapper.mapToDTOs(chapters);
 
-		return ResponseEntity.ok(chapterSummaryMapper.mapToDTOs(chapters));
+	    // Initialize the unlock status to false
+	    boolean isAuthenticated = jwt != null;
+	    User user = null;
+	    if (isAuthenticated) {
+	        // Check if the user exists
+	        user = userService.findUserByJwt(jwt);
+	    }
+
+	    for (int i = 0; i < chapters.size(); i++) {
+	        Chapter chapter = chapters.get(i);
+	        ChapterSummaryDTO dto = chapterDTOs.get(i);
+
+	        // If authenticated, check if the chapter is unlocked by the user
+	        if (isAuthenticated && user != null) {
+	            boolean isUnlocked = chapterService.isChapterUnlockedByUser(user.getId(), chapter.getId());
+	            dto.setUnlockedByUser(isUnlocked);
+	        } else {
+	            // Default to false if the user is not authenticated
+	            dto.setUnlockedByUser(false);
+	        }
+	    }
+
+	    return ResponseEntity.ok(chapterDTOs);
 	}
 
 	@GetMapping("/api/books/{bookId}/chapters")

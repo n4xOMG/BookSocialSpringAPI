@@ -14,6 +14,7 @@ import com.nix.dtos.BookDTO;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
 import com.nix.models.Category;
+import com.nix.models.Chapter;
 import com.nix.models.Tag;
 import com.nix.models.User;
 import com.nix.repository.BookRepository;
@@ -155,18 +156,25 @@ public class BookServiceImpl implements BookService {
 		Book existingBook = bookRepo.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
 
-		existingBook.getFavoured().forEach(user -> user.getLikedComments().remove(existingBook));
-		existingBook.getFavoured().forEach(user -> user.getFollowedBooks().remove(existingBook));
+		// Remove associations with Users
+		existingBook.getFavoured().forEach(user -> {
+			user.getLikedComments().remove(existingBook);
+			user.getFollowedBooks().remove(existingBook);
+		});
 		existingBook.getFavoured().clear();
 
-		existingBook.getCategory().getBooks().remove(existingBook);
+		// Remove association with Category
+		Category category = existingBook.getCategory();
+		if (category != null) {
+			category.getBooks().remove(existingBook);
+			existingBook.setCategory(null);
+		}
 
 		// Remove associations with Tags
-		for (Tag tag : existingBook.getTags()) {
-			tag.getBooks().remove(existingBook);
-		}
+		existingBook.getTags().forEach(tag -> tag.getBooks().remove(existingBook));
 		existingBook.getTags().clear();
 
+		// Delete the Book (Cascading will handle Chapters and ReadingProgress)
 		bookRepo.delete(existingBook);
 	}
 

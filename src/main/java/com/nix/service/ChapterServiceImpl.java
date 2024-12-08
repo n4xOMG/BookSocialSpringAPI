@@ -109,7 +109,9 @@ public class ChapterServiceImpl implements ChapterService {
 		editChapter.setChapterNum(chapter.getChapterNum());
 		editChapter.setPrice(chapter.getPrice());
 		editChapter.setTitle(chapter.getTitle());
-		editChapter.setContent(chapter.getContent());
+		if (chapter.getContent()!=null) {
+			editChapter.setContent(chapter.getContent());
+		}
 		editChapter.setLocked(chapter.isLocked());
 		editChapter.setDraft(chapter.isDraft());
 		return chapterRepo.save(editChapter);
