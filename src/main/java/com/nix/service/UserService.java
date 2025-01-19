@@ -14,9 +14,9 @@ public interface UserService {
 
 	public Page<User> getAllUsers(int page, int size, String searchTerm);
 
-	public User register(User user, String url) throws UnsupportedEncodingException, MessagingException;
+	public User register(User user) throws UnsupportedEncodingException, MessagingException;
 
-	public User sendForgotPasswordMail(User user, String url) throws UnsupportedEncodingException, MessagingException;
+	public User sendForgotPasswordMail(User user) throws UnsupportedEncodingException, MessagingException;
 
 	public User findUserById(Integer userId);
 

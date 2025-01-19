@@ -1,10 +1,10 @@
 package com.nix.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.nix.models.Book;
 import com.nix.models.Category;
@@ -58,23 +58,24 @@ public class CategoryServiceImpl implements CategoryService {
 		}
 	}
 
-	@Override
-	@Transactional
 	public String deleteCategory(Integer categoryId) {
 		try {
 			Category deleteCategory = findCategoryById(categoryId);
 
-			for (Book book : deleteCategory.getBooks()) {
+			List<Book> booksToRemove = new ArrayList<>(deleteCategory.getBooks());
+
+			for (Book book : booksToRemove) {
 				book.setCategory(null);
-				deleteCategory.getBooks().remove(book);
 
 				bookRepo.save(book);
 			}
+
 			categoryRepo.delete(deleteCategory);
+
 			return "Category deleted";
 
 		} catch (Exception e) {
-			return "Failed to delete category" + e;
+			return "Failed to delete category: " + e.getMessage();
 		}
 	}
 
