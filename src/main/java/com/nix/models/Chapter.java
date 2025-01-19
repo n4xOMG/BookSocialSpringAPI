@@ -41,7 +41,7 @@ public class Chapter implements Serializable {
 	private String chapterNum;
 	private String title;
 
-	@Column(columnDefinition = "TEXT")
+	@Column(columnDefinition = "LONGTEXT")
 	private String content;
 
 	private LocalDateTime uploadDate;

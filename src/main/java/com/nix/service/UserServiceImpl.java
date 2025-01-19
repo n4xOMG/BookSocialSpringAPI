@@ -6,8 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +24,6 @@ import com.nix.config.JwtProvider;
 import com.nix.dtos.CategoryDTO;
 import com.nix.dtos.TagDTO;
 import com.nix.dtos.UserDTO;
-import com.nix.dtos.mappers.UserMapper;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
 import com.nix.models.Category;
@@ -86,7 +85,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public User register(User user, String url) throws UnsupportedEncodingException, MessagingException {
+	public User register(User user) throws UnsupportedEncodingException, MessagingException {
 		User newUser = new User();
 		newUser.setEmail(user.getEmail());
 		newUser.setUsername(user.getUsername());
@@ -108,16 +107,13 @@ public class UserServiceImpl implements UserService {
 		newUser.setRole(roleRepo.findByName("USER"));
 
 		User savedUser = userRepo.save(newUser);
-		sendMail(savedUser, url, "Welcome to our fandom!",
-				"Dear [[username]],<br>" + "Please click the link below to complete signing up:<br>"
-						+ "<h3><a href=\"[[URL]]\" target=\"_self\">SIGN UP</a></h3>" + "Thank you,<br>" + "nixOMG.",
-				"register");
+		sendMail(savedUser,  "Welcome to our fandom!", "Dear [[username]],<br>" + "Your OTP code to complete signing up is: <b>[[OTP]]</b><br>" + "Thank you,<br>" + "nixOMG.");
 		;
 		return savedUser;
 	}
 
 	@Override
-	public User sendForgotPasswordMail(User user, String url) throws UnsupportedEncodingException, MessagingException {
+	public User sendForgotPasswordMail(User user) throws UnsupportedEncodingException, MessagingException {
 		user.setIsVerified(false);
 
 		String randomCode = generateRandomCode();
@@ -125,10 +121,8 @@ public class UserServiceImpl implements UserService {
 		user.setVerificationCode(randomCode);
 
 		User reqUser = userRepo.save(user);
-		sendMail(reqUser, url, "Confirm changing password.",
-				"Dear [[username]],<br>" + "Please click the link below to confirm changing your password:<br>"
-						+ "<h3><a href=\"[[URL]]\" target=\"_self\">VERIFY</a></h3>" + "Thank you,<br>" + "nixOMG.",
-				"reset-password");
+		sendMail(reqUser, "Your OTP Code", "Dear [[username]],<br>"
+				+ "Your OTP code for password reset is: <b>[[OTP]]</b><br>" + "Thank you,<br>" + "nixOMG.");
 
 		return reqUser;
 	}
@@ -164,8 +158,8 @@ public class UserServiceImpl implements UserService {
 			user.setVerificationCode(generateRandomCode());
 			userUpdate.setVerificationCode(user.getVerificationCode());
 			userRepo.save(userUpdate);
-			sendMail(user, url, "Email Verification", "Please verify your email by clicking the link: [[URL]]",
-					"updateProfile");
+			sendMail(user,  "Email Verification", "Please verify your email by clicking the link: [[URL]]"
+					);
 		}
 		if (user.getUsername() != null) {
 			userUpdate.setUsername(user.getUsername());
@@ -225,7 +219,7 @@ public class UserServiceImpl implements UserService {
 		return user;
 	}
 
-	private void sendMail(User user, String siteURL, String subject, String content, String action)
+	private void sendMail(User user, String subject, String content)
 			throws MessagingException, UnsupportedEncodingException {
 		String toAddress = user.getEmail();
 		String fromAddress = "testnixomg123@gmail.com";
@@ -243,10 +237,8 @@ public class UserServiceImpl implements UserService {
 		} else {
 			content = content.replace("[[username]]", "User");
 		}
-		String mailVerifyUrl = siteURL + "/auth/verify?code=" + user.getVerificationCode() + "&action=" + action
-				+ "&email=" + user.getEmail();
 
-		content = content.replace("[[URL]]", mailVerifyUrl);
+		content = content.replace("[[OTP]]", user.getVerificationCode());
 
 		helper.setText(content, true);
 		System.out.println("Mail sent to: " + user.getEmail());
@@ -254,12 +246,9 @@ public class UserServiceImpl implements UserService {
 	}
 
 	public String generateRandomCode() {
-		String uuid = UUID.randomUUID().toString().replace("-", "");
-		StringBuilder randomCode = new StringBuilder();
-		for (int i = 0; i < 2; i++) {
-			randomCode.append(uuid);
-		}
-		return randomCode.toString();
+		Random random = new Random();
+		int otp = 100000 + random.nextInt(900000); // Generate a random 6-digit OTP
+		return String.valueOf(otp);
 	}
 
 	@Override
