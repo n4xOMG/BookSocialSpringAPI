@@ -107,7 +107,8 @@ public class UserServiceImpl implements UserService {
 		newUser.setRole(roleRepo.findByName("USER"));
 
 		User savedUser = userRepo.save(newUser);
-		sendMail(savedUser,  "Welcome to our fandom!", "Dear [[username]],<br>" + "Your OTP code to complete signing up is: <b>[[OTP]]</b><br>" + "Thank you,<br>" + "nixOMG.");
+		sendMail(savedUser, "Welcome to our fandom!", "Dear [[username]],<br>"
+				+ "Your OTP code to complete signing up is: <b>[[OTP]]</b><br>" + "Thank you,<br>" + "nixOMG.");
 		;
 		return savedUser;
 	}
@@ -152,36 +153,36 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public User updateCurrentSessionUser(String jwt, User user, String url)
 			throws UnsupportedEncodingException, MessagingException {
+
 		User userUpdate = findUserByJwt(jwt);
 
+		// Generate OTP if email is changed
 		if (user.getEmail() != null && !user.getEmail().equals(userUpdate.getEmail())) {
-			user.setVerificationCode(generateRandomCode());
-			userUpdate.setVerificationCode(user.getVerificationCode());
+			String otpCode = generateRandomCode();
+			user.setVerificationCode(otpCode);
+			user.setIsVerified(false);
+			userUpdate.setVerificationCode(otpCode);
+			userUpdate.setIsVerified(false); // Mark email as unverified until OTP is confirmed
 			userRepo.save(userUpdate);
-			sendMail(user,  "Email Verification", "Please verify your email by clicking the link: [[URL]]"
-					);
+
+			sendMail(user, "Email Verification", "Please verify your email with this OTP: " + otpCode);
+			return userUpdate; // Return user without updating email yet
 		}
-		if (user.getUsername() != null) {
+
+		// Other profile updates (allowed directly)
+		if (user.getUsername() != null)
 			userUpdate.setUsername(user.getUsername());
-		}
-		if (user.getFullname() != null) {
+		if (user.getFullname() != null)
 			userUpdate.setFullname(user.getFullname());
-		}
-		if (user.getGender() != null) {
+		if (user.getGender() != null)
 			userUpdate.setGender(user.getGender());
-		}
-		if (user.getBirthdate() != null) {
+		if (user.getBirthdate() != null)
 			userUpdate.setBirthdate(user.getBirthdate());
-		}
-		if (user.getAvatarUrl() != null) {
+		if (user.getAvatarUrl() != null)
 			userUpdate.setAvatarUrl(user.getAvatarUrl());
-		}
-		if (user.getBio() != null) {
+		if (user.getBio() != null)
 			userUpdate.setBio(user.getBio());
-		}
-		if (user.getIsVerified() != null) {
-			userUpdate.setIsVerified(user.getIsVerified());
-		}
+
 		return userRepo.save(userUpdate);
 	}
 

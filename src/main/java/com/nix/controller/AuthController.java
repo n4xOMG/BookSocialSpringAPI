@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nix.config.JwtProvider;
@@ -100,6 +101,19 @@ public class AuthController {
 		return ResponseEntity.ok("Reset password link has been sent to your email.");
 	}
 
+	@PostMapping("/api/user/update-email")
+	public ResponseEntity<?> updateUserEmail(@RequestHeader("Authorization") String jwt,
+			@RequestBody Map<String, String> request) {
+		User user = userService.findUserByJwt(jwt);
+
+		user.setEmail(request.get("email")); // Now update email
+		user.setIsVerified(true); // Mark email as verified
+		user.setVerificationCode(null); // Clear OTP
+		userService.updateUser(user.getId(), user);
+
+		return ResponseEntity.ok("Email verified successfully");
+	}
+
 	@PostMapping("/auth/reset-password")
 	public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
 		try {
@@ -136,12 +150,14 @@ public class AuthController {
 		userService.updateUser(user.getId(), user);
 
 		if ("register".equals(context)) {
-	        return ResponseEntity.ok("OTP verified successfully. Registration complete.");
-	    } else if ("resetPassword".equals(context)) {
-	        return ResponseEntity.ok("OTP verified successfully. Please reset your password.");
-	    } else {
-	        return ResponseEntity.badRequest().body("Invalid context!");
-	    }
+			return ResponseEntity.ok("OTP verified successfully. Registration complete.");
+		} else if ("resetPassword".equals(context)) {
+			return ResponseEntity.ok("OTP verified successfully. Please reset your password.");
+		} else if ("updateProfile".equals(context)) {
+			return ResponseEntity.ok("OTP verified successfully. Update profile complete");
+		} else {
+			return ResponseEntity.badRequest().body("Invalid context!");
+		}
 	}
 
 	public Authentication authenticate(String email, String password) {
