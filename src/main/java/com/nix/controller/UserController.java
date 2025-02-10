@@ -58,7 +58,7 @@ public class UserController {
 
 	@GetMapping("/api/user/profile")
 	public ResponseEntity<?> getUserFromToken(@RequestHeader("Authorization") String jwt) {
-
+		System.out.println("Jwt: " + jwt);
 		try {
 			User user = userService.findUserByJwt(jwt);
 
@@ -80,9 +80,10 @@ public class UserController {
 			HttpServletRequest httpRequest) throws Exception {
 
 		try {
+			
 			UserDTO updateUser = userMapper
 					.mapToDTO(userService.updateCurrentSessionUser(jwt, user, getSiteURL(httpRequest)));
-
+			System.out.println("Update profile from user: "+updateUser.getEmail());
 			return new ResponseEntity<>(updateUser, HttpStatus.OK);
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
