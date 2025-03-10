@@ -18,7 +18,7 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
 	@Query("select b from Book b join b.favoured u where u.id = :userId")
 	public List<Book> findByUserFavoured(@Param("userId") Integer userId);
 
-	@Query("SELECT b FROM Book b LEFT JOIN b.favoured u GROUP BY b.id ORDER BY COUNT(u) DESC")
+	@Query("SELECT b FROM Book b LEFT JOIN b.favoured u GROUP BY b.id ORDER BY COUNT(u) DESC LIMIT 10")
 	public List<Book> findTopBooksByLikes();
 
 	List<Book> findByTitleContainingIgnoreCase(String title);
