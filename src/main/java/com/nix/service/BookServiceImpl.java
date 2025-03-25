@@ -14,7 +14,6 @@ import com.nix.dtos.BookDTO;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
 import com.nix.models.Category;
-import com.nix.models.Chapter;
 import com.nix.models.Tag;
 import com.nix.models.User;
 import com.nix.repository.BookRepository;
@@ -211,16 +210,18 @@ public class BookServiceImpl implements BookService {
 
 	@Override
 	@Transactional
-	public Book markAsFavouriteBook(Book book, User user) {
+	public boolean markAsFavouriteBook(Book book, User user) {
 		if (book.getFavoured().contains(user)) {
 			book.getFavoured().remove(user);
 			user.getFollowedBooks().remove(book);
+			return false;
 		} else {
 			book.getFavoured().add(user);
 			user.getFollowedBooks().add(book);
+			
+			return true;
 		}
 
-		return book;
 	}
 
 	@Override
@@ -274,4 +275,13 @@ public class BookServiceImpl implements BookService {
 		return relatedBooks;
 	}
 
+	@Override
+	public boolean isBookLikedByUser(Integer userId, Integer bookId) {
+		Optional<User> userOpt = userRepository.findById(userId);
+		Optional<Book> bookOpt = bookRepo.findById(bookId);
+		if (userOpt.isPresent() && bookOpt.isPresent()) {
+			return userOpt.get().getFollowedBooks().contains(bookOpt.get());
+		}
+		return false;
+	}
 }

@@ -143,6 +143,21 @@ public class BookController {
 		}
 	}
 
+	/**
+	 * Endpoint to check if a book is liked by the user.
+	 */
+	@GetMapping("/api/books/{bookId}/isLiked")
+	public ResponseEntity<Boolean> checkBookLikedByUser(@RequestHeader("Authorization") String jwt,
+			@PathVariable Integer bookId) {
+		try {
+			User user = userService.findUserByJwt(jwt);
+			boolean isLiked = bookService.isBookLikedByUser(user.getId(), bookId);
+			return ResponseEntity.ok(isLiked);
+		} catch (Exception ex) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
+		}
+	}
+
 	@PostMapping("/api/books")
 	public ResponseEntity<BookDTO> createBook(@RequestBody BookDTO bookDTO) {
 		Book created = bookService.createBook(bookDTO);
@@ -162,13 +177,12 @@ public class BookController {
 	}
 
 	@PutMapping("/api/books/follow/{bookId}")
-	public ResponseEntity<BookDTO> markBookAsFavoured(@RequestHeader("Authorization") String jwt,
+	public ResponseEntity<Boolean> markBookAsFavoured(@RequestHeader("Authorization") String jwt,
 			@PathVariable Integer bookId) {
 		User reqUser = userService.findUserByJwt(jwt);
 		if (reqUser != null) {
-			BookDTO followedBook = bookMapper
-					.mapToDTO(bookService.markAsFavouriteBook(bookService.getBookById(bookId), reqUser));
-			return new ResponseEntity<>(followedBook, HttpStatus.ACCEPTED);
+			Boolean isFollowed = bookService.markAsFavouriteBook(bookService.getBookById(bookId), reqUser);
+			return new ResponseEntity<>(isFollowed, HttpStatus.ACCEPTED);
 		}
 
 		return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);

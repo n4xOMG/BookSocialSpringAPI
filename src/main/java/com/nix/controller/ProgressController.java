@@ -98,15 +98,10 @@ public class ProgressController {
 		return null;
 	}
 
-	@PostMapping("/api/books/{bookId}/chapters/{chapterId}/progress")
+	@PostMapping("/api/chapters/{chapterId}/progress")
 	public ResponseEntity<ReadingProgressDTO> saveReadingProgress(@RequestHeader("Authorization") String jwt,
-			@PathVariable("bookId") Integer bookId, @PathVariable("chapterId") Integer chapterId,
-			@RequestBody ReadingProgress progress) throws Exception {
+			@PathVariable("chapterId") Integer chapterId, @RequestBody ReadingProgress progress) throws Exception {
 
-		Book book = bookService.getBookById(bookId);
-		if (book == null) {
-			throw new Exception("Book not found");
-		}
 		User reqUser = userService.findUserByJwt(jwt);
 		if (reqUser == null) {
 			throw new Exception("User not found");

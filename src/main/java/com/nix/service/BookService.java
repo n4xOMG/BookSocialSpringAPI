@@ -36,7 +36,7 @@ public interface BookService {
 
 	List<Book> getFeaturedBooks();
 
-	public Book markAsFavouriteBook(Book book, User user);
+	public boolean markAsFavouriteBook(Book book, User user);
 
 	public Book setEditorChoice(Integer id, BookDTO bookDTO);
 
@@ -45,5 +45,6 @@ public interface BookService {
 	List<Book> getTopRecentChapterBooks(int limit);
 
 	List<Book> getRelatedBooks(Integer bookId, List<Integer> tagIds);
-
+	
+	public boolean isBookLikedByUser(Integer userId, Integer bookId);
 }

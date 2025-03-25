@@ -1,8 +1,12 @@
 package com.nix.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nix.dtos.mappers.CommentMapper;
@@ -53,7 +58,7 @@ public class CommentController {
 		}
 	}
 
-	@GetMapping("/books/{bookId}/comments")
+	@GetMapping("/admin/books/{bookId}/comments")
 	public ResponseEntity<?> getAllBookComments(@PathVariable("bookId") Integer bookId) {
 		try {
 			List<Comment> comments = commentService.getAllBookComments(bookId);
@@ -64,7 +69,27 @@ public class CommentController {
 		}
 	}
 
-	@GetMapping("/books/{bookId}/chapters/{chapterId}/comments")
+	@GetMapping("/books/{bookId}/comments")
+	public ResponseEntity<?> getPagerBookComments(
+	        @PathVariable("bookId") Integer bookId,
+	        @RequestParam(defaultValue = "0") int page, 
+	        @RequestParam(defaultValue = "10") int size) {
+	    try {
+	        Page<Comment> commentsPage = commentService.getPagerBookComments(page, size, bookId);
+	        Map<String, Object> response = new HashMap<>();
+	        response.put("comments", commentMapper.mapToDTOs(commentsPage.getContent()));
+	        response.put("page", commentsPage.getNumber());
+	        response.put("size", commentsPage.getSize());
+	        response.put("totalPages", commentsPage.getTotalPages());
+	        response.put("totalElements", commentsPage.getTotalElements());
+	        
+	        return ResponseEntity.ok(response);
+	    } catch (Exception e) {
+	        return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+	    }
+	}
+
+	@GetMapping("/api/chapters/{chapterId}/comments")
 	public ResponseEntity<?> getAllChapterComments(@PathVariable("chapterId") Integer chapterId) {
 		try {
 			List<Comment> comments = commentService.getAllChapterComments(chapterId);
@@ -75,22 +100,28 @@ public class CommentController {
 		}
 	}
 
-	@PostMapping("/api/books/{bookId}/comments")
-	public ResponseEntity<?> createBookComment(@RequestHeader("Authorization") String jwt, @RequestBody Comment comment,
-			@PathVariable("bookId") Integer bookId) {
+	@GetMapping("/chapters/{chapterId}/comments")
+	public ResponseEntity<?> getPagerChapterComments(@PathVariable("chapterId") Integer chapterId,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
 		try {
-			User user = userService.findUserByJwt(jwt);
+			Page<Comment> comments = commentService.getPagerChapterComments(page, size, chapterId);
+
+			return ResponseEntity.ok(commentMapper.mapToDTOs(comments.getContent()));
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	private ResponseEntity<?> handleCommentCreation(User user, Supplier<Comment> commentCreator) {
+		try {
 			if (user == null) {
 				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
 			}
-
 			if (user.getIsSuspended()) {
 				return new ResponseEntity<>("User is suspended from commenting", HttpStatus.FORBIDDEN);
 			}
-
-			Comment newComment = commentService.createBookComment(comment, bookId, user);
+			Comment newComment = commentCreator.get();
 			return ResponseEntity.ok(commentMapper.mapToDTO(newComment));
-
 		} catch (SensitiveWordException e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_ACCEPTABLE);
 		} catch (Exception e) {
@@ -98,53 +129,49 @@ public class CommentController {
 		}
 	}
 
-	@PostMapping("/api/books/{bookId}/chapters/{chapterId}/comments")
+	@PostMapping("/api/books/{bookId}/comments")
+	public ResponseEntity<?> createBookComment(@RequestHeader("Authorization") String jwt, @RequestBody Comment comment,
+			@PathVariable("bookId") Integer bookId) {
+		User user = userService.findUserByJwt(jwt);
+		return handleCommentCreation(user, () -> {
+			try {
+				return commentService.createBookComment(comment, bookId, user);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return comment;
+		});
+	}
+
+	@PostMapping("/api/chapters/{chapterId}/comments")
 	public ResponseEntity<?> createChapterComment(@RequestHeader("Authorization") String jwt,
-			@RequestBody Comment comment, @PathVariable("bookId") Integer bookId,
-			@PathVariable("chapterId") Integer chapterId) throws Exception {
-		try {
-			User user = userService.findUserByJwt(jwt);
-			if (user == null) {
-				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
+			@RequestBody Comment comment, @PathVariable("chapterId") Integer chapterId) {
+		User user = userService.findUserByJwt(jwt);
+		return handleCommentCreation(user, () -> {
+			try {
+				return commentService.createChapterComment(comment, chapterId, user);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-
-			if (user.getIsSuspended()) {
-				return new ResponseEntity<>("User is suspended from commenting", HttpStatus.FORBIDDEN);
-			}
-
-			Comment newComment = commentService.createChapterComment(comment, bookId, chapterId, user);
-			return ResponseEntity.ok(commentMapper.mapToDTO(newComment));
-
-		} catch (SensitiveWordException e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_ACCEPTABLE);
-		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-
+			return comment;
+		});
 	}
 
 	@PostMapping("/api/posts/{postId}/comments")
 	public ResponseEntity<?> createPostComment(@RequestHeader("Authorization") String jwt, @RequestBody Comment comment,
-			@PathVariable("postId") Integer postId) throws Exception {
-		try {
-			User user = userService.findUserByJwt(jwt);
-			if (user == null) {
-				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
+			@PathVariable("postId") Integer postId) {
+		User user = userService.findUserByJwt(jwt);
+		return handleCommentCreation(user, () -> {
+			try {
+				return commentService.createPostComment(comment, postId, user);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-
-			if (user.getIsSuspended()) {
-				return new ResponseEntity<>("User is suspended from commenting", HttpStatus.FORBIDDEN);
-			}
-
-			Comment newComment = commentService.createPostComment(comment, postId, user);
-			return ResponseEntity.ok(commentMapper.mapToDTO(newComment));
-
-		} catch (SensitiveWordException e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_ACCEPTABLE);
-		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-
+			return comment;
+		});
 	}
 
 	@PostMapping("/api/books/{bookId}/comments/{parentCommentId}/reply")
@@ -216,8 +243,8 @@ public class CommentController {
 				return new ResponseEntity<>("User is suspended from commenting", HttpStatus.FORBIDDEN);
 			}
 
-			Comment comment = commentService.likeComment(commentId, user.getId());
-			return ResponseEntity.ok(commentMapper.mapToDTO(comment));
+			Boolean isCommentLiked = commentService.likeComment(commentId, user.getId());
+			return ResponseEntity.ok(isCommentLiked);
 
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);

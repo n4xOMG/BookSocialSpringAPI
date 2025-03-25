@@ -97,7 +97,7 @@ public class ChapterController {
 		return ResponseEntity.ok(chapterMapper.mapToDTOs(chapters));
 	}
 
-	@GetMapping("/books/{bookId}/chapters/{chapterId}")
+	@GetMapping("/chapters/{chapterId}")
 	public ResponseEntity<?> getChapterById(@PathVariable("chapterId") Integer chapterId,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		Chapter chapter = chapterService.findChapterById(chapterId);
