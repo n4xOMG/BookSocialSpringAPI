@@ -21,6 +21,7 @@ public class CommentDTO {
 	private Integer bookId;
 	private Integer chapterId;
 	private Integer postId;
+	private boolean isLikedByCurrentUser = false;
 	private List<UserSummaryDTO> likedUsers;
 	private LocalDateTime createdAt;
 	private Integer parentCommentId;
