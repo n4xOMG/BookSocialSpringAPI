@@ -27,7 +27,7 @@ public interface ChapterService {
 
 	public boolean isChapterUnlockedByUser(Integer userId, Integer chapterId);
 
-	public Chapter likeChapter(Integer userId, Integer chapterId) throws Exception;
+	public Boolean likeChapter(Integer userId, Integer chapterId) throws Exception;
 
 	public Chapter unlikeChapter(Integer userId, Integer chapterId) throws Exception;
 

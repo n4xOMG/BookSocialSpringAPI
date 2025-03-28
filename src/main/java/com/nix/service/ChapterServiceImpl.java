@@ -37,7 +37,7 @@ public class ChapterServiceImpl implements ChapterService {
 
 	@Autowired
 	ReadingProgressRepository progressRepo;
-	
+
 	@Autowired
 	ReportRepository reportRepository;
 
@@ -109,7 +109,7 @@ public class ChapterServiceImpl implements ChapterService {
 		editChapter.setChapterNum(chapter.getChapterNum());
 		editChapter.setPrice(chapter.getPrice());
 		editChapter.setTitle(chapter.getTitle());
-		if (chapter.getContent()!=null) {
+		if (chapter.getContent() != null) {
 			editChapter.setContent(chapter.getContent());
 		}
 		editChapter.setLocked(chapter.isLocked());
@@ -120,41 +120,41 @@ public class ChapterServiceImpl implements ChapterService {
 	@Override
 	@Transactional
 	public String deleteChapter(Integer chapterId) throws Exception {
-	    Chapter deleteChapter = findChapterById(chapterId);
-	    if (deleteChapter == null) {
-	        throw new Exception("Chapter not found");
-	    }
+		Chapter deleteChapter = findChapterById(chapterId);
+		if (deleteChapter == null) {
+			throw new Exception("Chapter not found");
+		}
 
-	    try {
-	        // Step 1: Disassociate chapter from its book
-	        deleteChapter.setBook(null);
+		try {
+			// Step 1: Disassociate chapter from its book
+			deleteChapter.setBook(null);
 
-	        // Step 2: Remove all progress related to this chapter
-	        progressRepo.deleteByChapterId(chapterId);
+			// Step 2: Remove all progress related to this chapter
+			progressRepo.deleteByChapterId(chapterId);
 
-	        // Step 3: Disassociate chapter from all users who liked it
-	        List<User> users = deleteChapter.getLikedUsers();
-	        for (User user : users) {
-	            user.getLikedChapters().remove(deleteChapter);
-	        }
-	        deleteChapter.getLikedUsers().clear(); // Clear the list to prevent memory leaks
+			// Step 3: Disassociate chapter from all users who liked it
+			List<User> users = deleteChapter.getLikedUsers();
+			for (User user : users) {
+				user.getLikedChapters().remove(deleteChapter);
+			}
+			deleteChapter.getLikedUsers().clear(); // Clear the list to prevent memory leaks
 
-	        // Step 4: Handle Reports referencing this chapter, if applicable
-	        List<Report> reports = reportRepository.findByChapterId(chapterId);
-	        for (Report report : reports) {
-	            report.setChapter(null);
-	            reportRepository.save(report);
-	        }
+			// Step 4: Handle Reports referencing this chapter, if applicable
+			List<Report> reports = reportRepository.findByChapterId(chapterId);
+			for (Report report : reports) {
+				report.setChapter(null);
+				reportRepository.save(report);
+			}
 
-	        // Step 5: Proceed to delete the chapter
-	        chapterRepo.delete(deleteChapter);
+			// Step 5: Proceed to delete the chapter
+			chapterRepo.delete(deleteChapter);
 
-	        return "Chapter deleted successfully!";
-	    } catch (Exception e) {
-	        // Log the error for debugging purposes
-	        System.err.println("Error deleting chapter: " + e.getMessage());
-	        throw new Exception("Error deleting chapter: " + e.getMessage(), e);
-	    }
+			return "Chapter deleted successfully!";
+		} catch (Exception e) {
+			// Log the error for debugging purposes
+			System.err.println("Error deleting chapter: " + e.getMessage());
+			throw new Exception("Error deleting chapter: " + e.getMessage(), e);
+		}
 	}
 
 	@Override
@@ -200,7 +200,6 @@ public class ChapterServiceImpl implements ChapterService {
 		return unlockRecord.isPresent();
 	}
 
-
 	@Override
 	public Chapter getChapterByRoomId(String roomId) {
 		return chapterRepo.findByRoomId(roomId).get();
@@ -208,7 +207,7 @@ public class ChapterServiceImpl implements ChapterService {
 
 	@Override
 	@Transactional
-	public Chapter likeChapter(Integer userId, Integer chapterId) throws Exception {
+	public Boolean likeChapter(Integer userId, Integer chapterId) throws Exception {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 		Chapter chapter = chapterRepo.findById(chapterId)
@@ -218,9 +217,17 @@ public class ChapterServiceImpl implements ChapterService {
 			user.getLikedChapters().add(chapter);
 			chapter.getLikedUsers().add(user);
 			userRepository.save(user);
-			return chapterRepo.save(chapter);
+			chapterRepo.save(chapter);
+
+			return true;
+		} else {
+			user.getLikedChapters().remove(chapter);
+			chapter.getLikedUsers().remove(user);
+			userRepository.save(user);
+			chapterRepo.save(chapter);
+
+			return false;
 		}
-		return chapter;
 	}
 
 	@Override

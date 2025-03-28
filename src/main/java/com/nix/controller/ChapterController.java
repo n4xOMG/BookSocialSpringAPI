@@ -59,35 +59,34 @@ public class ChapterController {
 	}
 
 	@GetMapping("/books/{bookId}/chapters")
-	public ResponseEntity<List<ChapterSummaryDTO>> getAllChaptersByBookId(
-	        @PathVariable("bookId") Integer bookId,
-	        @RequestHeader(value = "Authorization", required = false) String jwt) {
-	    List<Chapter> chapters = chapterService.findNotDraftedChaptersByBookId(bookId);
-	    List<ChapterSummaryDTO> chapterDTOs = chapterSummaryMapper.mapToDTOs(chapters);
+	public ResponseEntity<List<ChapterSummaryDTO>> getAllChaptersByBookId(@PathVariable("bookId") Integer bookId,
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
+		List<Chapter> chapters = chapterService.findNotDraftedChaptersByBookId(bookId);
+		List<ChapterSummaryDTO> chapterDTOs = chapterSummaryMapper.mapToDTOs(chapters);
 
-	    // Initialize the unlock status to false
-	    boolean isAuthenticated = jwt != null;
-	    User user = null;
-	    if (isAuthenticated) {
-	        // Check if the user exists
-	        user = userService.findUserByJwt(jwt);
-	    }
+		// Initialize the unlock status to false
+		boolean isAuthenticated = jwt != null;
+		User user = null;
+		if (isAuthenticated) {
+			// Check if the user exists
+			user = userService.findUserByJwt(jwt);
+		}
 
-	    for (int i = 0; i < chapters.size(); i++) {
-	        Chapter chapter = chapters.get(i);
-	        ChapterSummaryDTO dto = chapterDTOs.get(i);
+		for (int i = 0; i < chapters.size(); i++) {
+			Chapter chapter = chapters.get(i);
+			ChapterSummaryDTO dto = chapterDTOs.get(i);
 
-	        // If authenticated, check if the chapter is unlocked by the user
-	        if (isAuthenticated && user != null) {
-	            boolean isUnlocked = chapterService.isChapterUnlockedByUser(user.getId(), chapter.getId());
-	            dto.setUnlockedByUser(isUnlocked);
-	        } else {
-	            // Default to false if the user is not authenticated
-	            dto.setUnlockedByUser(false);
-	        }
-	    }
+			// If authenticated, check if the chapter is unlocked by the user
+			if (isAuthenticated && user != null) {
+				boolean isUnlocked = chapterService.isChapterUnlockedByUser(user.getId(), chapter.getId());
+				dto.setUnlockedByUser(isUnlocked);
+			} else {
+				// Default to false if the user is not authenticated
+				dto.setUnlockedByUser(false);
+			}
+		}
 
-	    return ResponseEntity.ok(chapterDTOs);
+		return ResponseEntity.ok(chapterDTOs);
 	}
 
 	@GetMapping("/api/books/{bookId}/chapters")
@@ -191,38 +190,25 @@ public class ChapterController {
 		}
 	}
 
-	@PostMapping("/api/chapters/{chapterId}/like")
+	@PutMapping("/api/chapters/{chapterId}/like")
 	public ResponseEntity<?> likeChapter(@RequestHeader("Authorization") String jwt, @PathVariable Integer chapterId) {
 		try {
 			User user = userService.findUserByJwt(jwt);
-			Chapter chapter = chapterService.likeChapter(user.getId(), chapterId);
+			if (user == null) {
+				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
+			}
+
+			Boolean isLiked = chapterService.likeChapter(user.getId(), chapterId);
+			Chapter chapter = chapterService.findChapterById(chapterId);
 			ChapterDTO chapterDTO = chapterMapper.mapToDTO(chapter);
-			chapterDTO.setLikedByCurrentUser(true);
+			chapterDTO.setLikedByCurrentUser(isLiked);
+			
 			return ResponseEntity.ok(chapterDTO);
 
 		} catch (ResourceNotFoundException ex) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
 		} catch (Exception ex) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error liking chapter.");
-		}
-	}
-
-	/**
-	 * Endpoint to unlike a chapter.
-	 */
-	@DeleteMapping("/api/chapters/{chapterId}/like")
-	public ResponseEntity<?> unlikeChapter(@RequestHeader("Authorization") String jwt,
-			@PathVariable Integer chapterId) {
-		try {
-			User user = userService.findUserByJwt(jwt);
-			Chapter chapter = chapterService.unlikeChapter(user.getId(), chapterId);
-			ChapterDTO chapterDTO = chapterMapper.mapToDTO(chapter);
-			chapterDTO.setLikedByCurrentUser(false);
-			return ResponseEntity.ok(chapterDTO);
-		} catch (ResourceNotFoundException ex) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-		} catch (Exception ex) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error unliking chapter.");
 		}
 	}
 
