@@ -74,16 +74,17 @@ public class CommentServiceImpl implements CommentService {
 	}
 
 	@Override
-	public List<Comment> getAllBookComments(Integer bookId) {
-		List<Comment> comments = commentRepo.findParentCommentsByBookId(bookId);
-		return comments;
+	public Page<Comment> getPagerBookComments(int page, int size, Integer bookId) {
+		Pageable pageable = PageRequest.of(page, size);
 
+		return commentRepo.findParentCommentsByBookId(bookId, pageable);
 	}
 
 	@Override
-	public List<Comment> getAllChapterComments(Integer chapterId) {
-		List<Comment> comments = commentRepo.findParentCommentsByChapterId(chapterId);
-		return comments;
+	public Page<Comment> getPagerChapterComments(int page, int size, Integer chapterId) {
+		Pageable pageable = PageRequest.of(page, size);
+
+		return commentRepo.findParentCommentsByChapterId(chapterId, pageable);
 	}
 
 	@Override
@@ -357,17 +358,12 @@ public class CommentServiceImpl implements CommentService {
 	}
 
 	@Override
-	public Page<Comment> getPagerBookComments(int page, int size, Integer bookId) {
-		Pageable pageable = PageRequest.of(page, size);
-
-		return commentRepo.findByBookId(bookId, pageable);
-	}
-
-	@Override
-	public Page<Comment> getPagerChapterComments(int page, int size, Integer chapterId) {
-		Pageable pageable = PageRequest.of(page, size);
-
-		return commentRepo.findByChapterId(chapterId, pageable);
+	public Boolean isCommentLikedByCurrentUser(Integer commentId, User user) {
+		Optional<Comment> commentOpt = commentRepo.findById(commentId);
+		if (commentOpt.isPresent()) {
+			return user.getLikedComments().contains(commentOpt.get());
+		}
+		return false;
 	}
 
 }

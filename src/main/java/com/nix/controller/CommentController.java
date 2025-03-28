@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nix.dtos.CommentDTO;
 import com.nix.dtos.mappers.CommentMapper;
 import com.nix.exception.SensitiveWordException;
 import com.nix.models.Comment;
@@ -58,55 +59,69 @@ public class CommentController {
 		}
 	}
 
-	@GetMapping("/admin/books/{bookId}/comments")
-	public ResponseEntity<?> getAllBookComments(@PathVariable("bookId") Integer bookId) {
+	@GetMapping("/books/{bookId}/comments")
+	public ResponseEntity<?> getPagerBookComments(@PathVariable("bookId") Integer bookId,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		try {
-			List<Comment> comments = commentService.getAllBookComments(bookId);
+			Page<Comment> commentsPage = commentService.getPagerBookComments(page, size, bookId);
+			List<CommentDTO> commentDTOs = commentMapper.mapToDTOs(commentsPage.getContent());
 
-			return ResponseEntity.ok(commentMapper.mapToDTOs(comments));
+			if (jwt != null && !jwt.isEmpty()) {
+				User user = userService.findUserByJwt(jwt);
+				// Process both top-level comments and their replies
+				for (CommentDTO comment : commentDTOs) {
+					setLikedByCurrentUserRecursively(comment, user, commentService);
+				}
+			}
+
+			Map<String, Object> response = new HashMap<>();
+			response.put("comments", commentDTOs);
+			response.put("page", commentsPage.getNumber());
+			response.put("size", commentsPage.getSize());
+			response.put("totalPages", commentsPage.getTotalPages());
+			response.put("totalElements", commentsPage.getTotalElements());
+
+			return ResponseEntity.ok(response);
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
-	@GetMapping("/books/{bookId}/comments")
-	public ResponseEntity<?> getPagerBookComments(
-	        @PathVariable("bookId") Integer bookId,
-	        @RequestParam(defaultValue = "0") int page, 
-	        @RequestParam(defaultValue = "10") int size) {
-	    try {
-	        Page<Comment> commentsPage = commentService.getPagerBookComments(page, size, bookId);
-	        Map<String, Object> response = new HashMap<>();
-	        response.put("comments", commentMapper.mapToDTOs(commentsPage.getContent()));
-	        response.put("page", commentsPage.getNumber());
-	        response.put("size", commentsPage.getSize());
-	        response.put("totalPages", commentsPage.getTotalPages());
-	        response.put("totalElements", commentsPage.getTotalElements());
-	        
-	        return ResponseEntity.ok(response);
-	    } catch (Exception e) {
-	        return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-	    }
-	}
-
-	@GetMapping("/api/chapters/{chapterId}/comments")
-	public ResponseEntity<?> getAllChapterComments(@PathVariable("chapterId") Integer chapterId) {
-		try {
-			List<Comment> comments = commentService.getAllChapterComments(chapterId);
-
-			return ResponseEntity.ok(commentMapper.mapToDTOs(comments));
-		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+	// Helper method to recursively set likedByCurrentUser
+	private void setLikedByCurrentUserRecursively(CommentDTO comment, User user, CommentService commentService) {
+		comment.setLikedByCurrentUser(commentService.isCommentLikedByCurrentUser(comment.getId(), user));
+		if (comment.getReplyComment() != null && !comment.getReplyComment().isEmpty()) {
+			for (CommentDTO reply : comment.getReplyComment()) {
+				setLikedByCurrentUserRecursively(reply, user, commentService);
+			}
 		}
 	}
 
 	@GetMapping("/chapters/{chapterId}/comments")
 	public ResponseEntity<?> getPagerChapterComments(@PathVariable("chapterId") Integer chapterId,
-			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		try {
 			Page<Comment> comments = commentService.getPagerChapterComments(page, size, chapterId);
 
-			return ResponseEntity.ok(commentMapper.mapToDTOs(comments.getContent()));
+			List<CommentDTO> commentDTOs = commentMapper.mapToDTOs(comments.getContent());
+
+			if (jwt != null && !jwt.isEmpty()) {
+				User user = userService.findUserByJwt(jwt);
+				for (CommentDTO comment : commentDTOs) {
+					comment.setLikedByCurrentUser(commentService.isCommentLikedByCurrentUser(comment.getId(), user));
+				}
+			}
+
+			Map<String, Object> response = new HashMap<>();
+			response.put("comments", commentDTOs);
+			response.put("page", comments.getNumber());
+			response.put("size", comments.getSize());
+			response.put("totalPages", comments.getTotalPages());
+			response.put("totalElements", comments.getTotalElements());
+
+			return ResponseEntity.ok(response);
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -232,7 +247,6 @@ public class CommentController {
 	@PutMapping("/api/comments/{commentId}/like")
 	public ResponseEntity<?> likeComment(@RequestHeader("Authorization") String jwt,
 			@PathVariable("commentId") Integer commentId) throws Exception {
-
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
@@ -244,8 +258,11 @@ public class CommentController {
 			}
 
 			Boolean isCommentLiked = commentService.likeComment(commentId, user.getId());
-			return ResponseEntity.ok(isCommentLiked);
+			Comment comment = commentService.findCommentById(commentId); // Fetch updated comment
+			CommentDTO commentDTO = commentMapper.mapToDTO(comment); // Convert to DTO
+			commentDTO.setLikedByCurrentUser(isCommentLiked); // Ensure this reflects the toggle result
 
+			return ResponseEntity.ok(commentDTO); // Return full CommentDTO
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
