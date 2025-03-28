@@ -12,12 +12,8 @@ public interface CommentService {
 
 	public List<Comment> getAllParentComments();
 
-	public List<Comment> getAllBookComments(Integer bookId);
-
 	public Page<Comment> getPagerBookComments(int page, int size, Integer bookId);
 
-	public List<Comment> getAllChapterComments(Integer chapterId);
-	
 	public Page<Comment> getPagerChapterComments(int page, int size, Integer chapterId);
 
 	public List<Comment> getAllPostComments(Integer postId);
@@ -29,6 +25,8 @@ public interface CommentService {
 	public Comment createChapterComment(Comment comment, Integer chapterId, User user) throws Exception;
 
 	public Boolean likeComment(Integer commentId, Integer userId) throws Exception;
+	
+	public Boolean isCommentLikedByCurrentUser(Integer commentId, User user);
 
 	public Comment findCommentById(Integer commentId) throws Exception;
 
