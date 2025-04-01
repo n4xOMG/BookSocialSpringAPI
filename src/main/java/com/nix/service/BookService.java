@@ -3,48 +3,47 @@ package com.nix.service;
 import java.util.List;
 
 import com.nix.dtos.BookDTO;
-import com.nix.models.Book;
 import com.nix.models.Category;
 import com.nix.models.User;
 
 public interface BookService {
-	public List<Book> getAllBooks();
+	public List<BookDTO> getAllBooks();
 
-	public Book getBookById(Integer id);
+	public BookDTO getBookById(Integer id);
 
-	public Book createBook(BookDTO bookDTO);
+	public BookDTO createBook(BookDTO bookDTO);
 
-	public Book updateBook(Integer id, BookDTO bookDTO);
+	public BookDTO updateBook(Integer id, BookDTO bookDTO);
 
 	public void deleteBook(Integer id);
 
-	public List<Book> searchBooksByTitle(String title);
+	public List<BookDTO> searchBooksByTitle(String title);
 
-	public List<Book> searchBooks(String title, Integer categoryId, List<Integer> tagIds);
+	public List<BookDTO> searchBooks(String title, Integer categoryId, List<Integer> tagIds);
 
-	public List<Book> getBooksByAuthor(Integer authorId);
+	public List<BookDTO> getBooksByAuthor(Integer authorId);
 
-	public List<Book> getBooksBySuggestedStatus(Boolean isSuggested);
+	public List<BookDTO> getBooksBySuggestedStatus(Boolean isSuggested);
 
-	public List<Book> getBooksByStatus(String status);
+	public List<BookDTO> getBooksByStatus(String status);
 
-	List<Book> getBooksByCategoryId(Integer categoryId);
+	List<BookDTO> getBooksByCategoryId(Integer categoryId);
 
 	List<Category> getTopSixCategoriesWithBooks();
 
-	public List<Book> getTop10LikedBooks();
+	public List<BookDTO> getTop10LikedBooks();
 
-	List<Book> getFeaturedBooks();
+	List<BookDTO> getFeaturedBooks();
 
-	public boolean markAsFavouriteBook(Book book, User user);
+	public boolean markAsFavouriteBook(BookDTO book, User user);
 
-	public Book setEditorChoice(Integer id, BookDTO bookDTO);
+	public BookDTO setEditorChoice(Integer id, BookDTO bookDTO);
 
-	List<Book> getFollowedBooksByUserId(Integer id);
+	List<BookDTO> getFollowedBooksByUserId(Integer id);
 
-	List<Book> getTopRecentChapterBooks(int limit);
+	List<BookDTO> getTopRecentChapterBooks(int limit);
 
-	List<Book> getRelatedBooks(Integer bookId, List<Integer> tagIds);
+	List<BookDTO> getRelatedBooks(Integer bookId, List<Integer> tagIds);
 	
 	public boolean isBookLikedByUser(Integer userId, Integer bookId);
 }

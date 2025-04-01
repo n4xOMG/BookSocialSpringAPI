@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nix.dtos.BookDTO;
 import com.nix.dtos.ReadingProgressDTO;
 import com.nix.dtos.mappers.ReadingProgressMapper;
-import com.nix.models.Book;
 import com.nix.models.Chapter;
 import com.nix.models.ReadingProgress;
 import com.nix.models.User;
@@ -65,16 +65,19 @@ public class ProgressController {
 			@PathVariable("bookId") Integer bookId) throws Exception {
 
 		try {
+			
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
 				throw new Exception("The user have to log in!");
 			}
 
-			Book book = bookService.getBookById(bookId);
+			BookDTO book = bookService.getBookById(bookId);
 			if (book == null) {
 				throw new Exception("Chapter not found");
 			}
+			
 			List<ReadingProgress> readingProgresses = progressService.findByUserAndBook(user.getId(), bookId);
+			
 			return new ResponseEntity<>(progressMapper.mapToDTOs(readingProgresses), HttpStatus.OK);
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);

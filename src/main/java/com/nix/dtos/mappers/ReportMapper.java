@@ -3,7 +3,6 @@ package com.nix.dtos.mappers;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.nix.dtos.ChapterSummaryDTO;
 import com.nix.dtos.ReportDTO;
 import com.nix.models.Report;
 

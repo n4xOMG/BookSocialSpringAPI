@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nix.dtos.BookDTO;
 import com.nix.dtos.RatingDTO;
 import com.nix.dtos.mappers.BookMapper;
 import com.nix.dtos.mappers.RatingMapper;
-import com.nix.models.Book;
 import com.nix.models.Rating;
 import com.nix.models.User;
 import com.nix.service.BookService;
@@ -38,7 +38,7 @@ public class RatingController {
 	@GetMapping("/books/rating/average/{bookId}")
 	public ResponseEntity<?> getAverageBookRating(@PathVariable("bookId") Integer bookId) throws Exception {
 		try {
-			Book book = bookService.getBookById(bookId);
+			BookDTO book = bookService.getBookById(bookId);
 
 			if (book == null) {
 				throw new Exception("Book not found");
@@ -59,7 +59,7 @@ public class RatingController {
 				throw new Exception("User not found");
 			}
 
-			Book book = bookService.getBookById(bookId);
+			BookDTO book = bookService.getBookById(bookId);
 
 			if (book == null) {
 				throw new Exception("Book not found");
@@ -76,7 +76,7 @@ public class RatingController {
 	public ResponseEntity<RatingDTO> rateBook(@RequestHeader("Authorization") String jwt, @PathVariable Integer bookId,
 			@RequestBody Rating rating) throws Exception {
 
-		Book book = bookService.getBookById(bookId);
+		BookDTO book = bookService.getBookById(bookId);
 		if (book == null) {
 			throw new Exception("Book not found");
 		}
@@ -86,11 +86,7 @@ public class RatingController {
 		}
 		Rating isRatedByUser = ratingService.findRatingByUserAndBook(reqUser.getId(), bookId);
 		if (isRatedByUser == null) {
-			Rating newRating = new Rating();
-			newRating.setBook(book);
-			newRating.setUser(reqUser);
-			newRating.setRating(rating.getRating());
-			return new ResponseEntity<>(ratingMapper.mapToDTO(ratingService.addNewRating(newRating)), HttpStatus.OK);
+			return new ResponseEntity<>(ratingMapper.mapToDTO(ratingService.addNewRating(reqUser, bookId, rating.getRating())), HttpStatus.OK);
 		} else {
 			return new ResponseEntity<>(ratingMapper.mapToDTO(ratingService.editRating(isRatedByUser.getId(), rating)),
 					HttpStatus.OK);

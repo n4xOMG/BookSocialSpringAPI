@@ -1,7 +1,5 @@
 package com.nix.service;
 
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -15,15 +13,11 @@ import com.nix.models.User;
 import com.nix.repository.CreditPackageRepository;
 import com.nix.repository.PurchaseRepository;
 import com.nix.repository.UserRepository;
-import com.stripe.Stripe;
-import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
-import com.stripe.net.Webhook;
 import com.stripe.param.PaymentIntentCreateParams;
 
 import jakarta.annotation.PostConstruct;
-import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 public class PaymentServiceImpl implements PaymentService {

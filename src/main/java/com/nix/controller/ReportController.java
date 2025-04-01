@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nix.dtos.BookDTO;
 import com.nix.dtos.ReportDTO;
 import com.nix.dtos.mappers.ReportMapper;
-import com.nix.models.Book;
 import com.nix.models.Chapter;
 import com.nix.models.Comment;
 import com.nix.models.Report;
@@ -77,11 +77,10 @@ public class ReportController {
 			}
 
 			if (reportDTO.getBook() != null) {
-				Book book = bookService.getBookById(reportDTO.getBook().getId());
+				BookDTO book = bookService.getBookById(reportDTO.getBook().getId());
 				if (book == null) {
 					return new ResponseEntity<>("Book not found!", HttpStatus.BAD_REQUEST);
 				}
-				report.setBook(book);
 			}
 
 			if (reportDTO.getChapter() != null) {

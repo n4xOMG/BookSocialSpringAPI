@@ -4,19 +4,19 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Component;
+
 import com.nix.dtos.BookDTO;
 import com.nix.models.Book;
-import com.nix.models.Category;
 import com.nix.models.Chapter;
 import com.nix.models.Rating;
 import com.nix.models.Tag;
 
+@Component
 public class BookMapper implements Mapper<Book, BookDTO> {
 	CommentMapper commentMapper = new CommentMapper();
 
 	RatingMapper ratingMapper = new RatingMapper();
-
-	ChapterMapper chapterMapper = new ChapterMapper();
 
 	UserSummaryMapper userSummaryMapper = new UserSummaryMapper();
 

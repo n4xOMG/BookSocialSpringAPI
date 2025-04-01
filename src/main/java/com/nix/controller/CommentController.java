@@ -19,24 +19,44 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nix.dtos.BookDTO;
 import com.nix.dtos.CommentDTO;
 import com.nix.dtos.mappers.CommentMapper;
 import com.nix.exception.SensitiveWordException;
+import com.nix.models.Book;
+import com.nix.models.Chapter;
 import com.nix.models.Comment;
+import com.nix.models.Post;
 import com.nix.models.User;
+import com.nix.service.BookService;
+import com.nix.service.ChapterService;
 import com.nix.service.CommentService;
+import com.nix.service.NotificationService;
+import com.nix.service.PostService;
 import com.nix.service.UserService;
 
 @RestController
 public class CommentController {
 
 	@Autowired
-	CommentService commentService;
+	private CommentService commentService;
 
 	@Autowired
-	UserService userService;
+	private UserService userService;
 
-	CommentMapper commentMapper = new CommentMapper();
+	@Autowired
+	private BookService bookService;
+
+	@Autowired
+	private ChapterService chapterService;
+
+	@Autowired
+	private PostService postService;
+
+	@Autowired
+	private NotificationService notificationService;
+
+	private CommentMapper commentMapper = new CommentMapper();
 
 	@GetMapping("/api/comments")
 	public ResponseEntity<?> getAllComments() {
@@ -52,7 +72,6 @@ public class CommentController {
 	public ResponseEntity<?> getAllPostComments(@PathVariable("postId") Integer postId) {
 		try {
 			List<Comment> comments = commentService.getAllPostComments(postId);
-
 			return ResponseEntity.ok(commentMapper.mapToDTOs(comments));
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -69,7 +88,6 @@ public class CommentController {
 
 			if (jwt != null && !jwt.isEmpty()) {
 				User user = userService.findUserByJwt(jwt);
-				// Process both top-level comments and their replies
 				for (CommentDTO comment : commentDTOs) {
 					setLikedByCurrentUserRecursively(comment, user, commentService);
 				}
@@ -88,7 +106,6 @@ public class CommentController {
 		}
 	}
 
-	// Helper method to recursively set likedByCurrentUser
 	private void setLikedByCurrentUserRecursively(CommentDTO comment, User user, CommentService commentService) {
 		comment.setLikedByCurrentUser(commentService.isCommentLikedByCurrentUser(comment.getId(), user));
 		if (comment.getReplyComment() != null && !comment.getReplyComment().isEmpty()) {
@@ -104,7 +121,6 @@ public class CommentController {
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		try {
 			Page<Comment> comments = commentService.getPagerChapterComments(page, size, chapterId);
-
 			List<CommentDTO> commentDTOs = commentMapper.mapToDTOs(comments.getContent());
 
 			if (jwt != null && !jwt.isEmpty()) {
@@ -127,7 +143,8 @@ public class CommentController {
 		}
 	}
 
-	private ResponseEntity<?> handleCommentCreation(User user, Supplier<Comment> commentCreator) {
+	private ResponseEntity<?> handleCommentCreation(User user, Supplier<Comment> commentCreator, String context,
+			Integer entityId) {
 		try {
 			if (user == null) {
 				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
@@ -136,6 +153,36 @@ public class CommentController {
 				return new ResponseEntity<>("User is suspended from commenting", HttpStatus.FORBIDDEN);
 			}
 			Comment newComment = commentCreator.get();
+
+			// Notify relevant user based on context
+			if ("book".equals(context) && entityId != null) {
+				
+				BookDTO book = bookService.getBookById(entityId);
+				Integer authorId = book.getAuthor().getId();
+				User author = userService.findUserById(authorId);
+				
+				if (author != null && !author.equals(user)) { // Don't notify if commenter is the author
+					notificationService.createNotification(author, "A new comment was posted on your book '"
+							+ book.getTitle() + "': " + newComment.getContent());
+				}
+			} else if ("chapter".equals(context) && entityId != null) {
+				// Assuming chapter has an author or links to a book
+				Chapter chapter = chapterService.findChapterById(entityId); // Add this method to BookService if needed
+				User author = chapter.getBook().getAuthor();
+				if (author != null && !author.equals(user)) {
+					notificationService.createNotification(author,
+							"A new comment was posted on a chapter of your book '" + chapter.getBook().getTitle()
+									+ "': " + newComment.getContent());
+				}
+			} else if ("post".equals(context) && entityId != null) {
+				// Assuming Post has an author; adjust based on your Post model
+				Post post = postService.getPostById(entityId);// Add this method to CommentService if needed
+				if (post.getUser() != null && !post.getUser().equals(user)) {
+					notificationService.createNotification(post.getUser(),
+							"A new comment was posted on your post: " + newComment.getContent());
+				}
+			}
+
 			return ResponseEntity.ok(commentMapper.mapToDTO(newComment));
 		} catch (SensitiveWordException e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_ACCEPTABLE);
@@ -156,7 +203,7 @@ public class CommentController {
 				e.printStackTrace();
 			}
 			return comment;
-		});
+		}, "book", bookId);
 	}
 
 	@PostMapping("/api/chapters/{chapterId}/comments")
@@ -171,7 +218,7 @@ public class CommentController {
 				e.printStackTrace();
 			}
 			return comment;
-		});
+		}, "chapter", chapterId);
 	}
 
 	@PostMapping("/api/posts/{postId}/comments")
@@ -186,7 +233,7 @@ public class CommentController {
 				e.printStackTrace();
 			}
 			return comment;
-		});
+		}, "post", postId);
 	}
 
 	@PostMapping("/api/books/{bookId}/comments/{parentCommentId}/reply")
@@ -198,6 +245,16 @@ public class CommentController {
 				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
 			}
 			Comment replyComment = commentService.createReplyBookComment(comment, parentCommentId, user);
+
+			// Notify the parent comment's author
+			Comment parentComment = commentService.findCommentById(parentCommentId);
+			User parentAuthor = parentComment.getUser();
+			if (parentAuthor != null && !parentAuthor.equals(user)) {
+				BookDTO book = bookService.getBookById(parentComment.getBook().getId());
+				notificationService.createNotification(parentAuthor,
+						"Someone replied to your comment on '" + book.getTitle() + "': " + replyComment.getContent());
+			}
+
 			return new ResponseEntity<>(commentMapper.mapToDTO(replyComment), HttpStatus.CREATED);
 		} catch (SensitiveWordException e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_ACCEPTABLE);
@@ -215,12 +272,20 @@ public class CommentController {
 				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
 			}
 			Comment replyComment = commentService.createReplyChapterComment(comment, parentCommentId, user);
+
+			// Notify the parent comment's author
+			Comment parentComment = commentService.findCommentById(parentCommentId);
+			User parentAuthor = parentComment.getUser();
+			if (parentAuthor != null && !parentAuthor.equals(user)) {
+				Book book = parentComment.getChapter().getBook();
+				notificationService.createNotification(parentAuthor, "Someone replied to your comment on a chapter of '"
+						+ book.getTitle() + "': " + replyComment.getContent());
+			}
+
 			return new ResponseEntity<>(commentMapper.mapToDTO(replyComment), HttpStatus.CREATED);
 		} catch (SensitiveWordException e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_ACCEPTABLE);
-		}
-
-		catch (Exception e) {
+		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -234,12 +299,19 @@ public class CommentController {
 				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
 			}
 			Comment replyComment = commentService.createReplyPostComment(comment, parentCommentId, user);
+
+			// Notify the parent comment's author
+			Comment parentComment = commentService.findCommentById(parentCommentId);
+			User parentAuthor = parentComment.getUser();
+			if (parentAuthor != null && !parentAuthor.equals(user)) {
+				notificationService.createNotification(parentAuthor,
+						"Someone replied to your comment on a post: " + replyComment.getContent());
+			}
+
 			return new ResponseEntity<>(commentMapper.mapToDTO(replyComment), HttpStatus.CREATED);
 		} catch (SensitiveWordException e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_ACCEPTABLE);
-		}
-
-		catch (Exception e) {
+		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -252,17 +324,25 @@ public class CommentController {
 			if (user == null) {
 				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
 			}
-
 			if (user.getIsSuspended()) {
 				return new ResponseEntity<>("User is suspended from commenting", HttpStatus.FORBIDDEN);
 			}
 
 			Boolean isCommentLiked = commentService.likeComment(commentId, user.getId());
-			Comment comment = commentService.findCommentById(commentId); // Fetch updated comment
-			CommentDTO commentDTO = commentMapper.mapToDTO(comment); // Convert to DTO
-			commentDTO.setLikedByCurrentUser(isCommentLiked); // Ensure this reflects the toggle result
+			Comment comment = commentService.findCommentById(commentId);
+			CommentDTO commentDTO = commentMapper.mapToDTO(comment);
+			commentDTO.setLikedByCurrentUser(isCommentLiked);
 
-			return ResponseEntity.ok(commentDTO); // Return full CommentDTO
+			// Notify the comment's author if liked
+			User commentAuthor = comment.getUser();
+			if (commentAuthor != null && !commentAuthor.equals(user) && isCommentLiked) {
+				String context = comment.getBook() != null ? "book '" + comment.getBook().getTitle() + "'"
+						: comment.getChapter() != null ? "chapter" : comment.getPost() != null ? "post" : "content";
+				notificationService.createNotification(commentAuthor,
+						"Your comment on " + context + " was liked: " + comment.getContent());
+			}
+
+			return ResponseEntity.ok(commentDTO);
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -271,37 +351,43 @@ public class CommentController {
 	@PutMapping("/api/comments/{commentId}")
 	public ResponseEntity<?> editComment(@RequestHeader("Authorization") String jwt,
 			@PathVariable("commentId") Integer commentId, @RequestBody Comment comment) throws Exception {
-
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
 				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
 			}
 			Comment editedComment = commentService.editComment(user.getId(), commentId, comment);
-			return new ResponseEntity<>(commentMapper.mapToDTO(editedComment), HttpStatus.OK);
 
+			return new ResponseEntity<>(commentMapper.mapToDTO(editedComment), HttpStatus.OK);
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-
 	}
 
 	@DeleteMapping("/api/comments/{commentId}")
 	public ResponseEntity<?> deleteComment(@RequestHeader("Authorization") String jwt,
 			@PathVariable("commentId") Integer commentId) throws Exception {
-
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
 				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
 			}
 
-			return new ResponseEntity<>(commentService.deleteComment(commentId, user.getId()), HttpStatus.OK);
+			Comment comment = commentService.findCommentById(commentId); // Fetch before deletion
+			commentService.deleteComment(commentId, user.getId());
 
+			// Notify the comment's author or parent author if deleted by someone else
+			User commentAuthor = comment.getUser();
+			if (commentAuthor != null && !commentAuthor.equals(user)) {
+				String context = comment.getBook() != null ? "book '" + comment.getBook().getTitle() + "'"
+						: comment.getChapter() != null ? "chapter" : comment.getPost() != null ? "post" : "content";
+				notificationService.createNotification(commentAuthor,
+						"Your comment on " + context + " was deleted: " + comment.getContent());
+			}
+
+			return new ResponseEntity<>(HttpStatus.OK);
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-
 	}
-
 }

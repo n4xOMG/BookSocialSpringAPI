@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.nix.dtos.NotificationDTO;
 import com.nix.dtos.mappers.NotificationMapper;
-import com.nix.models.Notification;
 import com.nix.models.User;
 import com.nix.service.NotificationService;
 import com.nix.service.UserService;
@@ -35,8 +34,8 @@ public class NotificationController {
 		if (user == null) {
 			return ResponseEntity.status(401).build();
 		}
-		List<Notification> notifications = notificationService.getUserNotifications(user);
-		return ResponseEntity.ok(notificationMapper.mapToDTOs(notifications));
+		List<NotificationDTO> notifications = notificationService.getUserNotifications(user);
+		return ResponseEntity.ok(notifications);
 	}
 
 	/**
@@ -48,8 +47,8 @@ public class NotificationController {
 		if (user == null) {
 			return ResponseEntity.status(401).build();
 		}
-		List<Notification> unreadNotifications = notificationService.getUnreadNotifications(user);
-		return ResponseEntity.ok(notificationMapper.mapToDTOs(unreadNotifications));
+		List<NotificationDTO> unreadNotifications = notificationService.getUnreadNotifications(user);
+		return ResponseEntity.ok(unreadNotifications);
 	}
 
 	/**
@@ -62,7 +61,7 @@ public class NotificationController {
 			return ResponseEntity.status(401).build();
 		}
 
-		notificationService.markAsRead(id);
+		notificationService.markAsRead(id, user);
 		return ResponseEntity.ok().build();
 	}
 

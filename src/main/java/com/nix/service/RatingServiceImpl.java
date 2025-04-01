@@ -7,7 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.nix.models.Book;
 import com.nix.models.Rating;
+import com.nix.models.User;
+import com.nix.repository.BookRepository;
 import com.nix.repository.RatingRepository;
 
 @Service
@@ -20,7 +23,7 @@ public class RatingServiceImpl implements RatingService {
 	UserService userService;
 
 	@Autowired
-	BookService bookService;
+	BookRepository bookRepository;
 
 	@Override
 	public Rating findRatingById(Integer ratingId) throws Exception {
@@ -39,14 +42,17 @@ public class RatingServiceImpl implements RatingService {
 
 	@Override
 	@Transactional
-	public Rating addNewRating(Rating rating) throws Exception {
+	public Rating addNewRating(User user, Integer bookId, Integer rating) throws Exception {
+
+		Optional<Book> book = bookRepository.findById(bookId);
+
 		Rating newRating = new Rating();
 
-		newRating.setBook(rating.getBook());
-		newRating.setUser(rating.getUser());
-		newRating.setRating(rating.getRating());
+		newRating.setBook(book.get());
+		newRating.setUser(user);
+		newRating.setRating(rating);
 
-		rating.getBook().getRatings().add(newRating);
+		book.get().getRatings().add(newRating);
 
 		return newRating;
 	}
