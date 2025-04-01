@@ -18,8 +18,6 @@ public class NotificationMapper implements Mapper<Notification, NotificationDTO>
 			}
 			notificationDTO.setMessage(n.getMessage());
 			notificationDTO.setCreatedDate(n.getCreatedDate());
-			notificationDTO.setRead(n.isRead());
-			notificationDTO.setUserSummaryDTO(userSummaryMapper.mapToDTO(n.getUser()));
 			return notificationDTO;
 		}
 		return null;

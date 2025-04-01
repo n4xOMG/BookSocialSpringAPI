@@ -14,12 +14,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nix.dtos.BookDTO;
 import com.nix.dtos.ChapterDTO;
 import com.nix.dtos.ChapterSummaryDTO;
 import com.nix.dtos.mappers.ChapterMapper;
 import com.nix.dtos.mappers.ChapterSummaryMapper;
 import com.nix.exception.ResourceNotFoundException;
-import com.nix.models.Book;
 import com.nix.models.Chapter;
 import com.nix.models.User;
 import com.nix.response.ApiResponse;
@@ -109,7 +109,7 @@ public class ChapterController {
 			User user = userService.findUserByJwt(jwt);
 			isUnlocked = chapterService.isChapterUnlockedByUser(user.getId(), chapterId);
 			isLiked = chapterService.isChapterLikedByUser(user.getId(), chapterId);
-			chapterDTO.setUnlockedByUser(isUnlocked);
+			chapterDTO.setUnlockedByUser(isUnlocked);	
 			chapterDTO.setLikedByCurrentUser(isLiked);
 		}
 
@@ -131,7 +131,7 @@ public class ChapterController {
 	@PostMapping("/api/books/{bookId}/chapters/draft")
 	public ResponseEntity<Chapter> createDraftChapter(@PathVariable("bookId") Integer bookId,
 			@RequestBody Chapter chapter) throws Exception {
-		Book book = bookService.getBookById(bookId);
+		BookDTO book = bookService.getBookById(bookId);
 		if (book == null) {
 			throw new Exception("Book not found");
 		}
@@ -143,7 +143,7 @@ public class ChapterController {
 	@PostMapping("/api/books/{bookId}/chapters")
 	public ResponseEntity<Chapter> publishChapter(@PathVariable("bookId") Integer bookId, @RequestBody Chapter chapter)
 			throws Exception {
-		Book book = bookService.getBookById(bookId);
+		BookDTO book = bookService.getBookById(bookId);
 		if (book == null) {
 			throw new Exception("Book not found");
 		}
@@ -152,14 +152,9 @@ public class ChapterController {
 		return new ResponseEntity<Chapter>(newChapter, HttpStatus.CREATED);
 	}
 
-	@PutMapping("/api/books/{bookId}/chapters/{chapterId}")
-	public ResponseEntity<ChapterDTO> editChapter(@PathVariable("bookId") Integer bookId,
-			@PathVariable("chapterId") Integer chapterId, @RequestBody Chapter chapter) throws Exception {
-		Book book = bookService.getBookById(bookId);
-
-		if (book == null) {
-			throw new Exception("Book not found");
-		}
+	@PutMapping("/api/chapters/{chapterId}")
+	public ResponseEntity<ChapterDTO> editChapter(@PathVariable("chapterId") Integer chapterId, 
+			@RequestBody Chapter chapter) throws Exception {
 
 		Chapter editChapter = chapterService.editChapter(chapterId, chapter);
 		return ResponseEntity.ok(chapterMapper.mapToDTO(editChapter));

@@ -1,0 +1,26 @@
+package com.nix.repository;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import com.nix.models.Notification;
+import com.nix.models.User;
+import com.nix.models.UserNotification;
+
+@Repository
+public interface UserNotificationRepository extends JpaRepository<UserNotification, Long> {
+
+    boolean existsByUserAndNotification(User user, Notification notification);
+
+    Optional<UserNotification> findByUserAndNotification(User user, Notification notification);
+    
+    // Lấy danh sách các notificationId mà user đã đọc
+    @Query("SELECT un.notification.id FROM UserNotification un WHERE un.user = :user")
+    List<Long> findReadNotificationIdsByUser(@Param("user") User user);
+}
+

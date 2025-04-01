@@ -3,7 +3,6 @@ package com.nix.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -11,14 +10,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.nix.dtos.BookDTO;
+import com.nix.dtos.mappers.BookMapper;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
 import com.nix.models.Category;
-import com.nix.models.Tag;
 import com.nix.models.User;
 import com.nix.repository.BookRepository;
 import com.nix.repository.CategoryRepository;
-import com.nix.repository.ChapterRepository;
 import com.nix.repository.TagRepository;
 import com.nix.repository.UserRepository;
 
@@ -29,9 +27,6 @@ public class BookServiceImpl implements BookService {
 	BookRepository bookRepo;
 
 	@Autowired
-	ChapterRepository chaptereRepo;
-
-	@Autowired
 	CategoryRepository categoryRepository;
 
 	@Autowired
@@ -40,37 +35,36 @@ public class BookServiceImpl implements BookService {
 	@Autowired
 	UserRepository userRepository;
 
+	@Autowired
+	BookMapper bookMapper;
+
 	@Override
-	public List<Book> getAllBooks() {
-		return bookRepo.findAll();
+	public List<BookDTO> getAllBooks() {
+		return bookMapper.mapToDTOs(bookRepo.findAll());
 	}
 
 	@Override
-	public Book getBookById(Integer id) {
-		return bookRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
+	public BookDTO getBookById(Integer id) {
+		Book book = bookRepo.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
+		return bookMapper.mapToDTO(book);
 	}
 
 	@Override
-	public List<Book> getBooksByCategoryId(Integer categoryId) {
-		// Fetch the category by ID
+	public List<BookDTO> getBooksByCategoryId(Integer categoryId) {
 		Optional<Category> categoryOpt = categoryRepository.findById(categoryId);
 		if (!categoryOpt.isPresent()) {
 			throw new ResourceNotFoundException("Category not found with ID: " + categoryId);
 		}
-		Category category = categoryOpt.get();
-
-		// Fetch books associated with the category
-		return bookRepo.findByCategory(category);
+		return bookMapper.mapToDTOs(bookRepo.findByCategory(categoryOpt.get()));
 	}
 
 	@Override
 	@Transactional
-	public Book createBook(BookDTO bookDTO) {
-		User author = userRepository.findById(bookDTO.getAuthor().getId()).orElseThrow(
-				() -> new ResourceNotFoundException("User not found with ID: " + bookDTO.getAuthor().getId()));
-
+	public BookDTO createBook(BookDTO bookDTO) {
 		Book book = new Book();
-		book.setAuthor(author);
+		book.setAuthor(userRepository.findById(bookDTO.getAuthor().getId()).orElseThrow(
+				() -> new ResourceNotFoundException("User not found with ID: " + bookDTO.getAuthor().getId())));
 		book.setTitle(bookDTO.getTitle());
 		book.setAuthorName(bookDTO.getAuthorName());
 		book.setArtistName(bookDTO.getArtistName());
@@ -81,34 +75,18 @@ public class BookServiceImpl implements BookService {
 		book.setUploadDate(LocalDateTime.now());
 		book.setSuggested(false);
 
-		Category category = categoryRepository.findById(bookDTO.getCategoryId()).orElseThrow(
-				() -> new ResourceNotFoundException("Category not found with ID: " + bookDTO.getCategoryId()));
+		book.setCategory(categoryRepository.findById(bookDTO.getCategoryId()).orElseThrow(
+				() -> new ResourceNotFoundException("Category not found with ID: " + bookDTO.getCategoryId())));
 
-		book.setCategory(category);
-		category.getBooks().add(book);
-
-		List<Tag> tags = tagRepository.findAllById(bookDTO.getTagIds());
-		if (tags.size() != bookDTO.getTagIds().size()) {
-			throw new ResourceNotFoundException("One or more tags not found.");
-		}
-		book.setTags(tags);
-		for (Tag tag : book.getTags()) {
-			tag.getBooks().add(book);
-		}
-
-		return bookRepo.save(book);
+		book.setTags(tagRepository.findAllById(bookDTO.getTagIds()));
+		return bookMapper.mapToDTO(bookRepo.save(book));
 	}
 
 	@Override
 	@Transactional
-	public Book updateBook(Integer id, BookDTO bookDTO) {
+	public BookDTO updateBook(Integer id, BookDTO bookDTO) {
 		Book existingBook = bookRepo.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
-		User author = userRepository.findById(bookDTO.getAuthor().getId()).orElseThrow(
-				() -> new ResourceNotFoundException("User not found with ID: " + bookDTO.getAuthor().getId()));
-
-		// Update fields
-		existingBook.setAuthor(author);
 		existingBook.setTitle(bookDTO.getTitle());
 		existingBook.setBookCover(bookDTO.getBookCover());
 		existingBook.setAuthorName(bookDTO.getAuthorName());
@@ -117,36 +95,10 @@ public class BookServiceImpl implements BookService {
 		existingBook.setLanguage(bookDTO.getLanguage());
 		existingBook.setStatus(bookDTO.getStatus());
 		existingBook.setSuggested(bookDTO.isSuggested());
-
-		// Change Category
-		Category newCategory = categoryRepository.findById(bookDTO.getCategoryId()).orElseThrow(
-				() -> new ResourceNotFoundException("Category not found with ID: " + bookDTO.getCategoryId()));
-
-		// Remove from old category
-		Category oldCategory = existingBook.getCategory();
-		if (oldCategory != null) {
-			oldCategory.getBooks().remove(existingBook);
-		}
-
-		// Set new category
-		existingBook.setCategory(newCategory);
-		newCategory.getBooks().add(existingBook);
-
-		// Update Tags
-		List<Tag> newTags = tagRepository.findAllById(bookDTO.getTagIds());
-		if (newTags.size() != bookDTO.getTagIds().size()) {
-			throw new ResourceNotFoundException("One or more tags not found.");
-		}
-		// Remove old associations
-		for (Tag tag : existingBook.getTags()) {
-			tag.getBooks().remove(existingBook);
-		}
-		existingBook.setTags(newTags);
-		for (Tag tag : newTags) {
-			tag.getBooks().add(existingBook);
-		}
-
-		return bookRepo.save(existingBook);
+		existingBook.setCategory(categoryRepository.findById(bookDTO.getCategoryId()).orElseThrow(
+				() -> new ResourceNotFoundException("Category not found with ID: " + bookDTO.getCategoryId())));
+		existingBook.setTags(tagRepository.findAllById(bookDTO.getTagIds()));
+		return bookMapper.mapToDTO(bookRepo.save(existingBook));
 	}
 
 	@Override
@@ -154,81 +106,50 @@ public class BookServiceImpl implements BookService {
 	public void deleteBook(Integer id) {
 		Book existingBook = bookRepo.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
-
-		// Remove associations with Users
-		existingBook.getFavoured().forEach(user -> {
-			user.getLikedComments().remove(existingBook);
-			user.getFollowedBooks().remove(existingBook);
-		});
-		existingBook.getFavoured().clear();
-
-		// Remove association with Category
-		Category category = existingBook.getCategory();
-		if (category != null) {
-			category.getBooks().remove(existingBook);
-			existingBook.setCategory(null);
-		}
-
-		// Remove associations with Tags
-		existingBook.getTags().forEach(tag -> tag.getBooks().remove(existingBook));
-		existingBook.getTags().clear();
-
-		// Delete the Book (Cascading will handle Chapters and ReadingProgress)
 		bookRepo.delete(existingBook);
 	}
 
 	@Override
-	public List<Book> searchBooksByTitle(String title) {
-		return bookRepo.findByTitleContainingIgnoreCase(title);
+	public List<BookDTO> searchBooksByTitle(String title) {
+		return bookMapper.mapToDTOs(bookRepo.findByTitleContainingIgnoreCase(title));
 	}
 
 	@Override
-	public List<Book> getBooksByAuthor(Integer authorId) {
-		return bookRepo.findByAuthorId(authorId);
+	public List<BookDTO> getBooksByAuthor(Integer authorId) {
+		return bookMapper.mapToDTOs(bookRepo.findByAuthorId(authorId));
 	}
 
 	@Override
-	public List<Book> getBooksBySuggestedStatus(Boolean isSuggested) {
-		return bookRepo.findByIsSuggested(isSuggested);
+	public List<BookDTO> getTop10LikedBooks() {
+		return bookMapper.mapToDTOs(bookRepo.findTopBooksByLikes());
 	}
 
 	@Override
-	public List<Book> getBooksByStatus(String status) {
-		return bookRepo.findByStatus(status);
+	public List<BookDTO> getFeaturedBooks() {
+		return bookMapper.mapToDTOs(bookRepo.findByIsSuggested(true));
 	}
 
 	@Override
-	public List<Book> getTop10LikedBooks() {
-		return bookRepo.findTopBooksByLikes();
+	public List<BookDTO> getRelatedBooks(Integer bookId, List<Integer> tagIds) {
+		Book currentBook = bookRepo.findById(bookId)
+				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
+		return bookMapper.mapToDTOs(
+				bookRepo.findRelatedBooks(currentBook.getCategory().getId(), tagIds, bookId, PageRequest.of(0, 5)));
 	}
 
 	@Override
-	public List<Book> getTopRecentChapterBooks(int limit) {
-		PageRequest pageRequest = PageRequest.of(0, limit);
-		return bookRepo.findTopBooksWithLatestChapters(pageRequest);
+	public List<BookDTO> getBooksBySuggestedStatus(Boolean isSuggested) {
+		return bookMapper.mapToDTOs(bookRepo.findByIsSuggested(isSuggested));
 	}
 
 	@Override
-	@Transactional
-	public boolean markAsFavouriteBook(Book book, User user) {
-		if (book.getFavoured().contains(user)) {
-			book.getFavoured().remove(user);
-			user.getFollowedBooks().remove(book);
-			return false;
-		} else {
-			book.getFavoured().add(user);
-			user.getFollowedBooks().add(book);
-			
-			return true;
-		}
-
+	public List<BookDTO> searchBooks(String title, Integer categoryId, List<Integer> tagIds) {
+		return bookMapper.mapToDTOs(bookRepo.searchBooks(title, categoryId, tagIds));
 	}
 
 	@Override
-	public List<Book> getFollowedBooksByUserId(Integer id) {
-		User user = userRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
-		return user.getFollowedBooks();
+	public List<BookDTO> getBooksByStatus(String status) {
+		return bookMapper.mapToDTOs(bookRepo.findByStatus(status));
 	}
 
 	@Override
@@ -237,51 +158,46 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	public List<Book> getFeaturedBooks() {
-		return bookRepo.findByIsSuggested(true);
+	@Transactional
+	public boolean markAsFavouriteBook(BookDTO bookDTO, User user) {
+		Book book = bookRepo.findById(bookDTO.getId())
+				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookDTO.getId()));
+		if (book.getFavoured().contains(user)) {
+			book.getFavoured().remove(user);
+			user.getFollowedBooks().remove(book);
+			return false;
+		} else {
+			book.getFavoured().add(user);
+			user.getFollowedBooks().add(book);
+			return true;
+		}
 	}
 
 	@Override
-	public List<Book> searchBooks(String title, Integer categoryId, List<Integer> tagIds) {
-		return bookRepo.searchBooks(title, categoryId, tagIds);
+	public List<BookDTO> getFollowedBooksByUserId(Integer id) {
+		User user = userRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+		return bookMapper.mapToDTOs(user.getFollowedBooks());
 	}
 
 	@Override
-	public Book setEditorChoice(Integer id, BookDTO bookDTO) {
+	public BookDTO setEditorChoice(Integer id, BookDTO bookDTO) {
 		Book existingBook = bookRepo.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
 		existingBook.setSuggested(!existingBook.isSuggested());
-
-		return bookRepo.save(existingBook);
-
-	}
-
-	@Override
-	public List<Book> getRelatedBooks(Integer bookId, List<Integer> tagIds) {
-		Book currentBook = bookRepo.findById(bookId)
-				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
-
-		Integer categoryId = currentBook.getCategory().getId();
-
-		// If tagIds are not provided, use the current book's tags
-		if (tagIds == null || tagIds.isEmpty()) {
-			tagIds = currentBook.getTags().stream().map(tag -> tag.getId()).collect(Collectors.toList());
-		}
-
-		// Fetch related books excluding the current book
-		List<Book> relatedBooks = bookRepo.findRelatedBooks(categoryId, tagIds, bookId, PageRequest.of(0, 5));
-
-		// Map to DTOs
-		return relatedBooks;
+		return bookMapper.mapToDTO(bookRepo.save(existingBook));
 	}
 
 	@Override
 	public boolean isBookLikedByUser(Integer userId, Integer bookId) {
 		Optional<User> userOpt = userRepository.findById(userId);
 		Optional<Book> bookOpt = bookRepo.findById(bookId);
-		if (userOpt.isPresent() && bookOpt.isPresent()) {
-			return userOpt.get().getFollowedBooks().contains(bookOpt.get());
-		}
-		return false;
+		return userOpt.isPresent() && bookOpt.isPresent() && userOpt.get().getFollowedBooks().contains(bookOpt.get());
+	}
+
+	@Override
+	public List<BookDTO> getTopRecentChapterBooks(int limit) {
+		PageRequest pageRequest = PageRequest.of(0, limit);
+		return bookMapper.mapToDTOs(bookRepo.findTopBooksWithLatestChapters(pageRequest));
 	}
 }

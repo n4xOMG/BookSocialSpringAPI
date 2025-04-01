@@ -9,6 +9,5 @@ import com.nix.models.User;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 	List<Notification> findByUser(User user);
-
-	List<Notification> findByUserAndIsReadFalse(User user);
 }
+
