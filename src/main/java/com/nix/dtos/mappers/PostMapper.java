@@ -3,9 +3,12 @@ package com.nix.dtos.mappers;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Component;
+
 import com.nix.dtos.PostDTO;
 import com.nix.models.Post;
 
+@Component
 public class PostMapper implements Mapper<Post, PostDTO> {
 	UserSummaryMapper userSummaryMapper = new UserSummaryMapper();
 	CommentMapper commentMapper = new CommentMapper();

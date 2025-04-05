@@ -1,6 +1,7 @@
 package com.nix.service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -10,7 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.nix.dtos.BookDTO;
+import com.nix.dtos.CategoryDTO;
 import com.nix.dtos.mappers.BookMapper;
+import com.nix.dtos.mappers.CategoryMapper;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
 import com.nix.models.Category;
@@ -37,6 +40,9 @@ public class BookServiceImpl implements BookService {
 
 	@Autowired
 	BookMapper bookMapper;
+	
+	@Autowired
+    CategoryMapper categoryMapper;
 
 	@Override
 	public List<BookDTO> getAllBooks() {
@@ -153,8 +159,13 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	public List<Category> getTopSixCategoriesWithBooks() {
-		return categoryRepository.findTop6ByOrderByNameAsc();
+	public List<CategoryDTO> getTopSixCategoriesWithBooks() {
+		List<Category> categories = categoryRepository.findTop6ByOrderByNameAsc();
+        if (categories.isEmpty()) {
+            return Collections.emptyList(); // Handle empty case
+        }
+        // Map to DTOs, including their books
+        return categoryMapper.mapToDTOs(categories);
 	}
 
 	@Override

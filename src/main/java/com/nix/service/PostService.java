@@ -2,24 +2,24 @@ package com.nix.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import com.nix.dtos.PostDTO;
-import com.nix.models.Post;
 import com.nix.models.User;
 
 public interface PostService {
-	List<Post> getAllPosts();
+	Page<PostDTO> getAllPosts(Pageable pageable);
 
-	Post getPostById(Integer postId);
+	List<PostDTO> getPostsByUser(User user);
 
-	List<Post> getPostsByUser(User user);
+	PostDTO createPost(User user, PostDTO post);
 
-	Post createPost(User user, PostDTO post);
-
-	Post updatePost(User user, Integer postId, Post postDetails);
+	PostDTO updatePost(User user, Integer postId, PostDTO postDetails);
 
 	void deletePost(User user, Integer postId);
 
-	Post likePost(Integer postId, User user);
+	PostDTO likePost(Integer postId, User user);
 
-	
+	PostDTO getPostById(Integer postId);
 }

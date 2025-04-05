@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nix.dtos.BookDTO;
-import com.nix.models.Category;
+import com.nix.dtos.CategoryDTO;
 import com.nix.models.User;
 import com.nix.service.BookService;
 import com.nix.service.NotificationService; // Add this import
@@ -71,7 +71,7 @@ public class BookController {
 	}
 
 	@GetMapping("/top-categories")
-	public ResponseEntity<List<Category>> getTopSixCategoriesWithBooks() {
+	public ResponseEntity<List<CategoryDTO>> getTopSixCategoriesWithBooks() {
 		return ResponseEntity.ok(bookService.getTopSixCategoriesWithBooks());
 	}
 

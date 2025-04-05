@@ -3,9 +3,12 @@ package com.nix.dtos.mappers;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Component;
+
 import com.nix.dtos.PurchaseDTO;
 import com.nix.models.Purchase;
 
+@Component
 public class PurchaseMapper implements Mapper<Purchase, PurchaseDTO> {
 	CreditPackageMapper creditPackageMapper = new CreditPackageMapper();
 

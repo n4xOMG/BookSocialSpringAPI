@@ -24,6 +24,7 @@ import com.nix.config.JwtProvider;
 import com.nix.dtos.CategoryDTO;
 import com.nix.dtos.TagDTO;
 import com.nix.dtos.UserDTO;
+import com.nix.dtos.mappers.BookMapper;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
 import com.nix.models.Category;
@@ -72,6 +73,9 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	BookRepository bookRepository;
+
+	@Autowired
+	BookMapper bookMapper;
 
 	@Override
 	public Page<User> getAllUsers(int page, int size, String searchTerm) {
@@ -438,7 +442,7 @@ public class UserServiceImpl implements UserService {
 		List<CategoryDTO> preferredCategories = categoryWeight.entrySet().stream()
 				.sorted(Map.Entry.<Category, Double>comparingByValue().reversed()).limit(5) // Top 5 categories
 				.map(entry -> new CategoryDTO(entry.getKey().getId(), entry.getKey().getName(),
-						entry.getKey().getDescription()))
+						entry.getKey().getDescription(), bookMapper.mapToDTOs(entry.getKey().getBooks())))
 				.collect(Collectors.toList());
 
 		// Calculate preferred tags
