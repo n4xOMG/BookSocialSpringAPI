@@ -21,12 +21,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.nix.dtos.BookDTO;
 import com.nix.dtos.CommentDTO;
+import com.nix.dtos.PostDTO;
 import com.nix.dtos.mappers.CommentMapper;
 import com.nix.exception.SensitiveWordException;
 import com.nix.models.Book;
 import com.nix.models.Chapter;
 import com.nix.models.Comment;
-import com.nix.models.Post;
 import com.nix.models.User;
 import com.nix.service.BookService;
 import com.nix.service.ChapterService;
@@ -156,11 +156,11 @@ public class CommentController {
 
 			// Notify relevant user based on context
 			if ("book".equals(context) && entityId != null) {
-				
+
 				BookDTO book = bookService.getBookById(entityId);
 				Integer authorId = book.getAuthor().getId();
 				User author = userService.findUserById(authorId);
-				
+
 				if (author != null && !author.equals(user)) { // Don't notify if commenter is the author
 					notificationService.createNotification(author, "A new comment was posted on your book '"
 							+ book.getTitle() + "': " + newComment.getContent());
@@ -176,9 +176,12 @@ public class CommentController {
 				}
 			} else if ("post".equals(context) && entityId != null) {
 				// Assuming Post has an author; adjust based on your Post model
-				Post post = postService.getPostById(entityId);// Add this method to CommentService if needed
-				if (post.getUser() != null && !post.getUser().equals(user)) {
-					notificationService.createNotification(post.getUser(),
+				PostDTO post = postService.getPostById(entityId);
+				Integer authorId = post.getUser().getId();
+				User author = userService.findUserById(authorId);
+
+				if (post.getUser() != null && !author.equals(user)) {
+					notificationService.createNotification(author,
 							"A new comment was posted on your post: " + newComment.getContent());
 				}
 			}

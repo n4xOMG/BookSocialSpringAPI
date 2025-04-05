@@ -31,7 +31,7 @@ public class CategoryController {
 
 	CategoryMapper categoryMapper = new CategoryMapper();
 
-	@GetMapping("/books/categories")
+	@GetMapping("/categories")
 	public ResponseEntity<?> getAllCategories() {
 		List<Category> categories = categoryService.findAllCategories();
 		return ResponseEntity.ok(categoryMapper.mapToDTOs(categories));

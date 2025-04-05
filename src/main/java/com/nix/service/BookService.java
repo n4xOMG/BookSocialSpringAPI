@@ -3,7 +3,7 @@ package com.nix.service;
 import java.util.List;
 
 import com.nix.dtos.BookDTO;
-import com.nix.models.Category;
+import com.nix.dtos.CategoryDTO;
 import com.nix.models.User;
 
 public interface BookService {
@@ -29,7 +29,7 @@ public interface BookService {
 
 	List<BookDTO> getBooksByCategoryId(Integer categoryId);
 
-	List<Category> getTopSixCategoriesWithBooks();
+	List<CategoryDTO> getTopSixCategoriesWithBooks();
 
 	public List<BookDTO> getTop10LikedBooks();
 

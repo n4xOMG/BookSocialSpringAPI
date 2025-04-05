@@ -3,9 +3,12 @@ package com.nix.dtos.mappers;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Component;
+
 import com.nix.dtos.ReadingProgressDTO;
 import com.nix.models.ReadingProgress;
 
+@Component
 public class ReadingProgressMapper implements Mapper<ReadingProgress, ReadingProgressDTO> {
 
 	@Override

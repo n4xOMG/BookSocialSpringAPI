@@ -11,8 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.nix.dtos.PurchaseDTO;
 import com.nix.dtos.SalesPerUserDTO;
-import com.nix.dtos.mappers.PurchaseMapper;
-import com.nix.models.Purchase;
 import com.nix.models.User;
 import com.nix.service.PurchaseService;
 import com.nix.service.UserService;
@@ -21,39 +19,34 @@ import com.nix.service.UserService;
 @RequestMapping("/api/purchases")
 public class PurchaseController {
 
-	@Autowired
-	private PurchaseService purchaseService;
+    @Autowired
+    private PurchaseService purchaseService;
 
-	@Autowired
-	private UserService userService;
+    @Autowired
+    private UserService userService;
 
-	PurchaseMapper purchaseMapper = new PurchaseMapper();
+    @GetMapping("/history")
+    public ResponseEntity<List<PurchaseDTO>> getPurchaseHistory(@RequestHeader("Authorization") String jwt) {
+        User user = userService.findUserByJwt(jwt);
+        List<PurchaseDTO> purchaseHistory = purchaseService.getPurchaseHistoryForUser(user.getId());
+        return ResponseEntity.ok(purchaseHistory);
+    }
 
-	@GetMapping("/history")
-	public ResponseEntity<List<PurchaseDTO>> getPurchaseHistory(@RequestHeader("Authorization") String jwt) {
+    @GetMapping("/admin/total-sales")
+    public ResponseEntity<Double> getTotalSalesAmount() {
+        Double totalSales = purchaseService.getTotalSalesAmount();
+        return ResponseEntity.ok(totalSales);
+    }
 
-		User user = userService.findUserByJwt(jwt);
+    @GetMapping("/admin/total-number")
+    public ResponseEntity<Long> getTotalNumberOfPurchases() {
+        Long totalPurchases = purchaseService.getTotalNumberOfPurchases();
+        return ResponseEntity.ok(totalPurchases);
+    }
 
-		List<Purchase> purchaseHistory = purchaseService.getPurchaseHistoryForUser(user.getId());
-		return ResponseEntity.ok(purchaseMapper.mapToDTOs(purchaseHistory));
-	}
-
-	@GetMapping("/admin/total-sales")
-	public ResponseEntity<Double> getTotalSalesAmount() {
-		Double totalSales = purchaseService.getTotalSalesAmount();
-		return ResponseEntity.ok(totalSales);
-	}
-
-	@GetMapping("/admin/total-number")
-	public ResponseEntity<Long> getTotalNumberOfPurchases() {
-		Long totalPurchases = purchaseService.getTotalNumberOfPurchases();
-		return ResponseEntity.ok(totalPurchases);
-	}
-
-	@GetMapping("/admin/sales-per-user")
-	public ResponseEntity<List<SalesPerUserDTO>> getSalesStatisticsPerUser() {
-		List<SalesPerUserDTO> salesPerUser = purchaseService.getSalesStatisticsPerUser();
-		return ResponseEntity.ok(salesPerUser);
-	}
-
+    @GetMapping("/admin/sales-per-user")
+    public ResponseEntity<List<SalesPerUserDTO>> getSalesStatisticsPerUser() {
+        List<SalesPerUserDTO> salesPerUser = purchaseService.getSalesStatisticsPerUser();
+        return ResponseEntity.ok(salesPerUser);
+    }
 }

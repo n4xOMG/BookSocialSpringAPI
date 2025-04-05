@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.nix.dtos.ReadingProgressDTO;
+import com.nix.dtos.mappers.ReadingProgressMapper;
 import com.nix.models.ReadingProgress;
 import com.nix.repository.ChapterRepository;
 import com.nix.repository.ReadingProgressRepository;
@@ -17,93 +19,93 @@ import com.nix.repository.UserRepository;
 @Service
 public class ReadingProgressServiceImpl implements ReadingProgressService {
 
-	@Autowired
-	UserRepository userRepo;
+    @Autowired
+    UserRepository userRepo;
 
-	@Autowired
-	ChapterRepository chapterRepo;
+    @Autowired
+    ChapterRepository chapterRepo;
 
-	@Autowired
-	ReadingProgressRepository readingProgressRepo;
+    @Autowired
+    ReadingProgressRepository readingProgressRepo;
 
+    @Autowired
+    ReadingProgressMapper progressMapper;  // Add mapper injection
 
-	@Override
-	public ReadingProgress findReadingProgressById(Integer progressId) throws IOException {
-		Optional<ReadingProgress> progress = readingProgressRepo.findById(progressId);
+    @Override
+    public ReadingProgressDTO findReadingProgressById(Integer progressId) throws IOException {
+        Optional<ReadingProgress> progress = readingProgressRepo.findById(progressId);
+        return progress.map(progressMapper::mapToDTO)
+                      .orElseThrow(() -> new IOException("Reading progress not found"));
+    }
 
-		return progress.get();
+    @Override
+    public ReadingProgressDTO findByUserAndChapter(Integer userId, Integer chapterId) {
+        ReadingProgress progress = readingProgressRepo.findReadingProgressByChapterAndUserId(chapterId, userId);
+        return progress != null ? progressMapper.mapToDTO(progress) : null;
+    }
 
-	}
+    @Override
+    public List<ReadingProgressDTO> findByUserAndBook(Integer userId, Integer bookId) {
+        List<ReadingProgress> progresses = readingProgressRepo.findReadingProgressByBookAndUserId(bookId, userId);
+        return progressMapper.mapToDTOs(progresses);
+    }
 
-	@Override
-	public ReadingProgress findByUserAndChapter(Integer userId, Integer chapterId) {
-		return readingProgressRepo.findReadingProgressByChapterAndUserId(chapterId, userId);
-	}
+    @Override
+    public List<ReadingProgressDTO> findAllReadingProgressByUserId(Integer userId) {
+        List<ReadingProgress> progresses = readingProgressRepo.findByUserId(userId);
+        return progressMapper.mapToDTOs(progresses);
+    }
 
-	@Override
-	public List<ReadingProgress> findByUserAndBook(Integer userId, Integer bookId) {
-		return readingProgressRepo.findReadingProgressByBookAndUserId(bookId, userId);
-	}
+    @Override
+    @Transactional
+    public ReadingProgressDTO createReadingProgress(ReadingProgress readingProgress) throws Exception {
+        try {
+            ReadingProgress newProgress = new ReadingProgress();
+            newProgress.setUser(readingProgress.getUser());
+            readingProgress.getUser().getReadingProgresses().add(newProgress);
+            newProgress.setChapter(readingProgress.getChapter());
+            newProgress.setProgress(readingProgress.getProgress());
+            newProgress.setLastReadAt(LocalDateTime.now());
+            
+            return progressMapper.mapToDTO(readingProgressRepo.save(newProgress));
+        } catch (Exception e) {
+            throw new Exception("Error creating reading progress: " + e);
+        }
+    }
 
-	@Override
-	public List<ReadingProgress> findAllReadingProgressByUserId(Integer userId) {
-		return readingProgressRepo.findByUserId(userId);
-	}
+    @Override
+    public ReadingProgressDTO updateReadingProgress(Integer progressId, ReadingProgress readingProgress)
+            throws Exception {
+        try {
+            ReadingProgress updateProgress = readingProgressRepo.findById(progressId)
+                .orElseThrow(() -> new Exception("Reading progress not found"));
+            
+            if (readingProgress.getProgress() != null) {
+                updateProgress.setProgress(readingProgress.getProgress());
+                updateProgress.setLastReadAt(LocalDateTime.now());
+            }
+            
+            return progressMapper.mapToDTO(readingProgressRepo.save(updateProgress));
+        } catch (Exception e) {
+            throw new Exception("Error updating progress: " + e);
+        }
+    }
 
-	@Override
-	@Transactional
-	public ReadingProgress createReadingProgress(ReadingProgress readingProgress) throws Exception {
-		try {
-			ReadingProgress newProgress = new ReadingProgress();
-
-			newProgress.setUser(readingProgress.getUser());
-			readingProgress.getUser().getReadingProgresses().add(newProgress);
-
-			newProgress.setChapter(readingProgress.getChapter());
-			newProgress.setProgress(readingProgress.getProgress());
-			newProgress.setLastReadAt(LocalDateTime.now());
-
-			return newProgress;
-		} catch (Exception e) {
-			throw new Exception("Error creating reading progress: " + e);
-		}
-
-	}
-
-	@Override
-	public ReadingProgress updateReadingProgress(Integer progressId, ReadingProgress readingProgress)
-			throws Exception {
-		try {
-			ReadingProgress updateProgress = findReadingProgressById(progressId);
-
-			if (readingProgress.getProgress() != null) {
-				updateProgress.setProgress(readingProgress.getProgress());
-				updateProgress.setLastReadAt(LocalDateTime.now());
-			}
-
-			return readingProgressRepo.save(updateProgress);
-		} catch (Exception e) {
-			throw new Exception("Error updating progress: " + e);
-		}
-	}
-
-	@Override
-	@Transactional
-	public String deleteReadingProgress(Integer progressId) throws IOException {
-		try {
-			ReadingProgress deleteProgress = findReadingProgressById(progressId);
-
-			deleteProgress.getUser().getReadingProgresses().remove(deleteProgress);
-
-			deleteProgress.setChapter(null);
-			deleteProgress.setUser(null);
-
-			readingProgressRepo.delete(deleteProgress);
-
-			return "Reading progress deleted successfully!";
-		} catch (IOException e) {
-			throw new IOException("Error deleting progress: " + e);
-		}
-	}
-
+    @Override
+    @Transactional
+    public String deleteReadingProgress(Integer progressId) throws IOException {
+        try {
+            ReadingProgress deleteProgress = readingProgressRepo.findById(progressId)
+                .orElseThrow(() -> new IOException("Reading progress not found"));
+            
+            deleteProgress.getUser().getReadingProgresses().remove(deleteProgress);
+            deleteProgress.setChapter(null);
+            deleteProgress.setUser(null);
+            readingProgressRepo.delete(deleteProgress);
+            
+            return "Reading progress deleted successfully!";
+        } catch (IOException e) {
+            throw new IOException("Error deleting progress: " + e);
+        }
+    }
 }

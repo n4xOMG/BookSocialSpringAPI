@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.nix.dtos.BookDTO;
 import com.nix.dtos.ReadingProgressDTO;
-import com.nix.dtos.mappers.ReadingProgressMapper;
 import com.nix.models.Chapter;
 import com.nix.models.ReadingProgress;
 import com.nix.models.User;
@@ -37,52 +36,43 @@ public class ProgressController {
 	@Autowired
 	ReadingProgressService progressService;
 
-	ReadingProgressMapper progressMapper = new ReadingProgressMapper();
-
 	@GetMapping("/api/reading-progress/chapters/{chapterId}")
 	public ResponseEntity<ReadingProgressDTO> getReadingProgressByUserAndChapter(
 			@RequestHeader("Authorization") String jwt, @PathVariable("chapterId") Integer chapterId) throws Exception {
 
 		User user = userService.findUserByJwt(jwt);
 		if (user == null) {
-			throw new Exception("The user have to log in!");
+			throw new Exception("The user must log in!");
 		}
 
 		Chapter chapter = chapterService.findChapterById(chapterId);
 		if (chapter == null) {
 			throw new Exception("Chapter not found");
 		}
-		ReadingProgress readingProgress = progressService.findByUserAndChapter(user.getId(), chapterId);
-		if (readingProgress != null) {
-			return new ResponseEntity<>(progressMapper.mapToDTO(readingProgress), HttpStatus.OK);
-		}
-		return null;
 
+		ReadingProgressDTO readingProgress = progressService.findByUserAndChapter(user.getId(), chapterId);
+		return readingProgress != null ? ResponseEntity.ok(readingProgress) : ResponseEntity.notFound().build();
 	}
 
 	@GetMapping("/api/reading-progress/books/{bookId}")
 	public ResponseEntity<?> getReadingProgressByUserAndBook(@RequestHeader("Authorization") String jwt,
 			@PathVariable("bookId") Integer bookId) throws Exception {
-
 		try {
-			
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
-				throw new Exception("The user have to log in!");
+				throw new Exception("The user must log in!");
 			}
 
 			BookDTO book = bookService.getBookById(bookId);
 			if (book == null) {
-				throw new Exception("Chapter not found");
+				throw new Exception("Book not found");
 			}
-			
-			List<ReadingProgress> readingProgresses = progressService.findByUserAndBook(user.getId(), bookId);
-			
-			return new ResponseEntity<>(progressMapper.mapToDTOs(readingProgresses), HttpStatus.OK);
+
+			List<ReadingProgressDTO> readingProgresses = progressService.findByUserAndBook(user.getId(), bookId);
+			return ResponseEntity.ok(readingProgresses);
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-
 	}
 
 	@GetMapping("/api/reading-progress")
@@ -90,20 +80,17 @@ public class ProgressController {
 			throws Exception {
 		User user = userService.findUserByJwt(jwt);
 		if (user == null) {
-			throw new Exception("The user have to log in!");
+			throw new Exception("The user must log in!");
 		}
 
-		List<ReadingProgress> readingProgresses = progressService.findAllReadingProgressByUserId(user.getId());
-		if (readingProgresses != null) {
-			return new ResponseEntity<List<ReadingProgressDTO>>(progressMapper.mapToDTOs(readingProgresses),
-					HttpStatus.OK);
-		}
-		return null;
+		List<ReadingProgressDTO> readingProgresses = progressService.findAllReadingProgressByUserId(user.getId());
+		return ResponseEntity.ok(readingProgresses);
 	}
 
 	@PostMapping("/api/chapters/{chapterId}/progress")
 	public ResponseEntity<ReadingProgressDTO> saveReadingProgress(@RequestHeader("Authorization") String jwt,
-			@PathVariable("chapterId") Integer chapterId, @RequestBody ReadingProgress progress) throws Exception {
+			@PathVariable("chapterId") Integer chapterId, @RequestBody ReadingProgressDTO progressDTO)
+			throws Exception {
 
 		User reqUser = userService.findUserByJwt(jwt);
 		if (reqUser == null) {
@@ -115,20 +102,18 @@ public class ProgressController {
 			throw new Exception("Chapter not found");
 		}
 
-		ReadingProgress readingProgress = progressService.findByUserAndChapter(reqUser.getId(), chapterId);
+		ReadingProgressDTO existingProgress = progressService.findByUserAndChapter(reqUser.getId(), chapterId);
 
-		if (readingProgress == null) {
+		if (existingProgress == null) {
 			ReadingProgress newProgress = new ReadingProgress();
 			newProgress.setUser(reqUser);
 			newProgress.setChapter(chapter);
-			newProgress.setProgress(progress.getProgress());
-			return new ResponseEntity<>(progressMapper.mapToDTO(progressService.createReadingProgress(newProgress)),
-					HttpStatus.OK);
+			newProgress.setProgress(progressDTO.getProgress());
+			return ResponseEntity.ok(progressService.createReadingProgress(newProgress));
 		} else {
-			return new ResponseEntity<>(
-					progressMapper.mapToDTO(progressService.updateReadingProgress(readingProgress.getId(), progress)),
-					HttpStatus.OK);
+			ReadingProgress updateProgress = new ReadingProgress();
+			updateProgress.setProgress(progressDTO.getProgress());
+			return ResponseEntity.ok(progressService.updateReadingProgress(existingProgress.getId(), updateProgress));
 		}
-
 	}
 }

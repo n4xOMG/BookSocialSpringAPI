@@ -3,21 +3,21 @@ package com.nix.service;
 import java.io.IOException;
 import java.util.List;
 
+import com.nix.dtos.ReadingProgressDTO;
 import com.nix.models.ReadingProgress;
 
 public interface ReadingProgressService {
-	public ReadingProgress findReadingProgressById(Integer progressId) throws IOException;
+	ReadingProgressDTO findReadingProgressById(Integer progressId) throws IOException;
 
-	public ReadingProgress findByUserAndChapter(Integer userId, Integer chapterId);
+	ReadingProgressDTO findByUserAndChapter(Integer userId, Integer chapterId);
 
-	public List<ReadingProgress> findByUserAndBook(Integer userId, Integer bookId);
+	List<ReadingProgressDTO> findByUserAndBook(Integer userId, Integer bookId);
 
-	public List<ReadingProgress> findAllReadingProgressByUserId(Integer userId);
+	List<ReadingProgressDTO> findAllReadingProgressByUserId(Integer userId);
 
-	public ReadingProgress createReadingProgress(ReadingProgress readingProgress) throws Exception;
+	ReadingProgressDTO createReadingProgress(ReadingProgress readingProgress) throws Exception;
 
-	public ReadingProgress updateReadingProgress(Integer progressId, ReadingProgress readingProgress) throws Exception;
+	ReadingProgressDTO updateReadingProgress(Integer progressId, ReadingProgress readingProgress) throws Exception;
 
-	public String deleteReadingProgress(Integer progressId) throws IOException;
-
+	String deleteReadingProgress(Integer progressId) throws IOException;
 }
