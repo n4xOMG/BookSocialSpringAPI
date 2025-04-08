@@ -8,6 +8,8 @@ import com.nix.models.User;
 
 public interface BookService {
 	public List<BookDTO> getAllBooks();
+	
+	public Long getBookCount();
 
 	public BookDTO getBookById(Integer id);
 

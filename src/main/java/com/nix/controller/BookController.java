@@ -38,6 +38,11 @@ public class BookController {
 		return ResponseEntity.ok(bookService.getAllBooks());
 	}
 
+	@GetMapping("/books/count")
+	public ResponseEntity<?> getBookCount() {
+		return ResponseEntity.ok(bookService.getBookCount());
+	}
+	
 	@GetMapping("/books/{bookId}")
 	public ResponseEntity<BookDTO> getBookById(@PathVariable Integer bookId) {
 		return ResponseEntity.ok(bookService.getBookById(bookId));

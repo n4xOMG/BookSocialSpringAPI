@@ -80,10 +80,10 @@ public class UserController {
 			HttpServletRequest httpRequest) throws Exception {
 
 		try {
-			
+
 			UserDTO updateUser = userMapper
 					.mapToDTO(userService.updateCurrentSessionUser(jwt, user, getSiteURL(httpRequest)));
-			System.out.println("Update profile from user: "+updateUser.getEmail());
+			System.out.println("Update profile from user: " + updateUser.getEmail());
 			return new ResponseEntity<>(updateUser, HttpStatus.OK);
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -174,6 +174,17 @@ public class UserController {
 
 			List<User> following = userService.getUserFollowing(userId);
 			return ResponseEntity.ok(userSummaryMapper.mapToDTOs(following));
+		} catch (ResourceNotFoundException ex) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+		} catch (Exception ex) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching following.");
+		}
+	}
+
+	@GetMapping("/users/count")
+	public ResponseEntity<?> getUserCount() {
+		try {
+			return ResponseEntity.ok(userService.getUserCount());
 		} catch (ResourceNotFoundException ex) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
 		} catch (Exception ex) {

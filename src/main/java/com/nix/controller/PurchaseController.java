@@ -16,7 +16,6 @@ import com.nix.service.PurchaseService;
 import com.nix.service.UserService;
 
 @RestController
-@RequestMapping("/api/purchases")
 public class PurchaseController {
 
     @Autowired
@@ -25,20 +24,20 @@ public class PurchaseController {
     @Autowired
     private UserService userService;
 
-    @GetMapping("/history")
+    @GetMapping("/api/purchases/history")
     public ResponseEntity<List<PurchaseDTO>> getPurchaseHistory(@RequestHeader("Authorization") String jwt) {
         User user = userService.findUserByJwt(jwt);
         List<PurchaseDTO> purchaseHistory = purchaseService.getPurchaseHistoryForUser(user.getId());
         return ResponseEntity.ok(purchaseHistory);
     }
 
-    @GetMapping("/admin/total-sales")
+    @GetMapping("/admin/purchases/total-sales")
     public ResponseEntity<Double> getTotalSalesAmount() {
         Double totalSales = purchaseService.getTotalSalesAmount();
         return ResponseEntity.ok(totalSales);
     }
 
-    @GetMapping("/admin/total-number")
+    @GetMapping("/admin/purchases/purchases-count")
     public ResponseEntity<Long> getTotalNumberOfPurchases() {
         Long totalPurchases = purchaseService.getTotalNumberOfPurchases();
         return ResponseEntity.ok(totalPurchases);

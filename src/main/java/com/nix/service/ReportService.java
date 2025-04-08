@@ -5,11 +5,13 @@ import java.util.List;
 import com.nix.models.Report;
 
 public interface ReportService {
-	Report createReport(Report report) throws Exception;
-	
-	Report saveReport(Report report);
-
 	List<Report> getAllReports();
+
+	Long getReportsCount();
+
+	Report createReport(Report report) throws Exception;
+
+	Report saveReport(Report report);
 
 	Report getReportById(Long id) throws Exception;
 

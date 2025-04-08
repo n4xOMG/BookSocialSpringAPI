@@ -493,4 +493,9 @@ public class UserServiceImpl implements UserService {
 
 		return following;
 	}
+
+	@Override
+	public Long getUserCount() {
+		return userRepo.count();
+	}
 }

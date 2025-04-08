@@ -109,6 +109,15 @@ public class ReportController {
 		}
 	}
 
+	@GetMapping("/count")
+	public ResponseEntity<?> getReportCount() {
+		try {
+			return new ResponseEntity<>(reportService.getReportsCount(), HttpStatus.OK);
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
 	// Get report by ID (Admin Only)
 	@GetMapping("/{id}")
 	public ResponseEntity<?> getReportById(@PathVariable Long id) {
