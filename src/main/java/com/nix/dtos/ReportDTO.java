@@ -19,5 +19,5 @@ public class ReportDTO {
 	private ChapterSummaryDTO chapter;
 	private CommentDTO comment;
 	private LocalDateTime reportedDate;
-	private boolean isResolved;
+	private boolean isResolved; //return resolved
 }

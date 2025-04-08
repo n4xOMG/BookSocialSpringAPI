@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.nix.models.Report;
 import com.nix.repository.ReportRepository;
+
 @Service
 public class ReportServiceImpl implements ReportService {
 
@@ -23,6 +24,11 @@ public class ReportServiceImpl implements ReportService {
 	@Override
 	public List<Report> getAllReports() {
 		return reportRepository.findAll();
+	}
+
+	@Override
+	public Long getReportsCount() {
+		return reportRepository.count();
 	}
 
 	@Override

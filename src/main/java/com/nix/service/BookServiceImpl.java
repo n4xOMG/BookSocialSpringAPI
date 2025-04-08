@@ -40,13 +40,18 @@ public class BookServiceImpl implements BookService {
 
 	@Autowired
 	BookMapper bookMapper;
-	
+
 	@Autowired
-    CategoryMapper categoryMapper;
+	CategoryMapper categoryMapper;
 
 	@Override
 	public List<BookDTO> getAllBooks() {
 		return bookMapper.mapToDTOs(bookRepo.findAll());
+	}
+
+	@Override
+	public Long getBookCount() {
+		return bookRepo.count();
 	}
 
 	@Override
@@ -161,11 +166,11 @@ public class BookServiceImpl implements BookService {
 	@Override
 	public List<CategoryDTO> getTopSixCategoriesWithBooks() {
 		List<Category> categories = categoryRepository.findTop6ByOrderByNameAsc();
-        if (categories.isEmpty()) {
-            return Collections.emptyList(); // Handle empty case
-        }
-        // Map to DTOs, including their books
-        return categoryMapper.mapToDTOs(categories);
+		if (categories.isEmpty()) {
+			return Collections.emptyList(); // Handle empty case
+		}
+		// Map to DTOs, including their books
+		return categoryMapper.mapToDTOs(categories);
 	}
 
 	@Override
@@ -211,4 +216,5 @@ public class BookServiceImpl implements BookService {
 		PageRequest pageRequest = PageRequest.of(0, limit);
 		return bookMapper.mapToDTOs(bookRepo.findTopBooksWithLatestChapters(pageRequest));
 	}
+
 }

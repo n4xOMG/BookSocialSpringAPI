@@ -14,6 +14,8 @@ public interface UserService {
 
 	public Page<User> getAllUsers(int page, int size, String searchTerm);
 
+	public Long getUserCount();
+
 	public User register(User user) throws UnsupportedEncodingException, MessagingException;
 
 	public User sendForgotPasswordMail(User user) throws UnsupportedEncodingException, MessagingException;
@@ -56,7 +58,7 @@ public interface UserService {
 	public UserDTO getUserPreferences(Integer userId);
 
 	public List<User> getUserFollowers(Integer userId);
-	
+
 	public List<User> getUserFollowing(Integer userId);
-	
+
 }
