@@ -1,7 +1,9 @@
 package com.nix.service;
 
-import java.util.List;
+import com.nix.dtos.LogPageResponse;
 
 public interface LogReaderService {
-	public List<String> getRecentLogs();
+	LogPageResponse getRecentLogs(int page, int size);
+
+	LogPageResponse getLogsByUsername(String username, int page, int size);
 }

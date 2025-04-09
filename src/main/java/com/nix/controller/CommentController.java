@@ -143,6 +143,16 @@ public class CommentController {
 		}
 	}
 
+	@GetMapping("/admin/comments/recent/{userId}")
+	public ResponseEntity<?> getRecentCommentsByUserId(@PathVariable Integer userId) {
+		try {
+			Page<Comment> comments = commentService.getRecentCommentsByUserId(userId, 0, 5);
+			return ResponseEntity.ok(commentMapper.mapToDTOs(comments.getContent()));
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
 	private ResponseEntity<?> handleCommentCreation(User user, Supplier<Comment> commentCreator, String context,
 			Integer entityId) {
 		try {

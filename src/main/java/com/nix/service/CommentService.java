@@ -17,6 +17,8 @@ public interface CommentService {
 	public Page<Comment> getPagerChapterComments(int page, int size, Integer chapterId);
 
 	public List<Comment> getAllPostComments(Integer postId);
+	
+	public Page<Comment> getRecentCommentsByUserId(Integer userId, int page, int size);
 
 	public Comment createPostComment(Comment comment, Integer postId, User user) throws Exception;
 
