@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -92,6 +93,12 @@ public class CommentServiceImpl implements CommentService {
 		List<Comment> comments = commentRepo.findParentCommentsByPostId(postId);
 		return comments;
 
+	}
+
+	@Override
+	public Page<Comment> getRecentCommentsByUserId(Integer userId, int page, int size) {
+		Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+		return commentRepo.findByUserIdOrderByCreatedAtDesc(userId, pageable);
 	}
 
 	public boolean containsSensitiveWords(String content) {

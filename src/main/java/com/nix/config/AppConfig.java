@@ -30,6 +30,7 @@ public class AppConfig {
 	@Autowired
 	JwtValidator jwtValidator;
 
+
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
@@ -38,6 +39,7 @@ public class AppConfig {
 						.requestMatchers("/admin/**").hasRole("ADMIN").requestMatchers("/moderator/**")
 						.hasAnyRole("ADMIN", "MODERATOR").anyRequest().permitAll())
 				.addFilterBefore(jwtValidator, UsernamePasswordAuthenticationFilter.class).csrf(csrf -> csrf.disable())
+				
 				.cors(cors -> cors.configurationSource(configurationSource()));
 
 		return http.build();

@@ -5,8 +5,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nix.dtos.PurchaseDTO;
@@ -30,6 +30,13 @@ public class PurchaseController {
         List<PurchaseDTO> purchaseHistory = purchaseService.getPurchaseHistoryForUser(user.getId());
         return ResponseEntity.ok(purchaseHistory);
     }
+    
+    @GetMapping("/admin/purchases/history/users/{userId}")
+    public ResponseEntity<List<PurchaseDTO>> getPurchaseHistoryByUser(@PathVariable Integer userId) {
+        List<PurchaseDTO> purchaseHistory = purchaseService.getPurchaseHistoryForUser(userId);
+        return ResponseEntity.ok(purchaseHistory);
+    }
+    
 
     @GetMapping("/admin/purchases/total-sales")
     public ResponseEntity<Double> getTotalSalesAmount() {
