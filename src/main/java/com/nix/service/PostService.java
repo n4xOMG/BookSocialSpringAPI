@@ -9,17 +9,26 @@ import com.nix.dtos.PostDTO;
 import com.nix.models.User;
 
 public interface PostService {
+	// Primary methods with user context
+	Page<PostDTO> getAllPosts(Pageable pageable, User currentUser);
+
+	List<PostDTO> getPostsByUser(User user, User currentUser);
+
+	PostDTO getPostById(Integer postId, User currentUser);
+
+	// Convenience methods without user context (they call the primary methods)
 	Page<PostDTO> getAllPosts(Pageable pageable);
 
 	List<PostDTO> getPostsByUser(User user);
 
-	PostDTO createPost(User user, PostDTO post);
+	PostDTO getPostById(Integer postId);
+
+	// Methods that always have a user context
+	PostDTO createPost(User user, PostDTO postDTO);
 
 	PostDTO updatePost(User user, Integer postId, PostDTO postDetails);
 
 	void deletePost(User user, Integer postId);
 
 	PostDTO likePost(Integer postId, User user);
-
-	PostDTO getPostById(Integer postId);
 }

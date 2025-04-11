@@ -29,7 +29,8 @@ public class CategoryController {
 	@Autowired
 	UserService userService;
 
-	CategoryMapper categoryMapper = new CategoryMapper();
+	@Autowired
+	CategoryMapper categoryMapper;
 
 	@GetMapping("/categories")
 	public ResponseEntity<?> getAllCategories() {

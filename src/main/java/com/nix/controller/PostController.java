@@ -32,15 +32,19 @@ public class PostController {
 	@Autowired
 	private UserService userService;
 
-	@GetMapping("/posts")
-	public ResponseEntity<Page<PostDTO>> getAllPosts(@RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "timestamp,desc") String sort) {
-		Pageable pageable = PageRequest.of(page, size, parseSort(sort));
-		Page<PostDTO> postsPage = postService.getAllPosts(pageable);
-		return ResponseEntity.ok(postsPage);
+	/**
+	 * Helper method to extract the current user from JWT if present
+	 */
+	private User getCurrentUser(String jwt) {
+		if (jwt != null && !jwt.isEmpty()) {
+			return userService.findUserByJwt(jwt);
+		}
+		return null;
 	}
 
-	// Helper method to parse sort parameter
+	/**
+	 * Helper method to parse sort parameter
+	 */
 	private Sort parseSort(String sort) {
 		String[] parts = sort.split(",");
 		String property = parts[0];
@@ -49,52 +53,70 @@ public class PostController {
 		return Sort.by(direction, property);
 	}
 
+	@GetMapping("/posts")
+	public ResponseEntity<Page<PostDTO>> getAllPosts(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "timestamp,desc") String sort,
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
+
+		User currentUser = getCurrentUser(jwt);
+		Pageable pageable = PageRequest.of(page, size, parseSort(sort));
+		Page<PostDTO> postsPage = postService.getAllPosts(pageable, currentUser);
+		return ResponseEntity.ok(postsPage);
+	}
+
 	@GetMapping("/posts/{postId}")
-	public ResponseEntity<PostDTO> getPostById(@PathVariable Integer postId) {
-		PostDTO post = postService.getPostById(postId);
+	public ResponseEntity<PostDTO> getPostById(@PathVariable Integer postId,
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
+
+		User currentUser = getCurrentUser(jwt);
+		PostDTO post = postService.getPostById(postId, currentUser);
 		return ResponseEntity.ok(post);
 	}
 
 	@GetMapping("/posts/user/{userId}")
-	public ResponseEntity<List<PostDTO>> getPostsByUser(@PathVariable("userId") Integer userId) {
+	public ResponseEntity<List<PostDTO>> getPostsByUser(@PathVariable("userId") Integer userId,
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
+
 		User user = userService.findUserById(userId);
 		if (user == null) {
 			throw new ResourceNotFoundException("Cannot find user with id: " + userId);
 		}
-		List<PostDTO> posts = postService.getPostsByUser(user);
+
+		User currentUser = getCurrentUser(jwt);
+		List<PostDTO> posts = postService.getPostsByUser(user, currentUser);
 		return ResponseEntity.ok(posts);
 	}
 
 	@PostMapping("/api/posts")
 	public ResponseEntity<PostDTO> createPost(@RequestBody PostDTO postDTO,
 			@RequestHeader("Authorization") String jwt) {
-		User user = userService.findUserByJwt(jwt);
-		PostDTO createdPost = postService.createPost(user, postDTO);
+		User currentUser = getCurrentUser(jwt);
+		PostDTO createdPost = postService.createPost(currentUser, postDTO);
 		return ResponseEntity.ok(createdPost);
 	}
 
 	@PutMapping("/api/posts/{id}")
 	public ResponseEntity<PostDTO> updatePost(@PathVariable Integer id, @RequestBody PostDTO postDetails,
 			@RequestHeader("Authorization") String jwt) {
-		User user = userService.findUserByJwt(jwt);
-		PostDTO updatedPost = postService.updatePost(user, id, postDetails);
+		User currentUser = getCurrentUser(jwt);
+		PostDTO updatedPost = postService.updatePost(currentUser, id, postDetails);
 		return ResponseEntity.ok(updatedPost);
 	}
 
 	@DeleteMapping("/api/posts/{id}")
 	public ResponseEntity<Void> deletePost(@PathVariable Integer id, @RequestHeader("Authorization") String jwt) {
-		User user = userService.findUserByJwt(jwt);
-		postService.deletePost(user, id);
+		User currentUser = getCurrentUser(jwt);
+		postService.deletePost(currentUser, id);
 		return ResponseEntity.noContent().build();
 	}
 
 	@PostMapping("/api/posts/{postId}/like")
 	public ResponseEntity<PostDTO> likePost(@PathVariable Integer postId, @RequestHeader("Authorization") String jwt) {
-		User user = userService.findUserByJwt(jwt);
-		if (user == null) {
+		User currentUser = getCurrentUser(jwt);
+		if (currentUser == null) {
 			throw new ResourceNotFoundException("Cannot find user");
 		}
-		PostDTO likedPost = postService.likePost(postId, user);
+		PostDTO likedPost = postService.likePost(postId, currentUser);
 		return ResponseEntity.ok(likedPost);
 	}
 }
