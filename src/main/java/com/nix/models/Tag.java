@@ -1,6 +1,7 @@
 package com.nix.models;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.Entity;
@@ -29,6 +30,6 @@ public class Tag implements Serializable {
 	private String name;
 
 	@ManyToMany(mappedBy = "tags")
-	private List<Book> books;
+	private List<Book> books = new ArrayList<>();
 
 }

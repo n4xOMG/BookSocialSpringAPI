@@ -22,7 +22,10 @@ public class CategoryMapper implements Mapper<Category, CategoryDTO> {
 		}
 		categoryDTO.setDescription(category.getDescription());
 		categoryDTO.setName(category.getName());
-		categoryDTO.setBooks(bookMapper.mapToDTOs(category.getBooks()));
+		if (category.getBooks()!=null) {
+			categoryDTO.setBooks(bookMapper.mapToDTOs(category.getBooks()));
+		}
+		
 		return categoryDTO;
 	}
 

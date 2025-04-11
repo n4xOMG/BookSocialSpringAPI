@@ -61,7 +61,7 @@ public class Book implements Serializable {
 	@JoinColumn(name = "category_id")
 	private Category category;
 
-	@ManyToMany(cascade = CascadeType.ALL)
+	@ManyToMany
 	@JoinTable(name = "book_tags", // Renamed join table
 			joinColumns = @JoinColumn(name = "book_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
 	private List<Tag> tags = new ArrayList<>();

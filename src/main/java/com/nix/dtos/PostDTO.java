@@ -14,15 +14,16 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PostDTO {
-	private Integer id;
-	private UserSummaryDTO user;
-	private String content;
-	private Integer sharedPostId;
-	private List<String> images = new ArrayList<>();
-	private Integer likes;
-	private List<CommentDTO> comments;
-	private LocalDateTime timestamp;
-	private UserSummaryDTO sharedPostUser;
-	private List<String> sharePostImages = new ArrayList<>();
+    private Integer id;
+    private UserSummaryDTO user;
+    private String content;
+    private Integer sharedPostId;
+    private List<String> images = new ArrayList<>();
+    private Integer likes;
+    private List<CommentDTO> comments;
+    private LocalDateTime timestamp;
+    private UserSummaryDTO sharedPostUser;
+    private List<String> sharePostImages = new ArrayList<>();
     private String sharedPostContent;
+    private boolean likedByCurrentUser;
 }

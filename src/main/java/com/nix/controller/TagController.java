@@ -29,7 +29,8 @@ public class TagController {
 	@Autowired
 	UserService userService;
 
-	TagMapper tagMapper = new TagMapper();
+	@Autowired
+	TagMapper tagMapper;
 
 	@GetMapping("/books/tags")
 	public ResponseEntity<?> getAllTags() {
