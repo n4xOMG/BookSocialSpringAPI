@@ -119,4 +119,24 @@ public class PostController {
 		PostDTO likedPost = postService.likePost(postId, currentUser);
 		return ResponseEntity.ok(likedPost);
 	}
+
+	@PostMapping("/posts/share-chapter/{chapterId}")
+	public ResponseEntity<PostDTO> shareChapterAsPost(@PathVariable Integer chapterId, @RequestBody PostDTO postDTO,
+			@RequestHeader("Authorization") String jwt) {
+
+		User currentUser = getCurrentUser(jwt);
+		PostDTO post = postService.createChapterSharePost(chapterId, currentUser, postDTO);
+
+		return ResponseEntity.ok(post);
+	}
+
+	@PostMapping("/posts/share-book/{bookId}")
+	public ResponseEntity<PostDTO> shareBookAsPost(@PathVariable Integer bookId, @RequestBody PostDTO postDTO,
+			@RequestHeader("Authorization") String jwt) {
+
+		User currentUser = getCurrentUser(jwt);
+		PostDTO post = postService.createBookSharePost(bookId, currentUser, postDTO);
+
+		return ResponseEntity.ok(post);
+	}
 }

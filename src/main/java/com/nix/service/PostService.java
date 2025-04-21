@@ -31,4 +31,8 @@ public interface PostService {
 	void deletePost(User user, Integer postId);
 
 	PostDTO likePost(Integer postId, User user);
+
+	PostDTO createChapterSharePost(Integer chapterId, User user, PostDTO postDTO);
+
+	PostDTO createBookSharePost(Integer bookId, User user, PostDTO postDTO);
 }

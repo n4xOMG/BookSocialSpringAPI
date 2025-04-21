@@ -12,6 +12,8 @@ import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -63,9 +65,25 @@ public class Post implements Serializable {
 	@ManyToMany
 	@JoinTable(name = "post_likes", joinColumns = @JoinColumn(name = "post_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
 	private List<User> likedUsers = new ArrayList<>();
-	
+
 	// New field to reference the original shared post
 	@ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shared_post_id")
-    private Post sharedPost;
+	@JoinColumn(name = "shared_post_id")
+	private Post sharedPost;
+
+	@ManyToOne
+	@JoinColumn(name = "shared_book_id")
+	private Book sharedBook;
+
+	@ManyToOne
+	@JoinColumn(name = "shared_chapter_id")
+	private Chapter sharedChapter;
+
+	@Enumerated(EnumType.STRING)
+	private PostType postType;
+
+	// Define PostType enum
+	public enum PostType {
+		STANDARD, BOOK_SHARE, CHAPTER_SHARE
+	}
 }

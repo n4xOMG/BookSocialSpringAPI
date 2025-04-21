@@ -12,8 +12,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.nix.dtos.PostDTO;
 import com.nix.dtos.mappers.PostMapper;
 import com.nix.exception.ResourceNotFoundException;
+import com.nix.models.Book;
+import com.nix.models.Chapter;
 import com.nix.models.Post;
+import com.nix.models.Post.PostType;
 import com.nix.models.User;
+import com.nix.repository.BookRepository;
+import com.nix.repository.ChapterRepository;
 import com.nix.repository.PostRepository;
 import com.nix.repository.UserRepository;
 
@@ -25,6 +30,12 @@ public class PostServiceImpl implements PostService {
 
 	@Autowired
 	private UserRepository userRepository;
+
+	@Autowired
+	private ChapterRepository chapterRepository;
+
+	@Autowired
+	private BookRepository bookRepository;
 
 	@Autowired
 	private PostMapper postMapper;
@@ -149,5 +160,56 @@ public class PostServiceImpl implements PostService {
 
 		Post savedPost = postRepository.save(post);
 		return postMapper.mapToDTO(savedPost, user);
+	}
+
+	public PostDTO createChapterSharePost(Integer chapterId, User user, PostDTO postDTO) {
+
+		// Find chapter and verify it's published
+		Chapter chapter = chapterRepository.findById(chapterId)
+				.orElseThrow(() -> new ResourceNotFoundException("Chapter not found"));
+
+		if (chapter.isDraft()) {
+			throw new IllegalStateException("Cannot share draft chapters");
+		}
+
+		// Create post
+		Post post = new Post();
+		post.setUser(user);
+		post.setContent(postDTO.getContent());
+		post.setTimestamp(LocalDateTime.now());
+		post.setSharedChapter(chapter);
+		post.setSharedBook(chapter.getBook());
+		post.setPostType(PostType.CHAPTER_SHARE);
+
+		// Add the book cover as the post image
+		if (chapter.getBook().getBookCover() != null) {
+			post.getImages().add(chapter.getBook().getBookCover());
+		}
+
+		Post savedPost = postRepository.save(post);
+		return postMapper.mapToDTO(savedPost);
+	}
+
+	// Method to create a post just sharing a book
+	public PostDTO createBookSharePost(Integer bookId, User user, PostDTO postDTO) {
+
+		// Find book
+		Book book = bookRepository.findById(bookId).orElseThrow(() -> new ResourceNotFoundException("Book not found"));
+
+		// Create post
+		Post post = new Post();
+		post.setUser(user);
+		post.setContent(postDTO.getContent());
+		post.setTimestamp(LocalDateTime.now());
+		post.setSharedBook(book);
+		post.setPostType(PostType.BOOK_SHARE);
+
+		// Add the book cover as the post image
+		if (book.getBookCover() != null) {
+			post.getImages().add(book.getBookCover());
+		}
+
+		Post savedPost = postRepository.save(post);
+		return postMapper.mapToDTO(savedPost);
 	}
 }

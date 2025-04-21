@@ -34,16 +34,6 @@ public class UserMapper implements Mapper<User, UserDTO> {
 		userDTO.setIsVerified(user.getIsVerified());
 		userDTO.setIsSuspended(user.getIsSuspended());
 
-		if (user.getFollowedBooks() != null) {
-			userDTO.setBook(bookMapper.mapToDTOs(user.getFollowedBooks()));
-		}
-		if (user.getLikedComments() != null) {
-			userDTO.setComment(commentMapper.mapToDTOs(user.getLikedComments()));
-		}
-		if (user.getLikedPosts() != null) {
-			userDTO.setPost(postMapper.mapToDTOs(user.getLikedPosts()));
-		}
-
 		return userDTO;
 	}
 
