@@ -26,4 +26,13 @@ public class PostDTO {
     private List<String> sharePostImages = new ArrayList<>();
     private String sharedPostContent;
     private boolean likedByCurrentUser;
+    
+    private BookDTO sharedBook;
+    private ChapterSummaryDTO sharedChapter;
+    private PostType postType = PostType.STANDARD; // STANDARD, BOOK_SHARE, CHAPTER_SHARE
+    
+    // Enum for post types
+    public enum PostType {
+        STANDARD, BOOK_SHARE, CHAPTER_SHARE
+    }
 }

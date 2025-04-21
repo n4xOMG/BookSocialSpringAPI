@@ -46,20 +46,20 @@ public class AppConfig {
 	}
 
 	private CorsConfigurationSource configurationSource() {
-		return new CorsConfigurationSource() {
-			@Override
-			public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
-				CorsConfiguration cfg = new CorsConfiguration();
-				cfg.setAllowedOrigins(Arrays.asList("*"));
-				cfg.setAllowedMethods(Collections.singletonList("*"));
-				cfg.setAllowCredentials(true);
-				cfg.setAllowedHeaders(Collections.singletonList("*"));
-				cfg.setExposedHeaders(Arrays.asList("Authorization"));
-				cfg.setMaxAge(3600L);
-
-				return cfg;
-			}
-		};
+	    return new CorsConfigurationSource() {
+	        @Override
+	        public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
+	            CorsConfiguration cfg = new CorsConfiguration();
+	            // Use allowedOriginPatterns for wildcard support
+	            cfg.setAllowedOriginPatterns(Arrays.asList("http://127.0.0.1:8081", "https://*.ngrok-free.app"));
+	            cfg.setAllowedMethods(Collections.singletonList("*"));
+	            cfg.setAllowCredentials(true);
+	            cfg.setAllowedHeaders(Collections.singletonList("*"));
+	            cfg.setExposedHeaders(Arrays.asList("Authorization"));
+	            cfg.setMaxAge(3600L);
+	            return cfg;
+	        }
+	    };
 	}
 
 	@Bean

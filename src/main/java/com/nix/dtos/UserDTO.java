@@ -1,7 +1,6 @@
 package com.nix.dtos;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -28,9 +27,6 @@ public class UserDTO {
 	private boolean isBanned;
 	private String banReason;
 	private int credits;
-	private List<BookDTO> book = new ArrayList<>();
-	private List<CommentDTO> comment = new ArrayList<>();
-	private List<PostDTO> post = new ArrayList<>();
 	private List<CategoryDTO> preferredCategories;
 	private List<TagDTO> preferredTags;
 }
