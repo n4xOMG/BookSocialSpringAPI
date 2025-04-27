@@ -102,7 +102,7 @@ public class UserController {
 		}
 	}
 
-	@PostMapping("/follow/{userIdToFollow}")
+	@PostMapping("/user/follow/{userIdToFollow}")
 	public ResponseEntity<?> followUser(@RequestHeader("Authorization") String jwt,
 			@PathVariable Integer userIdToFollow) {
 		try {
