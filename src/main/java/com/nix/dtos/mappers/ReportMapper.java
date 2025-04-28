@@ -3,12 +3,16 @@ package com.nix.dtos.mappers;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import com.nix.dtos.ReportDTO;
 import com.nix.models.Report;
 
+@Component
 public class ReportMapper implements Mapper<Report, ReportDTO> {
-
-	BookMapper bookMapper = new BookMapper();
+	@Autowired
+	BookMapper bookMapper;
 
 	CommentMapper commentMapper = new CommentMapper();
 
