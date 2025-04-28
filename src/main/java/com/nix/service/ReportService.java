@@ -2,20 +2,23 @@ package com.nix.service;
 
 import java.util.List;
 
+import com.nix.dtos.ReportDTO;
 import com.nix.models.Report;
 
 public interface ReportService {
-	List<Report> getAllReports();
+	ReportDTO createReport(String jwt, ReportDTO reportDTO) throws Exception;
+
+	List<ReportDTO> getAllReports();
 
 	Long getReportsCount();
 
-	Report createReport(Report report) throws Exception;
-
-	Report saveReport(Report report);
-
-	Report getReportById(Long id) throws Exception;
+	ReportDTO getReportById(Long id) throws Exception;
 
 	void resolveReport(Long id) throws Exception;
 
 	void deleteReport(Long id) throws Exception;
+
+	void deleteReportedObject(Long id, String jwt) throws Exception;
+
+	Report saveReport(Report report);
 }

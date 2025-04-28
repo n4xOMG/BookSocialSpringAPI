@@ -1,9 +1,9 @@
 package com.nix.controller;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,171 +16,108 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nix.dtos.BookDTO;
 import com.nix.dtos.ReportDTO;
-import com.nix.dtos.mappers.ReportMapper;
-import com.nix.models.Chapter;
-import com.nix.models.Comment;
-import com.nix.models.Report;
-import com.nix.models.User;
-import com.nix.service.BookService;
-import com.nix.service.ChapterService;
-import com.nix.service.CommentService;
+import com.nix.exception.ResourceNotFoundException;
+import com.nix.exception.UnauthorizedException;
 import com.nix.service.ReportService;
-import com.nix.service.UserService;
 
 @RestController
 @RequestMapping("/api/reports")
 public class ReportController {
 
-	@Autowired
-	private ReportService reportService;
+    @Autowired
+    private ReportService reportService;
 
-	@Autowired
-	private UserService userService;
 
-	@Autowired
-	private BookService bookService;
+    // Create a new report
+    @PostMapping
+    public ResponseEntity<?> createReport(@RequestHeader("Authorization") String jwt,
+                                         @RequestBody ReportDTO reportDTO) {
+        try {
+            ReportDTO createdReport = reportService.createReport(jwt, reportDTO);
+            return new ResponseEntity<>(createdReport, HttpStatus.CREATED);
+        } catch (UnauthorizedException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
+        } catch (ResourceNotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-	@Autowired
-	private ChapterService chapterService;
+    // Get all reports (Admin Only)
+    @GetMapping
+    public ResponseEntity<?> getAllReports() {
+        try {
+            List<ReportDTO> reports = reportService.getAllReports();
+            return new ResponseEntity<>(reports, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-	@Autowired
-	private CommentService commentService;
+    // Get report count
+    @GetMapping("/count")
+    public ResponseEntity<?> getReportCount() {
+        try {
+            Long count = reportService.getReportsCount();
+            return new ResponseEntity<>(count, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-	ReportMapper reportMapper = new ReportMapper();
+    // Get report by ID (Admin Only)
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getReportById(@PathVariable Long id) {
+        try {
+            ReportDTO report = reportService.getReportById(id);
+            return new ResponseEntity<>(report, HttpStatus.OK);
+        } catch (ResourceNotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-	// Create a new report
-	@PostMapping
-	public ResponseEntity<?> createReport(@RequestHeader("Authorization") String jwt,
-			@RequestBody ReportDTO reportDTO) {
-		try {
-			// Get User from JWT
-			User reporter = userService.findUserByJwt(jwt);
-			if (reporter == null) {
-				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
-			}
+    // Resolve a report (Admin Only)
+    @PutMapping("/{id}/resolve")
+    public ResponseEntity<?> resolveReport(@PathVariable Long id) {
+        try {
+            reportService.resolveReport(id);
+            return new ResponseEntity<>("Report resolved successfully.", HttpStatus.OK);
+        } catch (ResourceNotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-			Report report = new Report();
-			report.setReason(reportDTO.getReason());
-			report.setReporter(reporter);
-			report.setReportedDate(LocalDateTime.now());
-			report.setResolved(false);
+    // Delete a report (Admin Only)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteReport(@PathVariable Long id) {
+        try {
+            reportService.deleteReport(id);
+            return new ResponseEntity<>("Report deleted successfully.", HttpStatus.NO_CONTENT);
+        } catch (ResourceNotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-			// Associate the report with the relevant entity
-			if (reportDTO.getComment() != null) {
-				Comment comment = commentService.findCommentById(reportDTO.getComment().getId());
-				if (comment == null) {
-					return new ResponseEntity<>("Comment not found!", HttpStatus.BAD_REQUEST);
-				}
-				report.setComment(comment);
-			}
-
-			if (reportDTO.getBook() != null) {
-				BookDTO book = bookService.getBookById(reportDTO.getBook().getId());
-				if (book == null) {
-					return new ResponseEntity<>("Book not found!", HttpStatus.BAD_REQUEST);
-				}
-			}
-
-			if (reportDTO.getChapter() != null) {
-				Chapter chapter = chapterService.findChapterById(reportDTO.getChapter().getId());
-				if (chapter == null) {
-					return new ResponseEntity<>("Chapter not found!", HttpStatus.BAD_REQUEST);
-				}
-				report.setChapter(chapter);
-			}
-
-			Report createdReport = reportService.createReport(report);
-			return new ResponseEntity<>(reportMapper.mapToDTO(createdReport), HttpStatus.CREATED);
-		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-	}
-
-	// Get all reports (Admin Only)
-	@GetMapping
-	public ResponseEntity<?> getAllReports() {
-		try {
-			List<Report> reports = reportService.getAllReports();
-			return new ResponseEntity<>(reportMapper.mapToDTOs(reports), HttpStatus.OK);
-		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-	}
-
-	@GetMapping("/count")
-	public ResponseEntity<?> getReportCount() {
-		try {
-			return new ResponseEntity<>(reportService.getReportsCount(), HttpStatus.OK);
-		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-	}
-
-	// Get report by ID (Admin Only)
-	@GetMapping("/{id}")
-	public ResponseEntity<?> getReportById(@PathVariable Long id) {
-		try {
-			Report report = reportService.getReportById(id);
-			return new ResponseEntity<>(reportMapper.mapToDTO(report), HttpStatus.OK);
-		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-		}
-	}
-
-	// Resolve a report (Admin Only)
-	@PutMapping("/{id}/resolve")
-	public ResponseEntity<?> resolveReport(@PathVariable Long id) {
-		try {
-			reportService.resolveReport(id);
-			return new ResponseEntity<>("Report resolved successfully.", HttpStatus.OK);
-		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-		}
-	}
-
-	// Delete a report (Admin Only)
-	@DeleteMapping("/{id}")
-	public ResponseEntity<?> deleteReport(@PathVariable Long id) {
-		try {
-			reportService.deleteReport(id);
-			return new ResponseEntity<>("Report deleted successfully.", HttpStatus.NO_CONTENT);
-		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-		}
-	}
-
-	@DeleteMapping("/{id}/delete-object")
-	public ResponseEntity<?> deleteReportedObject(@PathVariable Long id, @RequestHeader("Authorization") String jwt) {
-		try {
-			User user = userService.findUserByJwt(jwt);
-			Report report = reportService.getReportById(id);
-			if (report != null) {
-				if (report.getBook() != null) {
-					Integer bookId = report.getBook().getId();
-					report.setBook(null);
-					reportService.saveReport(report);
-					bookService.deleteBook(bookId);
-				}
-				if (report.getChapter() != null) {
-					Integer chapterId = report.getChapter().getId();
-					report.setChapter(null);
-					reportService.saveReport(report);
-					chapterService.deleteChapter(chapterId);
-				}
-				if (report.getComment() != null) {
-					Integer commentId = report.getComment().getId();
-					report.setComment(null);
-					reportService.saveReport(report);
-					commentService.deleteComment(commentId, user.getId());
-				}
-				resolveReport(id);
-				reportService.deleteReport(id);
-			}
-			return new ResponseEntity<>("Reported object deleted successfully.", HttpStatus.NO_CONTENT);
-		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-		}
-	}
+    // Delete reported object (Admin Only)
+    @DeleteMapping("/{id}/delete-object")
+    public ResponseEntity<?> deleteReportedObject(@PathVariable Long id, @RequestHeader("Authorization") String jwt) {
+        try {
+            reportService.deleteReportedObject(id, jwt);
+            return new ResponseEntity<>("Reported object deleted successfully.", HttpStatus.NO_CONTENT);
+        } catch (UnauthorizedException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
