@@ -34,6 +34,9 @@ public class ReportServiceImpl implements ReportService {
 	private BookService bookService;
 
 	@Autowired
+	NotificationService notificationService;
+
+	@Autowired
 	private ChapterService chapterService;
 
 	@Autowired
@@ -110,6 +113,8 @@ public class ReportServiceImpl implements ReportService {
 		Report report = getReportEntityById(id);
 		report.setResolved(true);
 		reportRepository.save(report);
+		String message = "Your report has been resolved";
+		notificationService.createNotification(report.getReporter(), message);
 	}
 
 	@Override

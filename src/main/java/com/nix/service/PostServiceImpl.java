@@ -38,6 +38,9 @@ public class PostServiceImpl implements PostService {
 	private BookRepository bookRepository;
 
 	@Autowired
+	NotificationService notificationService;
+
+	@Autowired
 	private PostMapper postMapper;
 
 	@Override
@@ -130,7 +133,7 @@ public class PostServiceImpl implements PostService {
 		Post post = postRepository.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post not found with id " + postId));
 
-		if (!post.getUser().getId().equals(user.getId())) {
+		if (!post.getUser().getId().equals(user.getId()) && !post.getUser().getRole().getName().equals("ADMIN")) {
 			throw new ResourceNotFoundException("User is not authorized to delete this post.");
 		}
 
@@ -156,6 +159,8 @@ public class PostServiceImpl implements PostService {
 		} else {
 			post.getLikedUsers().add(user);
 			post.setLikes(post.getLikes() + 1);
+			String message = "User" + user.getUsername() + " liked your post!";
+			notificationService.createNotification(post.getUser(), message);
 		}
 
 		Post savedPost = postRepository.save(post);

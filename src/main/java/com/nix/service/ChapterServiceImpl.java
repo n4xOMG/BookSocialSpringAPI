@@ -219,6 +219,10 @@ public class ChapterServiceImpl implements ChapterService {
 			userRepository.save(user);
 			chapterRepo.save(chapter);
 
+			String message = "User liked chapter " + chapter.getTitle() + ": " + chapter.getChapterNum() + " in "
+					+ chapter.getBook().getTitle();
+			notificationService.createNotification(chapter.getBook().getAuthor(), message);
+
 			return true;
 		} else {
 			user.getLikedChapters().remove(chapter);

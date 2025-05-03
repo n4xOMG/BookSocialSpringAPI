@@ -89,9 +89,10 @@ public class CommentServiceImpl implements CommentService {
 	}
 
 	@Override
-	public List<Comment> getAllPostComments(Integer postId) {
-		List<Comment> comments = commentRepo.findParentCommentsByPostId(postId);
-		return comments;
+	public Page<Comment> getPagerPostComments(int page, int size, Integer postId) {
+		Pageable pageable = PageRequest.of(page, size);
+		
+		return commentRepo.findParentCommentsByPostId(postId, pageable);
 
 	}
 

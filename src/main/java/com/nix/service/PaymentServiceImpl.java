@@ -31,6 +31,9 @@ public class PaymentServiceImpl implements PaymentService {
 	private CreditPackageRepository creditPackageRepository;
 
 	@Autowired
+	private NotificationService notificationService;
+
+	@Autowired
 	private PurchaseRepository purchaseRepository;
 
 	@PostConstruct
@@ -86,6 +89,9 @@ public class PaymentServiceImpl implements PaymentService {
 		purchase.setPaymentIntentId(paymentIntentId);
 
 		purchaseRepository.save(purchase);
+
+		String message = "Payment succeed!" + creditPackage.getCreditAmount() + " has been added to your account.";
+		notificationService.createNotification(user, message);
 	}
 
 }

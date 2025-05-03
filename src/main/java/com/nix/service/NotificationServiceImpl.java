@@ -62,7 +62,7 @@ public class NotificationServiceImpl implements NotificationService {
 	    List<Long> readNotificationIds = userNotificationRepository.findReadNotificationIdsByUser(user);
 
 	    return notifications.stream()
-	        .filter(notification -> !readNotificationIds.contains(notification.getId())) // Chỉ giữ thông báo chưa đọc
+	        .filter(notification -> !readNotificationIds.contains(notification.getId()))
 	        .map(notification -> new NotificationDTO(notification.getId(), notification.getMessage(), false, notification.getCreatedDate()))
 	        .collect(Collectors.toList());
 	}

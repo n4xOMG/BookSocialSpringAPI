@@ -39,6 +39,9 @@ public class BookServiceImpl implements BookService {
 	UserRepository userRepository;
 
 	@Autowired
+	NotificationService notificationService;
+
+	@Autowired
 	BookMapper bookMapper;
 
 	@Autowired
@@ -115,14 +118,14 @@ public class BookServiceImpl implements BookService {
 	@Override
 	@Transactional
 	public void deleteBook(Integer id) {
-	    Book existingBook = bookRepo.findById(id)
-	            .orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
-	    
-	    // Remove this book from tags
-	    existingBook.getTags().clear();
-	    
-	    // Now delete the book
-	    bookRepo.delete(existingBook);
+		Book existingBook = bookRepo.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
+
+		// Remove this book from tags
+		existingBook.getTags().clear();
+
+		// Now delete the book
+		bookRepo.delete(existingBook);
 	}
 
 	@Override
@@ -190,6 +193,9 @@ public class BookServiceImpl implements BookService {
 		} else {
 			book.getFavoured().add(user);
 			user.getFollowedBooks().add(book);
+
+			String message = "User" + user.getUsername() + " favoured your book!";
+			notificationService.createNotification(book.getAuthor(), message);
 			return true;
 		}
 	}
@@ -206,6 +212,9 @@ public class BookServiceImpl implements BookService {
 		Book existingBook = bookRepo.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
 		existingBook.setSuggested(!existingBook.isSuggested());
+		String message = "Your book has been set as editor choice!";
+		notificationService.createNotification(existingBook.getAuthor(), message);
+		
 		return bookMapper.mapToDTO(bookRepo.save(existingBook));
 	}
 
