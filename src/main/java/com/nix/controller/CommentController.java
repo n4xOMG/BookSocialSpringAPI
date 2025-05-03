@@ -69,13 +69,32 @@ public class CommentController {
 	}
 
 	@GetMapping("/posts/{postId}/comments")
-	public ResponseEntity<?> getAllPostComments(@PathVariable("postId") Integer postId) {
-		try {
-			List<Comment> comments = commentService.getAllPostComments(postId);
-			return ResponseEntity.ok(commentMapper.mapToDTOs(comments));
-		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+	public ResponseEntity<?> getAllPostComments(@PathVariable("postId") Integer postId, 
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
+	    try {
+	        Page<Comment> commentsPage = commentService.getPagerPostComments(page, size, postId);
+	        List<CommentDTO> commentDTOs = commentMapper.mapToDTOs(commentsPage.getContent());
+
+			if (jwt != null && !jwt.isEmpty()) {
+				User user = userService.findUserByJwt(jwt);
+				for (CommentDTO comment : commentDTOs) {
+					setLikedByCurrentUserRecursively(comment, user, commentService);
+				}
+			}
+			
+			Map<String, Object> response = new HashMap<>();
+			response.put("comments", commentDTOs);
+			response.put("page", commentsPage.getNumber());
+			response.put("size", commentsPage.getSize());
+			response.put("totalPages", commentsPage.getTotalPages());
+			response.put("totalElements", commentsPage.getTotalElements());
+
+			return ResponseEntity.ok(response);
+			
+	    } catch (Exception e) {
+	        return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+	    }
 	}
 
 	@GetMapping("/books/{bookId}/comments")

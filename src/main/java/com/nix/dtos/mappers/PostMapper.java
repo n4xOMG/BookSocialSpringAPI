@@ -13,7 +13,6 @@ import com.nix.models.User;
 @Component
 public class PostMapper implements Mapper<Post, PostDTO> {
 	UserSummaryMapper userSummaryMapper = new UserSummaryMapper();
-	CommentMapper commentMapper = new CommentMapper();
 
 	@Autowired
 	BookMapper bookMapper;
@@ -28,7 +27,7 @@ public class PostMapper implements Mapper<Post, PostDTO> {
 		}
 		postDTO.setImages(p.getImages());
 		postDTO.setContent(p.getContent());
-		postDTO.setComments(commentMapper.mapToDTOs(p.getComments()));
+		postDTO.setCommentCount(p.getComments().size());
 		postDTO.setLikes(p.getLikes());
 		postDTO.setTimestamp(p.getTimestamp());
 		postDTO.setUser(userSummaryMapper.mapToDTO(p.getUser()));
@@ -44,14 +43,12 @@ public class PostMapper implements Mapper<Post, PostDTO> {
 
 		// Handle shared book
 		if (p.getSharedBook() != null) {
-			postDTO.setSharedBook(bookMapper.mapToDTO(p.getSharedBook())); // Assuming bookMapper exists
+			postDTO.setSharedBook(bookMapper.mapToDTO(p.getSharedBook()));
 		}
 
 		// Handle shared chapter
 		if (p.getSharedChapter() != null) {
-			postDTO.setSharedChapter(chapterSummaryMapper.mapToDTO(p.getSharedChapter())); // Assuming
-																							// chapterSummaryMapper
-																							// exists
+			postDTO.setSharedChapter(chapterSummaryMapper.mapToDTO(p.getSharedChapter()));
 		}
 
 		postDTO.setPostType(
@@ -65,7 +62,6 @@ public class PostMapper implements Mapper<Post, PostDTO> {
 		return posts.stream().map(this::mapToDTO).collect(Collectors.toList());
 	}
 
-	// Add these specialized methods without changing the interface
 	public PostDTO mapToDTO(Post p, User currentUser) {
 		PostDTO postDTO = mapToDTO(p); // Reuse existing method
 
