@@ -15,12 +15,13 @@ import com.nix.models.UserNotification;
 @Repository
 public interface UserNotificationRepository extends JpaRepository<UserNotification, Long> {
 
-    boolean existsByUserAndNotification(User user, Notification notification);
+	boolean existsByUserAndNotification(User user, Notification notification);
 
-    Optional<UserNotification> findByUserAndNotification(User user, Notification notification);
-    
-    // Lấy danh sách các notificationId mà user đã đọc
-    @Query("SELECT un.notification.id FROM UserNotification un WHERE un.user = :user")
-    List<Long> findReadNotificationIdsByUser(@Param("user") User user);
+	boolean existsByUserAndNotificationAndIsRead(User user, Notification notification, boolean isRead);
+
+	Optional<UserNotification> findByUserAndNotification(User user, Notification notification);
+
+	// Lấy danh sách các notificationId mà user đã đọc
+	@Query("SELECT un.notification.id FROM UserNotification un WHERE un.user = :user")
+	List<Long> findReadNotificationIdsByUser(@Param("user") User user);
 }
-
