@@ -21,7 +21,7 @@ public class BookDTO {
 	private String bookCover;
 	private String description;
 	private String language;
-	private boolean isSuggested;
+	private boolean isSuggested; //return suggested
 	private long viewCount;
 	private String status;
 	private LocalDateTime uploadDate;

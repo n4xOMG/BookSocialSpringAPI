@@ -371,7 +371,9 @@ public class CommentServiceImpl implements CommentService {
 		if (commentOpt.isPresent()) {
 			return user.getLikedComments().contains(commentOpt.get());
 		}
-		return false;
+		else{
+			return false;
+		}
 	}
 
 }

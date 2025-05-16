@@ -14,6 +14,6 @@ import lombok.Setter;
 public class NotificationDTO {
 	private Long id;
 	private String message;
-	private boolean isRead;
+	private boolean isRead; //return read
 	private LocalDateTime createdDate;
 }
