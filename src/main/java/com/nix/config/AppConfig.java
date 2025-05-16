@@ -51,7 +51,7 @@ public class AppConfig {
 	        public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
 	            CorsConfiguration cfg = new CorsConfiguration();
 	            // Use allowedOriginPatterns for wildcard support
-	            cfg.setAllowedOriginPatterns(Arrays.asList("http://127.0.0.1:8081", "http://192.168.1.6:3000", "http://localhost:3000","https://*.ngrok-free.app"));
+	            cfg.setAllowedOriginPatterns(Arrays.asList("http://127.0.0.1:8081", "http://*:3000", "http://localhost:3000","https://*.ngrok-free.app"));
 	            cfg.setAllowedMethods(Collections.singletonList("*"));
 	            cfg.setAllowCredentials(true);
 	            cfg.setAllowedHeaders(Collections.singletonList("*"));

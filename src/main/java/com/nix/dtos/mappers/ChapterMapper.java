@@ -29,6 +29,7 @@ public class ChapterMapper implements Mapper<Chapter, ChapterDTO> {
 			chapterDTO.setTitle(chapter.getTitle());
 			chapterDTO.setPrice(chapter.getPrice());
 			chapterDTO.setLocked(chapter.isLocked());
+			chapterDTO.setDraft(chapter.isDraft());
 			chapterDTO.setBookId(chapter.getBook().getId());
 			chapterDTO.setContent(chapter.getContent());
 			chapterDTO.setUploadDate(chapter.getUploadDate());

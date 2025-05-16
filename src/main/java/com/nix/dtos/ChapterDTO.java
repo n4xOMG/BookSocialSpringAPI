@@ -20,6 +20,7 @@ public class ChapterDTO {
 	private String content;
 	private int price;
 	private boolean isLocked;
+	private boolean isDraft;
 	private LocalDateTime uploadDate;
 	private Integer bookId;
 	private List<CommentDTO> comments;

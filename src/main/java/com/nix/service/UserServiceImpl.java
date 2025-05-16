@@ -203,7 +203,7 @@ public class UserServiceImpl implements UserService {
 				user.getRole().getUsers().remove(user);
 				user.getFollowedBooks().forEach(book -> book.getFavoured().remove(user));
 				user.getLikedComments().forEach(comment -> comment.getLikedUsers().remove(user));
-
+				user.getLikedPosts().forEach(post->post.getLikedUsers().remove(user));
 				userRepo.delete(user);
 
 			}

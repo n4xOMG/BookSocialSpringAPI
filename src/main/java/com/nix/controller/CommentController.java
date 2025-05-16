@@ -295,7 +295,7 @@ public class CommentController {
 		}
 	}
 
-	@PostMapping("/api/books/{bookId}/chapters/{chapterId}/comments/{parentCommentId}/reply")
+	@PostMapping("/api/chapters/{chapterId}/comments/{parentCommentId}/reply")
 	public ResponseEntity<?> createReplyChapterComment(@RequestBody Comment comment,
 			@PathVariable Integer parentCommentId, @RequestHeader("Authorization") String jwt) {
 		try {
