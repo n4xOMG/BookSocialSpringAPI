@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,7 @@ import com.nix.models.Category;
 import com.nix.models.User;
 import com.nix.repository.BookRepository;
 import com.nix.repository.CategoryRepository;
+import com.nix.repository.CommentRepository;
 import com.nix.repository.TagRepository;
 import com.nix.repository.UserRepository;
 
@@ -42,14 +45,49 @@ public class BookServiceImpl implements BookService {
 	NotificationService notificationService;
 
 	@Autowired
+	CommentRepository commentRepository;
+
+	@Autowired
 	BookMapper bookMapper;
 
 	@Autowired
 	CategoryMapper categoryMapper;
 
 	@Override
-	public List<BookDTO> getAllBooks() {
-		return bookMapper.mapToDTOs(bookRepo.findAll());
+	public Page<BookDTO> getAllBooks(Pageable pageable) {
+		Page<Book> booksPage = bookRepo.findAll(pageable);
+		return booksPage.map(book -> bookMapper.mapToDTO(book));
+	}
+
+	@Override
+	public Page<BookDTO> getBooksByCategoryId(Integer categoryId, Pageable pageable) {
+		Optional<Category> categoryOpt = categoryRepository.findById(categoryId);
+		if (!categoryOpt.isPresent()) {
+			throw new ResourceNotFoundException("Category not found with ID: " + categoryId);
+		}
+		Page<Book> booksPage = bookRepo.findByCategory(categoryOpt.get(), pageable);
+		return booksPage.map(book -> bookMapper.mapToDTO(book));
+	}
+
+	@Override
+	public Page<BookDTO> getBooksByAuthor(Integer authorId, Pageable pageable) {
+		Page<Book> booksPage = bookRepo.findByAuthorId(authorId, pageable);
+		return booksPage.map(book -> bookMapper.mapToDTO(book));
+	}
+
+	@Override
+	public Page<BookDTO> searchBooks(String title, Integer categoryId, List<Integer> tagIds, Pageable pageable) {
+		Page<Book> booksPage = bookRepo.searchBooks(title, categoryId, tagIds, pageable);
+		return booksPage.map(book -> bookMapper.mapToDTO(book));
+	}
+
+	@Override
+	public Page<BookDTO> getFollowedBooksByUserId(Integer id, Pageable pageable) {
+		User user = userRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+
+		return bookRepo.findByUserFavoured(id, pageable).map(book -> bookMapper.mapToDTO(book));
+
 	}
 
 	@Override
@@ -62,15 +100,6 @@ public class BookServiceImpl implements BookService {
 		Book book = bookRepo.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
 		return bookMapper.mapToDTO(book);
-	}
-
-	@Override
-	public List<BookDTO> getBooksByCategoryId(Integer categoryId) {
-		Optional<Category> categoryOpt = categoryRepository.findById(categoryId);
-		if (!categoryOpt.isPresent()) {
-			throw new ResourceNotFoundException("Category not found with ID: " + categoryId);
-		}
-		return bookMapper.mapToDTOs(bookRepo.findByCategory(categoryOpt.get()));
 	}
 
 	@Override
@@ -129,16 +158,6 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	public List<BookDTO> searchBooksByTitle(String title) {
-		return bookMapper.mapToDTOs(bookRepo.findByTitleContainingIgnoreCase(title));
-	}
-
-	@Override
-	public List<BookDTO> getBooksByAuthor(Integer authorId) {
-		return bookMapper.mapToDTOs(bookRepo.findByAuthorId(authorId));
-	}
-
-	@Override
 	public List<BookDTO> getTop10LikedBooks() {
 		return bookMapper.mapToDTOs(bookRepo.findTopBooksByLikes());
 	}
@@ -159,11 +178,6 @@ public class BookServiceImpl implements BookService {
 	@Override
 	public List<BookDTO> getBooksBySuggestedStatus(Boolean isSuggested) {
 		return bookMapper.mapToDTOs(bookRepo.findByIsSuggested(isSuggested));
-	}
-
-	@Override
-	public List<BookDTO> searchBooks(String title, Integer categoryId, List<Integer> tagIds) {
-		return bookMapper.mapToDTOs(bookRepo.searchBooks(title, categoryId, tagIds));
 	}
 
 	@Override
@@ -201,20 +215,13 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	public List<BookDTO> getFollowedBooksByUserId(Integer id) {
-		User user = userRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
-		return bookMapper.mapToDTOs(user.getFollowedBooks());
-	}
-
-	@Override
 	public BookDTO setEditorChoice(Integer id, BookDTO bookDTO) {
 		Book existingBook = bookRepo.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
 		existingBook.setSuggested(!existingBook.isSuggested());
 		String message = "Your book has been set as editor choice!";
 		notificationService.createNotification(existingBook.getAuthor(), message);
-		
+
 		return bookMapper.mapToDTO(bookRepo.save(existingBook));
 	}
 
@@ -229,6 +236,11 @@ public class BookServiceImpl implements BookService {
 	public List<BookDTO> getTopRecentChapterBooks(int limit) {
 		PageRequest pageRequest = PageRequest.of(0, limit);
 		return bookMapper.mapToDTOs(bookRepo.findTopBooksWithLatestChapters(pageRequest));
+	}
+
+	@Override
+	public Long getCommentCountForBook(Integer bookId) {
+		return commentRepository.countCommentsByBookId(bookId);
 	}
 
 }

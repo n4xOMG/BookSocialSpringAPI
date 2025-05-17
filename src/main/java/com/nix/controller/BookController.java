@@ -3,6 +3,10 @@ package com.nix.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,15 +38,56 @@ public class BookController {
 	private NotificationService notificationService;
 
 	@GetMapping("/books")
-	public ResponseEntity<List<BookDTO>> getAllBooks() {
-		return ResponseEntity.ok(bookService.getAllBooks());
+	public ResponseEntity<Page<BookDTO>> getAllBooks(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "id") String sortBy) {
+		Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+		return ResponseEntity.ok(bookService.getAllBooks(pageable));
+	}
+
+	@GetMapping("/books/author/{authorId}")
+	public ResponseEntity<Page<BookDTO>> getBooksByAuthor(@PathVariable Integer authorId,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
+			@RequestParam(defaultValue = "id") String sortBy) {
+		Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+		return ResponseEntity.ok(bookService.getBooksByAuthor(authorId, pageable));
+	}
+
+	@GetMapping("/api/books/favoured")
+	public ResponseEntity<Page<BookDTO>> getUserFavouredBooks(@RequestHeader("Authorization") String jwt,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
+			@RequestParam(defaultValue = "id") String sortBy) {
+		User user = userService.findUserByJwt(jwt);
+		Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+		return ResponseEntity.ok(bookService.getFollowedBooksByUserId(user.getId(), pageable));
+	}
+
+	@GetMapping("/categories/{categoryId}/books")
+	public ResponseEntity<Page<BookDTO>> getBooksByCategory(@PathVariable Integer categoryId,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
+			@RequestParam(defaultValue = "id") String sortBy) {
+		Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+		return ResponseEntity.ok(bookService.getBooksByCategoryId(categoryId, pageable));
+	}
+
+	@GetMapping("/books/search")
+	public ResponseEntity<Page<BookDTO>> searchBooks(@RequestParam(required = false) String title,
+			@RequestParam(required = false) Integer categoryId, @RequestParam(required = false) List<Integer> tagIds,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
+			@RequestParam(defaultValue = "id") String sortBy) {
+		Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+		return ResponseEntity.ok(bookService.searchBooks(title, categoryId, tagIds, pageable));
 	}
 
 	@GetMapping("/books/count")
 	public ResponseEntity<?> getBookCount() {
 		return ResponseEntity.ok(bookService.getBookCount());
 	}
-	
+
+	@GetMapping("/books/{bookId}/comments-count")
+	public Long getBookCommentCountCount(@PathVariable Integer bookId) {
+		return bookService.getCommentCountForBook(bookId);
+	}
+
 	@GetMapping("/books/{bookId}")
 	public ResponseEntity<BookDTO> getBookById(@PathVariable Integer bookId) {
 		return ResponseEntity.ok(bookService.getBookById(bookId));
@@ -64,36 +109,14 @@ public class BookController {
 		return ResponseEntity.ok(bookService.getRelatedBooks(bookId, tagIds));
 	}
 
-	@GetMapping("/books/search")
-	public ResponseEntity<List<BookDTO>> searchBooks(@RequestParam(required = false) String title,
-			@RequestParam(required = false) Integer categoryId, @RequestParam(required = false) List<Integer> tagIds) {
-		return ResponseEntity.ok(bookService.searchBooks(title, categoryId, tagIds));
-	}
-
-	@GetMapping("/books/author/{authorId}")
-	public ResponseEntity<List<BookDTO>> getBooksByAuthor(@PathVariable Integer authorId) {
-		return ResponseEntity.ok(bookService.getBooksByAuthor(authorId));
-	}
-
 	@GetMapping("/top-categories")
 	public ResponseEntity<List<CategoryDTO>> getTopSixCategoriesWithBooks() {
 		return ResponseEntity.ok(bookService.getTopSixCategoriesWithBooks());
 	}
 
-	@GetMapping("/api/books/favoured")
-	public ResponseEntity<List<BookDTO>> getUserFavouredBooks(@RequestHeader("Authorization") String jwt) {
-		User user = userService.findUserByJwt(jwt);
-		return ResponseEntity.ok(bookService.getFollowedBooksByUserId(user.getId()));
-	}
-
 	@GetMapping("/books/latest-update")
 	public ResponseEntity<List<BookDTO>> getLatestUpdateBooks(@RequestParam(defaultValue = "5") int limit) {
 		return ResponseEntity.ok(bookService.getTopRecentChapterBooks(limit));
-	}
-
-	@GetMapping("/categories/{categoryId}/books")
-	public ResponseEntity<List<BookDTO>> getBooksByCategory(@PathVariable Integer categoryId) {
-		return ResponseEntity.ok(bookService.getBooksByCategoryId(categoryId));
 	}
 
 	@GetMapping("/api/books/{bookId}/isLiked")

@@ -32,6 +32,9 @@ public interface CommentRepository extends JpaRepository<Comment, Integer> {
 
 	@Query("SELECT c FROM Comment c WHERE c.parentComment IS NULL AND c.post.id = :postId")
 	public Page<Comment> findParentCommentsByPostId(@Param("postId") Integer postId, Pageable pageable);
-	
+
 	public Page<Comment> findByUserIdOrderByCreatedAtDesc(Integer userId, Pageable pageable);
+
+	@Query("SELECT COUNT(c) FROM Comment c WHERE c.book.id = :bookId")
+	public Long countCommentsByBookId(@Param("bookId") Integer bookId);
 }

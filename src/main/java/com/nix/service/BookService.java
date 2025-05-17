@@ -2,13 +2,15 @@ package com.nix.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import com.nix.dtos.BookDTO;
 import com.nix.dtos.CategoryDTO;
 import com.nix.models.User;
 
 public interface BookService {
-	public List<BookDTO> getAllBooks();
-	
+
 	public Long getBookCount();
 
 	public BookDTO getBookById(Integer id);
@@ -19,17 +21,19 @@ public interface BookService {
 
 	public void deleteBook(Integer id);
 
-	public List<BookDTO> searchBooksByTitle(String title);
+	Page<BookDTO> getAllBooks(Pageable pageable);
 
-	public List<BookDTO> searchBooks(String title, Integer categoryId, List<Integer> tagIds);
+	Page<BookDTO> getBooksByCategoryId(Integer categoryId, Pageable pageable);
 
-	public List<BookDTO> getBooksByAuthor(Integer authorId);
+	Page<BookDTO> getBooksByAuthor(Integer authorId, Pageable pageable);
+
+	Page<BookDTO> searchBooks(String title, Integer categoryId, List<Integer> tagIds, Pageable pageable);
+
+	Page<BookDTO> getFollowedBooksByUserId(Integer id, Pageable pageable);
 
 	public List<BookDTO> getBooksBySuggestedStatus(Boolean isSuggested);
 
 	public List<BookDTO> getBooksByStatus(String status);
-
-	List<BookDTO> getBooksByCategoryId(Integer categoryId);
 
 	List<CategoryDTO> getTopSixCategoriesWithBooks();
 
@@ -41,11 +45,11 @@ public interface BookService {
 
 	public BookDTO setEditorChoice(Integer id, BookDTO bookDTO);
 
-	List<BookDTO> getFollowedBooksByUserId(Integer id);
-
 	List<BookDTO> getTopRecentChapterBooks(int limit);
 
 	List<BookDTO> getRelatedBooks(Integer bookId, List<Integer> tagIds);
-	
+
 	public boolean isBookLikedByUser(Integer userId, Integer bookId);
+
+	public Long getCommentCountForBook(Integer bookId);
 }

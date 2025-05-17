@@ -38,7 +38,7 @@ public class CategoryController {
 		return ResponseEntity.ok(categoryMapper.mapToDTOs(categories));
 	}
 
-	@GetMapping("/books/categories/{categoryId}")
+	@GetMapping("/categories/{categoryId}")
 	public ResponseEntity<?> getCategoryById(@PathVariable Integer categoryId) {
 		try {
 			Category category = categoryService.findCategoryById(categoryId);
@@ -59,7 +59,7 @@ public class CategoryController {
 		}
 	}
 
-	@PostMapping("/admin/books/categories")
+	@PostMapping("/admin/categories")
 	public ResponseEntity<?> addNewCategory(@RequestHeader("Authorization") String jwt, @RequestBody Category category)
 			throws Exception {
 		User user = userService.findUserByJwt(jwt);
@@ -75,7 +75,7 @@ public class CategoryController {
 		}
 	}
 
-	@PutMapping("/admin/books/categories/{categoryId}")
+	@PutMapping("/admin/categories/{categoryId}")
 	public ResponseEntity<?> editCategory(@RequestHeader("Authorization") String jwt, @PathVariable Integer categoryId,
 			@RequestBody Category category) throws Exception {
 		User user = userService.findUserByJwt(jwt);
@@ -91,7 +91,7 @@ public class CategoryController {
 		}
 	}
 
-	@DeleteMapping("/admin/books/categories/{categoryId}")
+	@DeleteMapping("/admin/categories/{categoryId}")
 	public ResponseEntity<?> deleteTag(@RequestHeader("Authorization") String jwt, @PathVariable Integer categoryId)
 			throws Exception {
 		User user = userService.findUserByJwt(jwt);
