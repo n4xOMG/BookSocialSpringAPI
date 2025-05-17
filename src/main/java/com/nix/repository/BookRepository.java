@@ -2,6 +2,7 @@ package com.nix.repository;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -23,13 +24,16 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
 
 	List<Book> findByTitleContainingIgnoreCase(String title);
 
-	List<Book> findByAuthorId(Integer authorId);
+	Page<Book> findByAuthorId(Integer authorId, Pageable pageable);
 
 	List<Book> findByIsSuggested(Boolean isSuggested);
 
 	List<Book> findByStatus(String status);
 
-	List<Book> findByCategory(Category category);
+	Page<Book> findByCategory(Category category, Pageable pageable);
+
+	@Query("select b from Book b join b.favoured u where u.id = :userId")
+	Page<Book> findByUserFavoured(@Param("userId") Integer userId, Pageable pageable);
 
 	List<Book> findByTagsIn(List<Integer> tagIds);
 
@@ -39,8 +43,8 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
 	@Query("SELECT DISTINCT b FROM Book b " + "JOIN b.tags t "
 			+ "WHERE (:title IS NULL OR LOWER(b.title) LIKE LOWER(CONCAT('%', :title, '%'))) "
 			+ "AND (:categoryId IS NULL OR b.category.id = :categoryId) " + "AND (:tagIds IS NULL OR t.id IN :tagIds)")
-	List<Book> searchBooks(@Param("title") String title, @Param("categoryId") Integer categoryId,
-			@Param("tagIds") List<Integer> tagIds);
+	Page<Book> searchBooks(@Param("title") String title, @Param("categoryId") Integer categoryId,
+			@Param("tagIds") List<Integer> tagIds, Pageable pageable);
 
 	@Query("SELECT DISTINCT b FROM Book b JOIN b.tags t WHERE b.category.id = :categoryId "
 			+ "AND b.id <> :bookId AND t.id IN :tagIds")
