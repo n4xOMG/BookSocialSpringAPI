@@ -46,6 +46,7 @@ public class Book implements Serializable {
 	private String description;
 	private String bookCover;
 	private LocalDateTime uploadDate;
+	private long viewCount;
 	private String language;
 	private boolean isSuggested;
 	private String status;

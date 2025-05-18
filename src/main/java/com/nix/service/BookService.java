@@ -49,6 +49,8 @@ public interface BookService {
 
 	List<BookDTO> getRelatedBooks(Integer bookId, List<Integer> tagIds);
 
+	List<Long> getBookUploadedPerMonthNumber();
+
 	public boolean isBookLikedByUser(Integer userId, Integer bookId);
 
 	public Long getCommentCountForBook(Integer bookId);

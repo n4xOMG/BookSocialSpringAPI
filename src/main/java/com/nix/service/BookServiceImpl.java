@@ -99,6 +99,7 @@ public class BookServiceImpl implements BookService {
 	public BookDTO getBookById(Integer id) {
 		Book book = bookRepo.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
+		book.setViewCount(book.getViewCount() + 1);
 		return bookMapper.mapToDTO(book);
 	}
 
@@ -189,9 +190,8 @@ public class BookServiceImpl implements BookService {
 	public List<CategoryDTO> getTopSixCategoriesWithBooks() {
 		List<Category> categories = categoryRepository.findTop6ByOrderByNameAsc();
 		if (categories.isEmpty()) {
-			return Collections.emptyList(); // Handle empty case
+			return Collections.emptyList();
 		}
-		// Map to DTOs, including their books
 		return categoryMapper.mapToDTOs(categories);
 	}
 
@@ -241,6 +241,11 @@ public class BookServiceImpl implements BookService {
 	@Override
 	public Long getCommentCountForBook(Integer bookId) {
 		return commentRepository.countCommentsByBookId(bookId);
+	}
+
+	@Override
+	public List<Long> getBookUploadedPerMonthNumber() {
+		return bookRepo.countBooksUploadedPerMonth();
 	}
 
 }

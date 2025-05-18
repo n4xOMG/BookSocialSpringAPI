@@ -72,7 +72,7 @@ public class AuthController {
 			return new ResponseEntity<>(authRes, HttpStatus.FORBIDDEN);
 		} catch (AccountException e) {
 			// Handle unverified account exception
-			System.out.println("Account not verified: " + e.getMessage());
+			System.out.println("Account Exception: " + e.getMessage());
 			AuthResponse authRes = new AuthResponse(null, e.getMessage());
 			return new ResponseEntity<>(authRes, HttpStatus.FORBIDDEN);
 		}
@@ -83,12 +83,13 @@ public class AuthController {
 		}
 
 		String token = JwtProvider.generateToken(auth, rememberMe);
+		userService.updateUserLastLoginDate(loginReq.getEmail());
 		AuthResponse authRes = new AuthResponse(token, "Login succeeded!");
 		return ResponseEntity.ok(authRes);
 	}
 
 	@PostMapping("/auth/forgot-password")
-	public ResponseEntity<?> semdForgotPasswordMail(@RequestBody Map<String, String> request,
+	public ResponseEntity<?> sendForgotPasswordMail(@RequestBody Map<String, String> request,
 			HttpServletRequest httpRequest) throws UnsupportedEncodingException, MessagingException {
 		String email = request.get("email");
 		User user = userService.findUserByEmail(email);
@@ -161,19 +162,62 @@ public class AuthController {
 	}
 
 	public Authentication authenticate(String email, String password) {
+		// Load user details once
 		UserDetails userDetails = customUserDetails.loadUserByUsername(email);
-		User user = userService.findUserByEmail(email);
 		if (userDetails == null) {
-			throw new BadCredentialsException("No email found with: " + email);
+			handleFailedLoginAttempt(email);
+			throw new BadCredentialsException("Invalid email or password");
 		}
-		if (!passEncoder.matches(password, userDetails.getPassword())) {
-			throw new BadCredentialsException("Invalid Password!");
-		}
-		if (user.getIsVerified() == false || user.getIsVerified() == null) {
-			throw new AccountException("Account is not verified, please check your mail!");
-		}
-		return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
+		// Validate password
+		if (!passEncoder.matches(password, userDetails.getPassword())) {
+			handleFailedLoginAttempt(email);
+			throw new BadCredentialsException("Invalid email or password");
+		}
+
+		// Fetch User entity only if needed for additional checks
+		User user = userService.findUserByEmail(email);
+		if (user == null) {
+			handleFailedLoginAttempt(email);
+			throw new BadCredentialsException("Invalid email or password");
+		}
+
+		// Check account status
+		if (!Boolean.TRUE.equals(user.getIsVerified())) {
+			handleFailedLoginAttempt(email);
+			throw new AccountException("Account is not verified. Please check your email.");
+		}
+
+		if (user.isBanned()) {
+			handleFailedLoginAttempt(email);
+			throw new AccountException("Account is banned. Please contact the administrator.");
+		}
+
+		if (Boolean.TRUE.equals(user.getIsSuspended())) {
+			handleFailedLoginAttempt(email);
+			throw new AccountException("Account is suspended. Please contact the administrator.");
+		}
+
+		if (user.getLoginAttempts() != null && user.getLoginAttempts() >= 5) {
+			handleFailedLoginAttempt(email);
+			throw new AccountException("Account is locked due to too many failed login attempts.");
+		}
+
+		// Reset login attempts on successful authentication
+		userService.resetLoginAttempts(email);
+
+		userService.updateUserLastLoginDate(email);
+
+		return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+	}
+
+	private void handleFailedLoginAttempt(String email) {
+		try {
+			userService.updateUserLoginAttemptsNumber(email);
+		} catch (Exception e) {
+			// Log error but don't fail authentication
+			System.out.println("Failed to update login attempts for email: " + email + "with error: " + e);
+		}
 	}
 
 }

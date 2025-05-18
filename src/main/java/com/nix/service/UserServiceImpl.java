@@ -101,8 +101,10 @@ public class UserServiceImpl implements UserService {
 		newUser.setBanned(false);
 		newUser.setBirthdate(user.getBirthdate());
 		newUser.setBio(user.getBio());
-		newUser.setBanReason(null);
 		newUser.setPassword(passEncoder.encode(user.getPassword()));
+		newUser.setAccountCreatedDate(LocalDateTime.now());
+		newUser.setLastLoginDate(LocalDateTime.now());
+		newUser.setLoginAttempts(0);
 
 		String randomCode = generateRandomCode();
 
@@ -203,7 +205,7 @@ public class UserServiceImpl implements UserService {
 				user.getRole().getUsers().remove(user);
 				user.getFollowedBooks().forEach(book -> book.getFavoured().remove(user));
 				user.getLikedComments().forEach(comment -> comment.getLikedUsers().remove(user));
-				user.getLikedPosts().forEach(post->post.getLikedUsers().remove(user));
+				user.getLikedPosts().forEach(post -> post.getLikedUsers().remove(user));
 				userRepo.delete(user);
 
 			}
@@ -279,9 +281,11 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public User banUser(Integer userId) {
+	public User banUser(Integer userId, String banReason) {
 		User user = findUserById(userId);
 		user.setBanned(true);
+		user.setBanReason(banReason);
+		user.setBanDate(LocalDateTime.now());
 
 		return userRepo.save(user);
 	}
@@ -290,6 +294,8 @@ public class UserServiceImpl implements UserService {
 	public User unbanUser(Integer userId) {
 		User user = findUserById(userId);
 		user.setBanned(false);
+		user.setBanReason(null);
+		user.setBanDate(null);
 
 		return userRepo.save(user);
 	}
@@ -497,5 +503,50 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public Long getUserCount() {
 		return userRepo.count();
+	}
+
+	@Override
+	public void updateUserLoginAttemptsNumber(String email) {
+		User user = userRepo.findByEmail(email);
+		user.setLoginAttempts(user.getLoginAttempts() + 1);
+
+		userRepo.save(user);
+	}
+
+	@Override
+	public void updateUserLastLoginDate(String email) {
+		User user = userRepo.findByEmail(email);
+		user.setLastLoginDate(LocalDateTime.now());
+
+		userRepo.save(user);
+	}
+
+	@Override
+	public void resetLoginAttempts(String email) {
+		User user = userRepo.findByEmail(email);
+		user.setLoginAttempts(0);
+
+		userRepo.save(user);
+
+	}
+
+	@Override
+	public List<Long> getNewUsersByMonth() {
+		return userRepo.countNewUsersByMonth();
+	}
+
+	@Override
+	public long getTotalUsers() {
+		return userRepo.count();
+	}
+
+	@Override
+	public long getBannedUsersCount() {
+		return userRepo.countBannedUsers();
+	}
+
+	@Override
+	public long getSuspendedUsersCount() {
+		return userRepo.countSuspendedUsers();
 	}
 }
