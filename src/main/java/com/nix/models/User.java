@@ -60,6 +60,20 @@ public class User implements Serializable {
 	private int credits;
 	private boolean isBanned;
 	private String banReason;
+	
+	@Column(updatable = false)
+    private LocalDateTime accountCreatedDate;
+
+    private LocalDateTime suspendDate;
+
+    private LocalDateTime banDate;
+
+    private LocalDateTime lastLoginDate;
+
+    @Column(columnDefinition = "TEXT")
+    private String suspensionReason;
+
+    private Integer loginAttempts;
 
 	@JsonIgnore
 	@ManyToMany

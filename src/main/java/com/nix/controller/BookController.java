@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,6 +43,11 @@ public class BookController {
 			@RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "id") String sortBy) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
 		return ResponseEntity.ok(bookService.getAllBooks(pageable));
+	}
+
+	@GetMapping("/books/books-upload-per-month")
+	public ResponseEntity<List<Long>> getBooksUploadedPerMonthCount() {
+		return ResponseEntity.ok(bookService.getBookUploadedPerMonthNumber());
 	}
 
 	@GetMapping("/books/author/{authorId}")
@@ -139,9 +145,14 @@ public class BookController {
 	}
 
 	@PutMapping("/api/books/{bookId}")
-	public ResponseEntity<BookDTO> updateBook(@PathVariable("bookId") Integer bookId, @RequestBody BookDTO bookDTO) {
+	public ResponseEntity<?> updateBook(@PathVariable("bookId") Integer bookId, @RequestBody BookDTO bookDTO,
+			@RequestHeader("Authorization") String jwt) {
 		BookDTO updatedBook = bookService.updateBook(bookId, bookDTO);
+		User user = userService.findUserByJwt(jwt);
 		Integer authorId = updatedBook.getAuthor().getId();
+		if (user.getId() != authorId && user.getRole().getName().equals("ADMIN")) {
+			return new ResponseEntity<>("You dont have any permission to edit this chapter", HttpStatus.UNAUTHORIZED);
+		}
 		if (authorId != null) {
 			User author = userService.findUserById(authorId);
 			notificationService.createNotification(author,
@@ -151,10 +162,15 @@ public class BookController {
 	}
 
 	@DeleteMapping("/api/books/{bookId}")
-	public ResponseEntity<Void> deleteBook(@PathVariable("bookId") Integer bookId) {
+	public ResponseEntity<?> deleteBook(@PathVariable("bookId") Integer bookId,
+			@RequestHeader("Authorization") String jwt) {
 		BookDTO book = bookService.getBookById(bookId);
 		bookService.deleteBook(bookId);
+		User user = userService.findUserByJwt(jwt);
 		Integer authorId = book.getAuthor().getId();
+		if (user.getId() != authorId && user.getRole().getName().equals("ADMIN")) {
+			return new ResponseEntity<>("You dont have any permission to edit this chapter", HttpStatus.UNAUTHORIZED);
+		}
 		if (authorId != null) {
 			User author = userService.findUserById(authorId);
 			notificationService.createNotification(author, "Your book '" + book.getTitle() + "' has been deleted!");

@@ -35,6 +35,7 @@ public class BookMapper implements Mapper<Book, BookDTO> {
 		bookDTO.setUploadDate(book.getUploadDate());
 		bookDTO.setSuggested(book.isSuggested());
 		bookDTO.setStatus(book.getStatus());
+		bookDTO.setViewCount(book.getViewCount());
 		if (book.getRatings() != null && !book.getRatings().isEmpty()) {
 			double avgRating = book.getRatings().stream().mapToDouble(Rating::getRating).average().orElse(0.0);
 			bookDTO.setAvgRating(avgRating);

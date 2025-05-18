@@ -13,6 +13,13 @@ import com.nix.models.Category;
 
 public interface BookRepository extends JpaRepository<Book, Integer> {
 
+	// Fetch the number of books uploaded in each month (grouped by year and month)
+	@Query("SELECT COUNT(b) " + "FROM Book b " + "GROUP BY YEAR(b.uploadDate), MONTH(b.uploadDate) "
+			+ "ORDER BY YEAR(b.uploadDate), MONTH(b.uploadDate)")
+	List<Long> countBooksUploadedPerMonth();
+
+	long count();
+
 	@Query("select b from Book b where b.title LIKE %:title%")
 	public List<Book> findByTitle(String title);
 

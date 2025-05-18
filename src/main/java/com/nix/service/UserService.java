@@ -31,6 +31,12 @@ public interface UserService {
 	public User updateCurrentSessionUser(String jwt, User user, String url)
 			throws UnsupportedEncodingException, MessagingException;
 
+	public void updateUserLoginAttemptsNumber(String email);
+
+	public void resetLoginAttempts(String email);
+
+	public void updateUserLastLoginDate(String email);
+
 	public User updateUserRole(Integer userId, String roleName);
 
 	public User updateUser(Integer userId, User user);
@@ -45,7 +51,7 @@ public interface UserService {
 
 	public User unsuspendUser(Integer userId);
 
-	public User banUser(Integer userId);
+	public User banUser(Integer userId, String banReason);
 
 	public User unbanUser(Integer userId);
 
@@ -60,5 +66,13 @@ public interface UserService {
 	public List<User> getUserFollowers(Integer userId);
 
 	public List<User> getUserFollowing(Integer userId);
+
+	public List<Long> getNewUsersByMonth();
+
+	public long getTotalUsers();
+
+	public long getBannedUsersCount();
+
+	public long getSuspendedUsersCount();
 
 }

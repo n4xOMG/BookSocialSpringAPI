@@ -26,4 +26,20 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
 	Page<User> findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(String username, String email,
 			Pageable pageable);
+
+	@Query("SELECT COUNT(u) AS count " + "FROM User u "
+			+ "GROUP BY FUNCTION('DATE_FORMAT', u.accountCreatedDate, '%Y-%m') "
+			+ "ORDER BY FUNCTION('DATE_FORMAT', u.accountCreatedDate, '%Y-%m') DESC")
+	List<Long> countNewUsersByMonth();
+
+	// Count all users
+	long count();
+
+	// Count banned users
+	@Query("SELECT COUNT(u) FROM User u WHERE u.isBanned = true")
+	long countBannedUsers();
+
+	// Count suspended users
+	@Query("SELECT COUNT(u) FROM User u WHERE u.isSuspended = true")
+	long countSuspendedUsers();
 }

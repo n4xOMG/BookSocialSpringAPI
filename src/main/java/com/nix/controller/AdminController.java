@@ -1,5 +1,8 @@
 package com.nix.controller;
 
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -40,6 +43,45 @@ public class AdminController {
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
+	}
+
+	@GetMapping("/users/new-by-month")
+	public ResponseEntity<List<Long>> getNewUsersByMonth(@RequestHeader("Authorization") String jwt) {
+		User admin = userService.findUserByJwt(jwt);
+		if (admin == null) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+		}
+		List<Long> result = userService.getNewUsersByMonth();
+		return ResponseEntity.ok(result);
+	}
+
+	@GetMapping("/users/total")
+	public ResponseEntity<Long> getTotalUsers(@RequestHeader("Authorization") String jwt) {
+		User admin = userService.findUserByJwt(jwt);
+		if (admin == null) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+		}
+		return ResponseEntity.ok(userService.getTotalUsers());
+	}
+
+	// Get banned users count
+	@GetMapping("/users/banned")
+	public ResponseEntity<Long> getBannedUsersCount(@RequestHeader("Authorization") String jwt) {
+		User admin = userService.findUserByJwt(jwt);
+		if (admin == null) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+		}
+		return ResponseEntity.ok(userService.getBannedUsersCount());
+	}
+
+	// Get suspended users count
+	@GetMapping("/users/suspended")
+	public ResponseEntity<Long> getSuspendedUsersCount(@RequestHeader("Authorization") String jwt) {
+		User admin = userService.findUserByJwt(jwt);
+		if (admin == null) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+		}
+		return ResponseEntity.ok(userService.getSuspendedUsersCount());
 	}
 
 	@PutMapping("/users/update/{userId}")
@@ -101,14 +143,17 @@ public class AdminController {
 	}
 
 	@PatchMapping("/users/ban/{userId}")
-	public ResponseEntity<?> banUser(@RequestHeader("Authorization") String jwt, @PathVariable Integer userId)
-			throws Exception {
+	public ResponseEntity<?> banUser(@RequestHeader("Authorization") String jwt,
+			@RequestBody Map<String, String> request) throws Exception {
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
 				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
 			}
-			User bannedUser = userService.banUser(userId);
+			Integer userId = Integer.parseInt(request.get("userId"));
+			String banReason = request.get("banReason");
+
+			User bannedUser = userService.banUser(userId, banReason);
 			return new ResponseEntity<>(userMapper.mapToDTO(bannedUser), HttpStatus.OK);
 
 		} catch (Exception e) {
@@ -131,6 +176,7 @@ public class AdminController {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
+
 	@PutMapping("/users/{id}/role")
 	public ResponseEntity<?> updateUserRole(@PathVariable("id") Integer userId, @RequestParam String roleName) {
 		try {
