@@ -21,7 +21,7 @@ public class BookDTO {
 	private String bookCover;
 	private String description;
 	private String language;
-	private boolean isSuggested; //return suggested
+	private boolean isSuggested; // return suggested
 	private long viewCount;
 	private String status;
 	private LocalDateTime uploadDate;
@@ -34,5 +34,6 @@ public class BookDTO {
 	private Integer ratingCount;
 	private int chapterCount;
 	private String latestChapterNumber;
+	private boolean isFollowedByCurrentUser = false;
 
 }

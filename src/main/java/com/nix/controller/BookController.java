@@ -1,6 +1,7 @@
 package com.nix.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.nix.dtos.BookDTO;
 import com.nix.dtos.CategoryDTO;
+import com.nix.models.Book;
 import com.nix.models.User;
 import com.nix.service.BookService;
 import com.nix.service.NotificationService; // Add this import
@@ -40,9 +42,26 @@ public class BookController {
 
 	@GetMapping("/books")
 	public ResponseEntity<Page<BookDTO>> getAllBooks(@RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "id") String sortBy) {
+			@RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "id") String sortBy,
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
-		return ResponseEntity.ok(bookService.getAllBooks(pageable));
+		Page<BookDTO> booksPage = bookService.getAllBooks(pageable);
+
+		boolean isAuthenticated = jwt != null;
+		if (isAuthenticated) {
+			User user = userService.findUserByJwt(jwt);
+			if (user != null) {
+				// Get the list of followed book IDs in a single query
+				List<Integer> followedBookIds = user.getFollowedBooks().stream().map(Book::getId)
+						.collect(Collectors.toList());
+
+				booksPage.getContent().forEach(bookDTO -> {
+					bookDTO.setFollowedByCurrentUser(followedBookIds.contains(bookDTO.getId()));
+				});
+			}
+		}
+
+		return ResponseEntity.ok(booksPage);
 	}
 
 	@GetMapping("/books/books-upload-per-month")
@@ -95,8 +114,18 @@ public class BookController {
 	}
 
 	@GetMapping("/books/{bookId}")
-	public ResponseEntity<BookDTO> getBookById(@PathVariable Integer bookId) {
-		return ResponseEntity.ok(bookService.getBookById(bookId));
+	public ResponseEntity<BookDTO> getBookById(@PathVariable Integer bookId,
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
+		BookDTO bookDTO = bookService.getBookById(bookId);
+		boolean isAuthenticated = jwt != null;
+		if (isAuthenticated) {
+			User user = userService.findUserByJwt(jwt);
+			if (user != null) {
+				bookDTO.setFollowedByCurrentUser(bookService.isBookLikedByUser(user.getId(), bookId));
+			}
+		}
+
+		return ResponseEntity.ok(bookDTO);
 	}
 
 	@GetMapping("/books/top-likes")
