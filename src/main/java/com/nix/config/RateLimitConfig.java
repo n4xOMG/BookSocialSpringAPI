@@ -22,9 +22,8 @@ public class RateLimitConfig {
 		return buckets;
 	}
 
-	// Define rate limit: e.g., 100 requests per hour
 	public Bucket createBucket() {
-		Bandwidth limit = Bandwidth.classic(80, Refill.greedy(80, Duration.ofMinutes(1)));
+		Bandwidth limit = Bandwidth.classic(150, Refill.greedy(150, Duration.ofMinutes(1)));
 		return Bucket.builder().addLimit(limit).build();
 	}
 }
