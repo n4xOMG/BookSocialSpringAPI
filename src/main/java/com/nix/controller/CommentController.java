@@ -231,7 +231,6 @@ public class CommentController {
 			try {
 				return commentService.createBookComment(comment, bookId, user);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			return comment;
@@ -246,7 +245,6 @@ public class CommentController {
 			try {
 				return commentService.createChapterComment(comment, chapterId, user);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			return comment;
@@ -261,7 +259,6 @@ public class CommentController {
 			try {
 				return commentService.createPostComment(comment, postId, user);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			return comment;

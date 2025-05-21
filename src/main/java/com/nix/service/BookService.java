@@ -1,5 +1,6 @@
 package com.nix.service;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -15,7 +16,7 @@ public interface BookService {
 
 	public BookDTO getBookById(Integer id);
 
-	public BookDTO createBook(BookDTO bookDTO);
+	public BookDTO createBook(BookDTO bookDTO) throws IOException;
 
 	public BookDTO updateBook(Integer id, BookDTO bookDTO);
 

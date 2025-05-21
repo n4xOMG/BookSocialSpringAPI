@@ -51,7 +51,7 @@ public class ProgressController {
 		}
 
 		ReadingProgressDTO readingProgress = progressService.findByUserAndChapter(user.getId(), chapterId);
-		return readingProgress != null ? ResponseEntity.ok(readingProgress) : ResponseEntity.notFound().build();
+		return readingProgress != null ? ResponseEntity.ok(readingProgress) : ResponseEntity.ok(null);
 	}
 
 	@GetMapping("/api/reading-progress/books/{bookId}")
