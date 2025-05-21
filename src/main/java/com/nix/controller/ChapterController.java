@@ -109,7 +109,7 @@ public class ChapterController {
 			User user = userService.findUserByJwt(jwt);
 			isUnlocked = chapterService.isChapterUnlockedByUser(user.getId(), chapterId);
 			isLiked = chapterService.isChapterLikedByUser(user.getId(), chapterId);
-			chapterDTO.setUnlockedByUser(isUnlocked);	
+			chapterDTO.setUnlockedByUser(isUnlocked);
 			chapterDTO.setLikedByCurrentUser(isLiked);
 		}
 
@@ -153,24 +153,18 @@ public class ChapterController {
 	}
 
 	@PutMapping("/api/chapters/{chapterId}")
-	public ResponseEntity<ChapterDTO> editChapter(@PathVariable("chapterId") Integer chapterId, 
+	public ResponseEntity<ChapterDTO> editChapter(@PathVariable("chapterId") Integer chapterId,
 			@RequestBody Chapter chapter) throws Exception {
 
 		Chapter editChapter = chapterService.editChapter(chapterId, chapter);
 		return ResponseEntity.ok(chapterMapper.mapToDTO(editChapter));
 	}
 
-	@DeleteMapping("/api/books/{bookId}/chapters/{chapterId}")
-	public ResponseEntity<ApiResponse> deleteChapter(@PathVariable("bookId") Integer bookId,
-			@PathVariable("chapterId") Integer chapterId) throws Exception {
+	@DeleteMapping("/api/chapters/{chapterId}")
+	public ResponseEntity<ApiResponse> deleteChapter(@PathVariable("chapterId") Integer chapterId) throws Exception {
 		Chapter chapter = chapterService.findChapterById(chapterId);
-		if (chapter.getBook().getId().equals(bookId)) {
-			ApiResponse res = new ApiResponse(chapterService.deleteChapter(chapterId), true);
-			return new ResponseEntity<>(res, HttpStatus.ACCEPTED);
-		} else {
-			ApiResponse res = new ApiResponse("Chapter is not belonged to this book!", false);
-			return new ResponseEntity<>(res, HttpStatus.NOT_ACCEPTABLE);
-		}
+		ApiResponse res = new ApiResponse(chapterService.deleteChapter(chapterId), true);
+		return new ResponseEntity<>(res, HttpStatus.OK);
 	}
 
 	@PostMapping("/api/unlock/{chapterId}")
@@ -197,7 +191,7 @@ public class ChapterController {
 			Chapter chapter = chapterService.findChapterById(chapterId);
 			ChapterDTO chapterDTO = chapterMapper.mapToDTO(chapter);
 			chapterDTO.setLikedByCurrentUser(isLiked);
-			
+
 			return ResponseEntity.ok(chapterDTO);
 
 		} catch (ResourceNotFoundException ex) {

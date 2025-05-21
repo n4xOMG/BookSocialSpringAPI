@@ -1,5 +1,6 @@
 package com.nix.service;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -19,6 +20,7 @@ import com.nix.dtos.mappers.CategoryMapper;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
 import com.nix.models.Category;
+import com.nix.models.UploadType;
 import com.nix.models.User;
 import com.nix.repository.BookRepository;
 import com.nix.repository.CategoryRepository;
@@ -46,6 +48,9 @@ public class BookServiceImpl implements BookService {
 
 	@Autowired
 	CommentRepository commentRepository;
+
+	@Autowired
+	ImageService imageService;
 
 	@Autowired
 	BookMapper bookMapper;
@@ -105,7 +110,7 @@ public class BookServiceImpl implements BookService {
 
 	@Override
 	@Transactional
-	public BookDTO createBook(BookDTO bookDTO) {
+	public BookDTO createBook(BookDTO bookDTO) throws IOException {
 		Book book = new Book();
 		book.setAuthor(userRepository.findById(bookDTO.getAuthor().getId()).orElseThrow(
 				() -> new ResourceNotFoundException("User not found with ID: " + bookDTO.getAuthor().getId())));
@@ -123,8 +128,10 @@ public class BookServiceImpl implements BookService {
 				() -> new ResourceNotFoundException("Category not found with ID: " + bookDTO.getCategoryId())));
 
 		book.setTags(tagRepository.findAllById(bookDTO.getTagIds()));
+
 		return bookMapper.mapToDTO(bookRepo.save(book));
 	}
+
 
 	@Override
 	@Transactional
@@ -154,7 +161,6 @@ public class BookServiceImpl implements BookService {
 		// Remove this book from tags
 		existingBook.getTags().clear();
 
-		// Now delete the book
 		bookRepo.delete(existingBook);
 	}
 

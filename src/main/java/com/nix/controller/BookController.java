@@ -1,5 +1,6 @@
 package com.nix.controller;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -162,7 +163,16 @@ public class BookController {
 	}
 
 	@PostMapping("/api/books")
-	public ResponseEntity<BookDTO> createBook(@RequestBody BookDTO bookDTO) {
+	public ResponseEntity<?> createBook(@RequestBody BookDTO bookDTO, @RequestHeader("Authorization") String jwt)
+			throws IOException {
+		User user = userService.findUserByJwt(jwt);
+		if (user.isBanned()) {
+			return new ResponseEntity<>("You are current banned from this website! Contact Admin for support",
+					HttpStatus.FORBIDDEN);
+		}
+		if (user.getIsSuspended()) {
+			return new ResponseEntity<>("You are currently suspended! Contact Admin for support", HttpStatus.FORBIDDEN);
+		}
 		BookDTO createdBook = bookService.createBook(bookDTO);
 		Integer authorId = createdBook.getAuthor().getId();
 		if (authorId != null) {
@@ -176,12 +186,14 @@ public class BookController {
 	@PutMapping("/api/books/{bookId}")
 	public ResponseEntity<?> updateBook(@PathVariable("bookId") Integer bookId, @RequestBody BookDTO bookDTO,
 			@RequestHeader("Authorization") String jwt) {
-		BookDTO updatedBook = bookService.updateBook(bookId, bookDTO);
+		BookDTO book = bookService.getBookById(bookId);
 		User user = userService.findUserByJwt(jwt);
-		Integer authorId = updatedBook.getAuthor().getId();
+		Integer authorId = book.getAuthor().getId();
+		
 		if (user.getId() != authorId && user.getRole().getName().equals("ADMIN")) {
-			return new ResponseEntity<>("You dont have any permission to edit this chapter", HttpStatus.UNAUTHORIZED);
+			return new ResponseEntity<>("You dont have any permission to edit this book", HttpStatus.UNAUTHORIZED);
 		}
+		BookDTO updatedBook = bookService.updateBook(bookId, bookDTO);
 		if (authorId != null) {
 			User author = userService.findUserById(authorId);
 			notificationService.createNotification(author,
@@ -194,12 +206,13 @@ public class BookController {
 	public ResponseEntity<?> deleteBook(@PathVariable("bookId") Integer bookId,
 			@RequestHeader("Authorization") String jwt) {
 		BookDTO book = bookService.getBookById(bookId);
-		bookService.deleteBook(bookId);
 		User user = userService.findUserByJwt(jwt);
+
 		Integer authorId = book.getAuthor().getId();
 		if (user.getId() != authorId && user.getRole().getName().equals("ADMIN")) {
-			return new ResponseEntity<>("You dont have any permission to edit this chapter", HttpStatus.UNAUTHORIZED);
+			return new ResponseEntity<>("You dont have any permission to delete this book", HttpStatus.UNAUTHORIZED);
 		}
+		bookService.deleteBook(bookId);
 		if (authorId != null) {
 			User author = userService.findUserById(authorId);
 			notificationService.createNotification(author, "Your book '" + book.getTitle() + "' has been deleted!");
