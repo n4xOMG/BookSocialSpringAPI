@@ -10,8 +10,8 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RatingDTO {
-	private Integer id;
-	private Integer bookId;
-	private Integer userId;
+	private Long id;
+	private Long bookId;
+	private Long userId;
 	private Integer rating;
 }

@@ -14,23 +14,23 @@ public interface BookService {
 
 	public Long getBookCount();
 
-	public BookDTO getBookById(Integer id);
+	public BookDTO getBookById(Long bookId);
 
 	public BookDTO createBook(BookDTO bookDTO) throws IOException;
 
-	public BookDTO updateBook(Integer id, BookDTO bookDTO);
+	public BookDTO updateBook(Long bookId, BookDTO bookDTO);
 
-	public void deleteBook(Integer id);
+	public void deleteBook(Long bookId);
 
 	Page<BookDTO> getAllBooks(Pageable pageable);
 
 	Page<BookDTO> getBooksByCategoryId(Integer categoryId, Pageable pageable);
 
-	Page<BookDTO> getBooksByAuthor(Integer authorId, Pageable pageable);
+	Page<BookDTO> getBooksByAuthor(Long authorId, Pageable pageable);
 
 	Page<BookDTO> searchBooks(String title, Integer categoryId, List<Integer> tagIds, Pageable pageable);
 
-	Page<BookDTO> getFollowedBooksByUserId(Integer id, Pageable pageable);
+	Page<BookDTO> getFollowedBooksByUserId(Long bookId, Pageable pageable);
 
 	public List<BookDTO> getBooksBySuggestedStatus(Boolean isSuggested);
 
@@ -44,15 +44,15 @@ public interface BookService {
 
 	public boolean markAsFavouriteBook(BookDTO book, User user);
 
-	public BookDTO setEditorChoice(Integer id, BookDTO bookDTO);
+	public BookDTO setEditorChoice(Long bookId, BookDTO bookDTO);
 
 	List<BookDTO> getTopRecentChapterBooks(int limit);
 
-	List<BookDTO> getRelatedBooks(Integer bookId, List<Integer> tagIds);
+	List<BookDTO> getRelatedBooks(Long bookId, List<Integer> tagIds);
 
 	List<Long> getBookUploadedPerMonthNumber();
 
-	public boolean isBookLikedByUser(Integer userId, Integer bookId);
+	public boolean isBookLikedByUser(Long userId, Long bookId);
 
-	public Long getCommentCountForBook(Integer bookId);
+	public Long getCommentCountForBook(Long bookId);
 }

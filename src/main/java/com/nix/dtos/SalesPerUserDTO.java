@@ -10,7 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SalesPerUserDTO {
-	private Integer userId;
+	private Long userId;
 	private String username;
 	private Double totalSpent;
 }

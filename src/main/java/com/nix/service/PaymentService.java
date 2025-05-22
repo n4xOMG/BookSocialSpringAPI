@@ -5,12 +5,12 @@ import java.util.List;
 import com.nix.models.CreditPackage;
 
 public interface PaymentService {
-	String createPaymentIntent(long amount, String currency, Integer userId, Long creditPackageId) throws Exception;
+	String createPaymentIntent(long amount, String currency, Long userId, Long creditPackageId) throws Exception;
 
 	List<CreditPackage> getAllActiveCreditPackages();
 
 	CreditPackage getCreditPackageById(Long id);
 
-	void confirmPayment(Integer userId, Long creditPackageId, String paymentIntentId) throws Exception;
+	void confirmPayment(Long userId, Long creditPackageId, String paymentIntentId) throws Exception;
 
 }

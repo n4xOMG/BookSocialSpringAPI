@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 import com.nix.models.Book;
 import com.nix.models.Category;
 
-public interface BookRepository extends JpaRepository<Book, Integer> {
+public interface BookRepository extends JpaRepository<Book, Long> {
 
 	// Fetch the number of books uploaded in each month (grouped by year and month)
 	@Query("SELECT COUNT(b) " + "FROM Book b " + "GROUP BY YEAR(b.uploadDate), MONTH(b.uploadDate) "
@@ -24,14 +24,14 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
 	public List<Book> findByTitle(String title);
 
 	@Query("select b from Book b join b.favoured u where u.id = :userId")
-	public List<Book> findByUserFavoured(@Param("userId") Integer userId);
+	public List<Book> findByUserFavoured(@Param("userId") Long userId);
 
 	@Query("SELECT b FROM Book b LEFT JOIN b.favoured u GROUP BY b.id ORDER BY COUNT(u) DESC LIMIT 10")
 	public List<Book> findTopBooksByLikes();
 
 	List<Book> findByTitleContainingIgnoreCase(String title);
 
-	Page<Book> findByAuthorId(Integer authorId, Pageable pageable);
+	Page<Book> findByAuthorId(Long authorId, Pageable pageable);
 
 	List<Book> findByIsSuggested(Boolean isSuggested);
 
@@ -40,7 +40,7 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
 	Page<Book> findByCategory(Category category, Pageable pageable);
 
 	@Query("select b from Book b join b.favoured u where u.id = :userId")
-	Page<Book> findByUserFavoured(@Param("userId") Integer userId, Pageable pageable);
+	Page<Book> findByUserFavoured(@Param("userId") Long userId, Pageable pageable);
 
 	List<Book> findByTagsIn(List<Integer> tagIds);
 
@@ -56,6 +56,6 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
 	@Query("SELECT DISTINCT b FROM Book b JOIN b.tags t WHERE b.category.id = :categoryId "
 			+ "AND b.id <> :bookId AND t.id IN :tagIds")
 	List<Book> findRelatedBooks(@Param("categoryId") Integer categoryId, @Param("tagIds") List<Integer> tagIds,
-			@Param("bookId") Integer bookId, Pageable pageable);
+			@Param("bookId") Long bookId, Pageable pageable);
 
 }

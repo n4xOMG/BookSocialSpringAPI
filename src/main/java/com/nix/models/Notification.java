@@ -41,4 +41,7 @@ public class Notification implements Serializable {
     
     @OneToMany(mappedBy = "notification", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserNotification> userNotifications = new ArrayList<>();
+    
+    private String entityType; // e.g., "BOOK", "CHAPTER", "COMMENT", "PAYMENT"
+    private Long entityId; 
 }

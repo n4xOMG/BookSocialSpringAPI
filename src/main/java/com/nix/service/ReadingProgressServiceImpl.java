@@ -32,26 +32,26 @@ public class ReadingProgressServiceImpl implements ReadingProgressService {
     ReadingProgressMapper progressMapper;  // Add mapper injection
 
     @Override
-    public ReadingProgressDTO findReadingProgressById(Integer progressId) throws IOException {
+    public ReadingProgressDTO findReadingProgressById(Long progressId) throws IOException {
         Optional<ReadingProgress> progress = readingProgressRepo.findById(progressId);
         return progress.map(progressMapper::mapToDTO)
                       .orElseThrow(() -> new IOException("Reading progress not found"));
     }
 
     @Override
-    public ReadingProgressDTO findByUserAndChapter(Integer userId, Integer chapterId) {
+    public ReadingProgressDTO findByUserAndChapter(Long userId, Long chapterId) {
         ReadingProgress progress = readingProgressRepo.findReadingProgressByChapterAndUserId(chapterId, userId);
         return progress != null ? progressMapper.mapToDTO(progress) : null;
     }
 
     @Override
-    public List<ReadingProgressDTO> findByUserAndBook(Integer userId, Integer bookId) {
+    public List<ReadingProgressDTO> findByUserAndBook(Long userId, Long bookId) {
         List<ReadingProgress> progresses = readingProgressRepo.findReadingProgressByBookAndUserId(bookId, userId);
         return progressMapper.mapToDTOs(progresses);
     }
 
     @Override
-    public List<ReadingProgressDTO> findAllReadingProgressByUserId(Integer userId) {
+    public List<ReadingProgressDTO> findAllReadingProgressByUserId(Long userId) {
         List<ReadingProgress> progresses = readingProgressRepo.findByUserId(userId);
         return progressMapper.mapToDTOs(progresses);
     }
@@ -74,7 +74,7 @@ public class ReadingProgressServiceImpl implements ReadingProgressService {
     }
 
     @Override
-    public ReadingProgressDTO updateReadingProgress(Integer progressId, ReadingProgress readingProgress)
+    public ReadingProgressDTO updateReadingProgress(Long progressId, ReadingProgress readingProgress)
             throws Exception {
         try {
             ReadingProgress updateProgress = readingProgressRepo.findById(progressId)
@@ -93,7 +93,7 @@ public class ReadingProgressServiceImpl implements ReadingProgressService {
 
     @Override
     @Transactional
-    public String deleteReadingProgress(Integer progressId) throws IOException {
+    public String deleteReadingProgress(Long progressId) throws IOException {
         try {
             ReadingProgress deleteProgress = readingProgressRepo.findById(progressId)
                 .orElseThrow(() -> new IOException("Reading progress not found"));

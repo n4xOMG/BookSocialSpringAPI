@@ -7,7 +7,7 @@ import com.nix.dtos.NotificationDTO;
 import com.nix.models.User;
 
 public interface NotificationService {
-	public void createNotification(User user, String message);
+	public void createNotification(User user, String message, String entityType, Long entityId);
 
 	public Page<NotificationDTO> getUserNotifications(User user, Pageable pageable);
 

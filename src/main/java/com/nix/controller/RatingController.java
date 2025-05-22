@@ -36,7 +36,7 @@ public class RatingController {
 	RatingMapper ratingMapper = new RatingMapper();
 
 	@GetMapping("/books/rating/average/{bookId}")
-	public ResponseEntity<?> getAverageBookRating(@PathVariable("bookId") Integer bookId) throws Exception {
+	public ResponseEntity<?> getAverageBookRating(@PathVariable("bookId") Long bookId) throws Exception {
 		try {
 			BookDTO book = bookService.getBookById(bookId);
 
@@ -52,7 +52,7 @@ public class RatingController {
 
 	@GetMapping("/api/books/rating/{bookId}")
 	public ResponseEntity<?> getRatingByBookAndUser(@RequestHeader("Authorization") String jwt,
-			@PathVariable("bookId") Integer bookId) throws Exception {
+			@PathVariable("bookId") Long bookId) throws Exception {
 		try {
 			User reqUser = userService.findUserByJwt(jwt);
 			if (reqUser == null) {
@@ -73,7 +73,7 @@ public class RatingController {
 	}
 
 	@PatchMapping("/api/books/rating/{bookId}")
-	public ResponseEntity<RatingDTO> rateBook(@RequestHeader("Authorization") String jwt, @PathVariable Integer bookId,
+	public ResponseEntity<RatingDTO> rateBook(@RequestHeader("Authorization") String jwt, @PathVariable Long bookId,
 			@RequestBody Rating rating) throws Exception {
 
 		BookDTO book = bookService.getBookById(bookId);

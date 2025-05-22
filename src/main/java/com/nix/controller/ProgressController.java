@@ -38,7 +38,7 @@ public class ProgressController {
 
 	@GetMapping("/api/reading-progress/chapters/{chapterId}")
 	public ResponseEntity<ReadingProgressDTO> getReadingProgressByUserAndChapter(
-			@RequestHeader("Authorization") String jwt, @PathVariable("chapterId") Integer chapterId) throws Exception {
+			@RequestHeader("Authorization") String jwt, @PathVariable("chapterId") Long chapterId) throws Exception {
 
 		User user = userService.findUserByJwt(jwt);
 		if (user == null) {
@@ -56,7 +56,7 @@ public class ProgressController {
 
 	@GetMapping("/api/reading-progress/books/{bookId}")
 	public ResponseEntity<?> getReadingProgressByUserAndBook(@RequestHeader("Authorization") String jwt,
-			@PathVariable("bookId") Integer bookId) throws Exception {
+			@PathVariable("bookId") Long bookId) throws Exception {
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
@@ -89,7 +89,7 @@ public class ProgressController {
 
 	@PostMapping("/api/chapters/{chapterId}/progress")
 	public ResponseEntity<ReadingProgressDTO> saveReadingProgress(@RequestHeader("Authorization") String jwt,
-			@PathVariable("chapterId") Integer chapterId, @RequestBody ReadingProgressDTO progressDTO)
+			@PathVariable("chapterId") Long chapterId, @RequestBody ReadingProgressDTO progressDTO)
 			throws Exception {
 
 		User reqUser = userService.findUserByJwt(jwt);

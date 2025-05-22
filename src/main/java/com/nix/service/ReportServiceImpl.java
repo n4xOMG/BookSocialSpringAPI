@@ -114,7 +114,7 @@ public class ReportServiceImpl implements ReportService {
 		report.setResolved(true);
 		reportRepository.save(report);
 		String message = "Your report has been resolved";
-		notificationService.createNotification(report.getReporter(), message);
+		notificationService.createNotification(report.getReporter(), message, "REPORT", report.getId());
 	}
 
 	@Override
@@ -132,19 +132,19 @@ public class ReportServiceImpl implements ReportService {
 
 		Report report = getReportEntityById(id);
 		if (report.getBook() != null) {
-			Integer bookId = report.getBook().getId();
+			Long bookId = report.getBook().getId();
 			report.setBook(null);
 			reportRepository.save(report);
 			bookService.deleteBook(bookId);
 		}
 		if (report.getChapter() != null) {
-			Integer chapterId = report.getChapter().getId();
+			Long chapterId = report.getChapter().getId();
 			report.setChapter(null);
 			reportRepository.save(report);
 			chapterService.deleteChapter(chapterId);
 		}
 		if (report.getComment() != null) {
-			Integer commentId = report.getComment().getId();
+			Long commentId = report.getComment().getId();
 			report.setComment(null);
 			reportRepository.save(report);
 			commentService.deleteComment(commentId, user.getId());

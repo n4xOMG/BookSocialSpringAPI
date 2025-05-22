@@ -80,7 +80,7 @@ public class CategoryServiceImpl implements CategoryService {
 	}
 
 	@Override
-	public List<Category> findALlCategoriesByBookId(Integer bookId) {
+	public List<Category> findALlCategoriesByBookId(Long bookId) {
 		// TODO Auto-generated method stub
 		return null;
 	}

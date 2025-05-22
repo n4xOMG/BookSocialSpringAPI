@@ -37,7 +37,7 @@ public class UserController {
 	UserSummaryMapper userSummaryDTO = new UserSummaryMapper();
 
 	@GetMapping("/user/profile/{userId}")
-	public ResponseEntity<?> getUserProfile(@PathVariable("userId") Integer userId,
+	public ResponseEntity<?> getUserProfile(@PathVariable("userId") Long userId,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		try {
 			User otherUser = userService.findUserById(userId);
@@ -104,7 +104,7 @@ public class UserController {
 
 	@PostMapping("/user/follow/{userIdToFollow}")
 	public ResponseEntity<?> followUser(@RequestHeader("Authorization") String jwt,
-			@PathVariable Integer userIdToFollow) {
+			@PathVariable Long userIdToFollow) {
 		try {
 			UserSummaryDTO userSummaryDTO = new UserSummaryDTO();
 			User currentUser = userService.findUserByJwt(jwt);
@@ -123,7 +123,7 @@ public class UserController {
 
 	@PostMapping("/unfollow/{userIdToUnfollow}")
 	public ResponseEntity<?> unFollowUser(@RequestHeader("Authorization") String jwt,
-			@PathVariable Integer userIdToUnfollow) {
+			@PathVariable Long userIdToUnfollow) {
 		try {
 			UserSummaryDTO userSummaryDTO = new UserSummaryDTO();
 			User currentUser = userService.findUserByJwt(jwt);
@@ -152,7 +152,7 @@ public class UserController {
 	}
 
 	@GetMapping("/api/user/{userId}/followers")
-	public ResponseEntity<?> getFollowers(@PathVariable Integer userId) {
+	public ResponseEntity<?> getFollowers(@PathVariable Long userId) {
 		try {
 
 			List<User> followers = userService.getUserFollowers(userId);
@@ -165,7 +165,7 @@ public class UserController {
 	}
 
 	@GetMapping("/api/user/{userId}/following")
-	public ResponseEntity<?> getFollowing(@RequestHeader("Authorization") String jwt, @PathVariable Integer userId) {
+	public ResponseEntity<?> getFollowing(@RequestHeader("Authorization") String jwt, @PathVariable Long userId) {
 		try {
 			User currentUser = userService.findUserByJwt(jwt);
 			if (!currentUser.getId().equals(userId)) {

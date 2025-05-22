@@ -6,18 +6,18 @@ import com.nix.models.Rating;
 import com.nix.models.User;
 
 public interface RatingService {
-	public Rating findRatingById(Integer ratingId) throws Exception;
+	public Rating findRatingById(Long ratingId) throws Exception;
 
-	public Double getAverageBookRating(Integer bookId);
+	public Double getAverageBookRating(Long bookId);
 
-	public Rating addNewRating(User user, Integer bookId, Integer rating) throws Exception;
+	public Rating addNewRating(User user, Long bookId, Integer rating) throws Exception;
 
-	public Rating editRating(Integer ratingId, Rating rating) throws Exception;
+	public Rating editRating(Long ratingId, Rating rating) throws Exception;
 
-	public List<Rating> getAllRatingsForBook(Integer bookId);
+	public List<Rating> getAllRatingsForBook(Long bookId);
 
-	public List<Rating> getAllRatingsByUser(Integer userId);
+	public List<Rating> getAllRatingsByUser(Long userId);
 
-	public Rating findRatingByUserAndBook(Integer userId, Integer bookId);
+	public Rating findRatingByUserAndBook(Long userId, Long bookId);
 
 }

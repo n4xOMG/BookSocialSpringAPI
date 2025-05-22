@@ -14,25 +14,27 @@ public interface PostService {
 
 	List<PostDTO> getPostsByUser(User user, User currentUser);
 
-	PostDTO getPostById(Integer postId, User currentUser);
+	PostDTO getPostById(Long postId, User currentUser);
 
 	// Convenience methods without user context (they call the primary methods)
 	Page<PostDTO> getAllPosts(Pageable pageable);
 
 	List<PostDTO> getPostsByUser(User user);
 
-	PostDTO getPostById(Integer postId);
+	PostDTO getPostById(Long postId);
 
 	// Methods that always have a user context
 	PostDTO createPost(User user, PostDTO postDTO);
 
-	PostDTO updatePost(User user, Integer postId, PostDTO postDetails);
+	PostDTO updatePost(User user, Long postId, PostDTO postDetails);
 
-	void deletePost(User user, Integer postId);
+	void deletePost(User user, Long postId);
 
-	PostDTO likePost(Integer postId, User user);
+	PostDTO likePost(Long postId, User user);
 
-	PostDTO createChapterSharePost(Integer chapterId, User user, PostDTO postDTO);
+	PostDTO createChapterSharePost(Long chapterId, User user, PostDTO postDTO);
 
-	PostDTO createBookSharePost(Integer bookId, User user, PostDTO postDTO);
+	PostDTO createBookSharePost(Long bookId, User user, PostDTO postDTO);
+
+	boolean isPostLikedByCurrentUser(User user, Long postId);
 }

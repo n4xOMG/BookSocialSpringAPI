@@ -7,17 +7,17 @@ import com.nix.dtos.ReadingProgressDTO;
 import com.nix.models.ReadingProgress;
 
 public interface ReadingProgressService {
-	ReadingProgressDTO findReadingProgressById(Integer progressId) throws IOException;
+	ReadingProgressDTO findReadingProgressById(Long progressId) throws IOException;
 
-	ReadingProgressDTO findByUserAndChapter(Integer userId, Integer chapterId);
+	ReadingProgressDTO findByUserAndChapter(Long userId, Long chapterId);
 
-	List<ReadingProgressDTO> findByUserAndBook(Integer userId, Integer bookId);
+	List<ReadingProgressDTO> findByUserAndBook(Long userId, Long bookId);
 
-	List<ReadingProgressDTO> findAllReadingProgressByUserId(Integer userId);
+	List<ReadingProgressDTO> findAllReadingProgressByUserId(Long userId);
 
 	ReadingProgressDTO createReadingProgress(ReadingProgress readingProgress) throws Exception;
 
-	ReadingProgressDTO updateReadingProgress(Integer progressId, ReadingProgress readingProgress) throws Exception;
+	ReadingProgressDTO updateReadingProgress(Long progressId, ReadingProgress readingProgress) throws Exception;
 
-	String deleteReadingProgress(Integer progressId) throws IOException;
+	String deleteReadingProgress(Long progressId) throws IOException;
 }

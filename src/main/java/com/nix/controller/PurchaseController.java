@@ -32,7 +32,7 @@ public class PurchaseController {
     }
     
     @GetMapping("/admin/purchases/history/users/{userId}")
-    public ResponseEntity<List<PurchaseDTO>> getPurchaseHistoryByUser(@PathVariable Integer userId) {
+    public ResponseEntity<List<PurchaseDTO>> getPurchaseHistoryByUser(@PathVariable Long userId) {
         List<PurchaseDTO> purchaseHistory = purchaseService.getPurchaseHistoryForUser(userId);
         return ResponseEntity.ok(purchaseHistory);
     }

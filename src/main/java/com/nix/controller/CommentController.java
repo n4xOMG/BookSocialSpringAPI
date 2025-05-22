@@ -69,12 +69,12 @@ public class CommentController {
 	}
 
 	@GetMapping("/posts/{postId}/comments")
-	public ResponseEntity<?> getAllPostComments(@PathVariable("postId") Integer postId, 
+	public ResponseEntity<?> getAllPostComments(@PathVariable("postId") Long postId,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
-	    try {
-	        Page<Comment> commentsPage = commentService.getPagerPostComments(page, size, postId);
-	        List<CommentDTO> commentDTOs = commentMapper.mapToDTOs(commentsPage.getContent());
+		try {
+			Page<Comment> commentsPage = commentService.getPagerPostComments(page, size, postId);
+			List<CommentDTO> commentDTOs = commentMapper.mapToDTOs(commentsPage.getContent());
 
 			if (jwt != null && !jwt.isEmpty()) {
 				User user = userService.findUserByJwt(jwt);
@@ -82,7 +82,7 @@ public class CommentController {
 					setLikedByCurrentUserRecursively(comment, user, commentService);
 				}
 			}
-			
+
 			Map<String, Object> response = new HashMap<>();
 			response.put("comments", commentDTOs);
 			response.put("page", commentsPage.getNumber());
@@ -91,14 +91,14 @@ public class CommentController {
 			response.put("totalElements", commentsPage.getTotalElements());
 
 			return ResponseEntity.ok(response);
-			
-	    } catch (Exception e) {
-	        return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-	    }
+
+		} catch (Exception e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	@GetMapping("/books/{bookId}/comments")
-	public ResponseEntity<?> getPagerBookComments(@PathVariable("bookId") Integer bookId,
+	public ResponseEntity<?> getPagerBookComments(@PathVariable("bookId") Long bookId,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		try {
@@ -135,7 +135,7 @@ public class CommentController {
 	}
 
 	@GetMapping("/chapters/{chapterId}/comments")
-	public ResponseEntity<?> getPagerChapterComments(@PathVariable("chapterId") Integer chapterId,
+	public ResponseEntity<?> getPagerChapterComments(@PathVariable("chapterId") Long chapterId,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		try {
@@ -163,7 +163,7 @@ public class CommentController {
 	}
 
 	@GetMapping("/admin/comments/recent/{userId}")
-	public ResponseEntity<?> getRecentCommentsByUserId(@PathVariable Integer userId) {
+	public ResponseEntity<?> getRecentCommentsByUserId(@PathVariable Long userId) {
 		try {
 			Page<Comment> comments = commentService.getRecentCommentsByUserId(userId, 0, 5);
 			return ResponseEntity.ok(commentMapper.mapToDTOs(comments.getContent()));
@@ -173,7 +173,7 @@ public class CommentController {
 	}
 
 	private ResponseEntity<?> handleCommentCreation(User user, Supplier<Comment> commentCreator, String context,
-			Integer entityId) {
+			Long entityId) {
 		try {
 			if (user == null) {
 				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
@@ -187,31 +187,33 @@ public class CommentController {
 			if ("book".equals(context) && entityId != null) {
 
 				BookDTO book = bookService.getBookById(entityId);
-				Integer authorId = book.getAuthor().getId();
+				Long authorId = book.getAuthor().getId();
 				User author = userService.findUserById(authorId);
 
 				if (author != null && !author.equals(user)) { // Don't notify if commenter is the author
 					notificationService.createNotification(author, "A new comment was posted on your book '"
-							+ book.getTitle() + "': " + newComment.getContent());
+							+ book.getTitle() + "': " + newComment.getContent(), "COMMENT", book.getId());
 				}
 			} else if ("chapter".equals(context) && entityId != null) {
 				// Assuming chapter has an author or links to a book
 				Chapter chapter = chapterService.findChapterById(entityId); // Add this method to BookService if needed
 				User author = chapter.getBook().getAuthor();
 				if (author != null && !author.equals(user)) {
-					notificationService.createNotification(author,
-							"A new comment was posted on a chapter of your book '" + chapter.getBook().getTitle()
-									+ "': " + newComment.getContent());
+					notificationService.createNotification(
+							author, "A new comment was posted on a chapter of your book '"
+									+ chapter.getBook().getTitle() + "': " + newComment.getContent(),
+							"COMMENT", chapter.getId());
 				}
 			} else if ("post".equals(context) && entityId != null) {
 				// Assuming Post has an author; adjust based on your Post model
 				PostDTO post = postService.getPostById(entityId);
-				Integer authorId = post.getUser().getId();
+				Long authorId = post.getUser().getId();
 				User author = userService.findUserById(authorId);
 
 				if (post.getUser() != null && !author.equals(user)) {
 					notificationService.createNotification(author,
-							"A new comment was posted on your post: " + newComment.getContent());
+							"A new comment was posted on your post: " + newComment.getContent(), "COMMENT",
+							post.getId());
 				}
 			}
 
@@ -225,7 +227,7 @@ public class CommentController {
 
 	@PostMapping("/api/books/{bookId}/comments")
 	public ResponseEntity<?> createBookComment(@RequestHeader("Authorization") String jwt, @RequestBody Comment comment,
-			@PathVariable("bookId") Integer bookId) {
+			@PathVariable("bookId") Long bookId) {
 		User user = userService.findUserByJwt(jwt);
 		return handleCommentCreation(user, () -> {
 			try {
@@ -239,7 +241,7 @@ public class CommentController {
 
 	@PostMapping("/api/chapters/{chapterId}/comments")
 	public ResponseEntity<?> createChapterComment(@RequestHeader("Authorization") String jwt,
-			@RequestBody Comment comment, @PathVariable("chapterId") Integer chapterId) {
+			@RequestBody Comment comment, @PathVariable("chapterId") Long chapterId) {
 		User user = userService.findUserByJwt(jwt);
 		return handleCommentCreation(user, () -> {
 			try {
@@ -253,7 +255,7 @@ public class CommentController {
 
 	@PostMapping("/api/posts/{postId}/comments")
 	public ResponseEntity<?> createPostComment(@RequestHeader("Authorization") String jwt, @RequestBody Comment comment,
-			@PathVariable("postId") Integer postId) {
+			@PathVariable("postId") Long postId) {
 		User user = userService.findUserByJwt(jwt);
 		return handleCommentCreation(user, () -> {
 			try {
@@ -266,7 +268,7 @@ public class CommentController {
 	}
 
 	@PostMapping("/api/books/{bookId}/comments/{parentCommentId}/reply")
-	public ResponseEntity<?> createReplyBookComment(@RequestBody Comment comment, @PathVariable Integer parentCommentId,
+	public ResponseEntity<?> createReplyBookComment(@RequestBody Comment comment, @PathVariable Long parentCommentId,
 			@RequestHeader("Authorization") String jwt) {
 		try {
 			User user = userService.findUserByJwt(jwt);
@@ -281,7 +283,8 @@ public class CommentController {
 			if (parentAuthor != null && !parentAuthor.equals(user)) {
 				BookDTO book = bookService.getBookById(parentComment.getBook().getId());
 				notificationService.createNotification(parentAuthor,
-						"Someone replied to your comment on '" + book.getTitle() + "': " + replyComment.getContent());
+						"Someone replied to your comment on '" + book.getTitle() + "': " + replyComment.getContent(),
+						"COMMENT", comment.getId());
 			}
 
 			return new ResponseEntity<>(commentMapper.mapToDTO(replyComment), HttpStatus.CREATED);
@@ -293,8 +296,8 @@ public class CommentController {
 	}
 
 	@PostMapping("/api/chapters/{chapterId}/comments/{parentCommentId}/reply")
-	public ResponseEntity<?> createReplyChapterComment(@RequestBody Comment comment,
-			@PathVariable Integer parentCommentId, @RequestHeader("Authorization") String jwt) {
+	public ResponseEntity<?> createReplyChapterComment(@RequestBody Comment comment, @PathVariable Long parentCommentId,
+			@RequestHeader("Authorization") String jwt) {
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
@@ -308,7 +311,7 @@ public class CommentController {
 			if (parentAuthor != null && !parentAuthor.equals(user)) {
 				Book book = parentComment.getChapter().getBook();
 				notificationService.createNotification(parentAuthor, "Someone replied to your comment on a chapter of '"
-						+ book.getTitle() + "': " + replyComment.getContent());
+						+ book.getTitle() + "': " + replyComment.getContent(), "COMMENT", parentCommentId);
 			}
 
 			return new ResponseEntity<>(commentMapper.mapToDTO(replyComment), HttpStatus.CREATED);
@@ -320,7 +323,7 @@ public class CommentController {
 	}
 
 	@PostMapping("/api/posts/{postId}/comments/{parentCommentId}/reply")
-	public ResponseEntity<?> createReplyPostComment(@RequestBody Comment comment, @PathVariable Integer parentCommentId,
+	public ResponseEntity<?> createReplyPostComment(@RequestBody Comment comment, @PathVariable Long parentCommentId,
 			@RequestHeader("Authorization") String jwt) {
 		try {
 			User user = userService.findUserByJwt(jwt);
@@ -334,7 +337,8 @@ public class CommentController {
 			User parentAuthor = parentComment.getUser();
 			if (parentAuthor != null && !parentAuthor.equals(user)) {
 				notificationService.createNotification(parentAuthor,
-						"Someone replied to your comment on a post: " + replyComment.getContent());
+						"Someone replied to your comment on a post: " + replyComment.getContent(), "COMMENT",
+						parentCommentId);
 			}
 
 			return new ResponseEntity<>(commentMapper.mapToDTO(replyComment), HttpStatus.CREATED);
@@ -347,7 +351,7 @@ public class CommentController {
 
 	@PutMapping("/api/comments/{commentId}/like")
 	public ResponseEntity<?> likeComment(@RequestHeader("Authorization") String jwt,
-			@PathVariable("commentId") Integer commentId) throws Exception {
+			@PathVariable("commentId") Long commentId) throws Exception {
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
@@ -368,7 +372,7 @@ public class CommentController {
 				String context = comment.getBook() != null ? "book '" + comment.getBook().getTitle() + "'"
 						: comment.getChapter() != null ? "chapter" : comment.getPost() != null ? "post" : "content";
 				notificationService.createNotification(commentAuthor,
-						"Your comment on " + context + " was liked: " + comment.getContent());
+						"Your comment on " + context + " was liked: " + comment.getContent(), "COMMENT", commentId);
 			}
 
 			return ResponseEntity.ok(commentDTO);
@@ -379,7 +383,7 @@ public class CommentController {
 
 	@PutMapping("/api/comments/{commentId}")
 	public ResponseEntity<?> editComment(@RequestHeader("Authorization") String jwt,
-			@PathVariable("commentId") Integer commentId, @RequestBody Comment comment) throws Exception {
+			@PathVariable("commentId") Long commentId, @RequestBody Comment comment) throws Exception {
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
@@ -395,7 +399,7 @@ public class CommentController {
 
 	@DeleteMapping("/api/comments/{commentId}")
 	public ResponseEntity<?> deleteComment(@RequestHeader("Authorization") String jwt,
-			@PathVariable("commentId") Integer commentId) throws Exception {
+			@PathVariable("commentId") Long commentId) throws Exception {
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
@@ -411,7 +415,7 @@ public class CommentController {
 				String context = comment.getBook() != null ? "book '" + comment.getBook().getTitle() + "'"
 						: comment.getChapter() != null ? "chapter" : comment.getPost() != null ? "post" : "content";
 				notificationService.createNotification(commentAuthor,
-						"Your comment on " + context + " was deleted: " + comment.getContent());
+						"Your comment on " + context + " was deleted: " + comment.getContent(), "COMMENT", commentId);
 			}
 
 			return new ResponseEntity<>(HttpStatus.OK);

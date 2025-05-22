@@ -8,16 +8,16 @@ import org.springframework.data.repository.query.Param;
 
 import com.nix.models.ReadingProgress;
 
-public interface ReadingProgressRepository extends JpaRepository<ReadingProgress, Integer> {
-	public List<ReadingProgress> findByUserId(Integer userId);
+public interface ReadingProgressRepository extends JpaRepository<ReadingProgress, Long> {
+	public List<ReadingProgress> findByUserId(Long userId);
 
-	public void deleteByChapterId(Integer chapterId);
+	public void deleteByChapterId(Long chapterId);
 
 	@Query("select rp from ReadingProgress rp where rp.chapter.id=:chapterId and rp.user.id=:userId")
-	public ReadingProgress findReadingProgressByChapterAndUserId(@Param(value = "chapterId") Integer chapterId,
-			@Param(value = "userId") Integer userId);
+	public ReadingProgress findReadingProgressByChapterAndUserId(@Param(value = "chapterId") Long chapterId,
+			@Param(value = "userId") Long userId);
 	
 	@Query("select rp from ReadingProgress rp where rp.chapter.book.id=:bookId and rp.user.id=:userId")
-	public List<ReadingProgress> findReadingProgressByBookAndUserId(@Param(value = "bookId") Integer bookId,
-			@Param(value = "userId") Integer userId);
+	public List<ReadingProgress> findReadingProgressByBookAndUserId(@Param(value = "bookId") Long bookId,
+			@Param(value = "userId") Long userId);
 }

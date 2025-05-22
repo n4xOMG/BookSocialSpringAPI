@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.nix.models.Purchase;
 import com.nix.models.User;
 
-public interface PurchaseRepository extends JpaRepository<Purchase, Integer> {
+public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
 
 	boolean existsByPaymentIntentId(String paymentIntentId);
 

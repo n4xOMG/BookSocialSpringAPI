@@ -8,9 +8,9 @@ import org.springframework.data.jpa.repository.Query;
 
 import com.nix.models.ChapterUnlockRecord;
 
-public interface ChapterUnlockRecordRepository extends JpaRepository<ChapterUnlockRecord, Integer> {
-	Optional<ChapterUnlockRecord> findByUserIdAndChapterId(Integer userId, Integer chapterId);
+public interface ChapterUnlockRecordRepository extends JpaRepository<ChapterUnlockRecord, Long> {
+	Optional<ChapterUnlockRecord> findByUserIdAndChapterId(Long userId, Long chapterId);
 	
 	@Query("SELECT cur.chapter.id FROM ChapterUnlockRecord cur WHERE cur.user.id = :userId")
-    List<Integer> findChapterIdsByUserId(Integer userId);
+    List<Integer> findChapterIdsByUserId(Long userId);
 }

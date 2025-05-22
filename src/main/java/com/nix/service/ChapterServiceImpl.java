@@ -48,19 +48,19 @@ public class ChapterServiceImpl implements ChapterService {
 	private UserRepository userRepository;
 
 	@Override
-	public Chapter findChapterById(Integer chapterId) {
+	public Chapter findChapterById(Long chapterId) {
 		Chapter chapter = chapterRepo.findById(chapterId)
 				.orElseThrow(() -> new ResourceNotFoundException("Cannot found chapter with id: " + chapterId));
 		return chapter;
 	}
 
 	@Override
-	public List<Chapter> findChaptersByBookId(Integer bookId) {
+	public List<Chapter> findChaptersByBookId(Long bookId) {
 		return chapterRepo.findByBookId(bookId);
 	}
 
 	@Override
-	public List<Chapter> findNotDraftedChaptersByBookId(Integer bookId) {
+	public List<Chapter> findNotDraftedChaptersByBookId(Long bookId) {
 		return chapterRepo.findNotDraftedChaptersByBookId(bookId);
 	}
 
@@ -70,7 +70,7 @@ public class ChapterServiceImpl implements ChapterService {
 	}
 
 	@Override
-	public Chapter createDraftChapter(Integer bookId, Chapter chapter) {
+	public Chapter createDraftChapter(Long bookId, Chapter chapter) {
 		Book book = bookRepo.findById(bookId)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 
@@ -84,7 +84,7 @@ public class ChapterServiceImpl implements ChapterService {
 
 	@Override
 	@Transactional
-	public Chapter publishChapter(Integer bookId, Chapter chapter) {
+	public Chapter publishChapter(Long bookId, Chapter chapter) {
 		Book book = bookRepo.findById(bookId)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 
@@ -95,13 +95,13 @@ public class ChapterServiceImpl implements ChapterService {
 		List<User> followers = book.getFavoured();
 		String message = "New chapter added to " + book.getTitle() + ": " + chapter.getTitle();
 		for (User user : followers) {
-			notificationService.createNotification(user, message);
+			notificationService.createNotification(user, message, "BOOK", bookId);
 		}
 		return chapterRepo.save(chapter);
 	}
 
 	@Override
-	public Chapter editChapter(Integer chapterId, Chapter chapter) throws Exception {
+	public Chapter editChapter(Long chapterId, Chapter chapter) throws Exception {
 		Chapter editChapter = findChapterById(chapterId);
 		if (editChapter == null) {
 			throw new Exception("Chapter not found");
@@ -119,7 +119,7 @@ public class ChapterServiceImpl implements ChapterService {
 
 	@Override
 	@Transactional
-	public String deleteChapter(Integer chapterId) throws Exception {
+	public String deleteChapter(Long chapterId) throws Exception {
 		Chapter deleteChapter = findChapterById(chapterId);
 		if (deleteChapter == null) {
 			throw new Exception("Chapter not found");
@@ -158,7 +158,7 @@ public class ChapterServiceImpl implements ChapterService {
 	}
 
 	@Override
-	public void unlockChapter(Integer userId, Integer chapterId) throws Exception {
+	public void unlockChapter(Long userId, Long chapterId) throws Exception {
 		Chapter chapter = chapterRepo.findById(chapterId).orElseThrow(() -> new Exception("Chapter not found"));
 
 		if (!chapter.isLocked()) {
@@ -195,7 +195,7 @@ public class ChapterServiceImpl implements ChapterService {
 	}
 
 	@Override
-	public boolean isChapterUnlockedByUser(Integer userId, Integer chapterId) {
+	public boolean isChapterUnlockedByUser(Long userId, Long chapterId) {
 		Optional<ChapterUnlockRecord> unlockRecord = unlockRecordRepository.findByUserIdAndChapterId(userId, chapterId);
 		return unlockRecord.isPresent();
 	}
@@ -207,7 +207,7 @@ public class ChapterServiceImpl implements ChapterService {
 
 	@Override
 	@Transactional
-	public Boolean likeChapter(Integer userId, Integer chapterId) throws Exception {
+	public Boolean likeChapter(Long userId, Long chapterId) throws Exception {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 		Chapter chapter = chapterRepo.findById(chapterId)
@@ -221,7 +221,7 @@ public class ChapterServiceImpl implements ChapterService {
 
 			String message = "User liked chapter " + chapter.getTitle() + ": " + chapter.getChapterNum() + " in "
 					+ chapter.getBook().getTitle();
-			notificationService.createNotification(chapter.getBook().getAuthor(), message);
+			notificationService.createNotification(chapter.getBook().getAuthor(), message, "CHAPTER", chapterId);
 
 			return true;
 		} else {
@@ -236,7 +236,7 @@ public class ChapterServiceImpl implements ChapterService {
 
 	@Override
 	@Transactional
-	public Chapter unlikeChapter(Integer userId, Integer chapterId) throws Exception {
+	public Chapter unlikeChapter(Long userId, Long chapterId) throws Exception {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 		Chapter chapter = chapterRepo.findById(chapterId)
@@ -252,7 +252,7 @@ public class ChapterServiceImpl implements ChapterService {
 	}
 
 	@Override
-	public boolean isChapterLikedByUser(Integer userId, Integer chapterId) {
+	public boolean isChapterLikedByUser(Long userId, Long chapterId) {
 		Optional<User> userOpt = userRepository.findById(userId);
 		Optional<Chapter> chapterOpt = chapterRepo.findById(chapterId);
 		if (userOpt.isPresent() && chapterOpt.isPresent()) {

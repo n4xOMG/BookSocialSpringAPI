@@ -15,15 +15,15 @@ import lombok.Setter;
 @NoArgsConstructor
 public class CommentDTO {
 
-	private Integer id;
+	private Long id;
 	private String content;
 	private UserSummaryDTO user;
-	private Integer bookId;
-	private Integer chapterId;
-	private Integer postId;
+	private Long bookId;
+	private Long chapterId;
+	private Long postId;
 	private boolean isLikedByCurrentUser = false;
 	private List<UserSummaryDTO> likedUsers;
 	private LocalDateTime createdAt;
-	private Integer parentCommentId;
+	private Long parentCommentId;
 	private List<CommentDTO> replyComment = new ArrayList<>();
 }

@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.nix.models.User;
 
-public interface UserRepository extends JpaRepository<User, Integer> {
+public interface UserRepository extends JpaRepository<User, Long> {
 	public User findByEmail(String email);
 
 	@Query("select u from User u where u.username LIKE %:username%")
@@ -22,7 +22,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
 	@Modifying
 	@Query("UPDATE User u SET u.credits = :credits WHERE u.id = :userId")
-	void updateCredits(@Param("userId") Integer userId, @Param("credits") int credits);
+	void updateCredits(@Param("userId") Long userId, @Param("credits") int credits);
 
 	Page<User> findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(String username, String email,
 			Pageable pageable);

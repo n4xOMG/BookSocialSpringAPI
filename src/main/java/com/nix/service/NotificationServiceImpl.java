@@ -33,11 +33,13 @@ public class NotificationServiceImpl implements NotificationService {
 	private SimpMessagingTemplate messagingTemplate;
 
 	@Override
-	public void createNotification(User user, String message) {
+	public void createNotification(User user, String message, String entityType, Long entityId) {
 		Notification notification = new Notification();
 		notification.setUser(user);
 		notification.setMessage(message);
 		notification.setCreatedDate(LocalDateTime.now());
+		notification.setEntityType(entityType);
+	    notification.setEntityId(entityId);
 		notificationRepository.save(notification);
 
 		messagingTemplate.convertAndSendToUser(user.getUsername(), "/notifications", new NotificationDTO(
@@ -98,7 +100,7 @@ public class NotificationServiceImpl implements NotificationService {
 	public void createGlobalAnnouncement(String message) {
 		List<User> users = userRepository.findAll();
 		for (User user : users) {
-			createNotification(user, message);
+			createNotification(user, message, "GLOBAL",null);
 		}
 
 		messagingTemplate.convertAndSend("/group/announcements", message);
