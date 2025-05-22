@@ -14,10 +14,10 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PostDTO {
-    private Integer id;
+    private Long id;
     private UserSummaryDTO user;
     private String content;
-    private Integer sharedPostId;
+    private Long sharedPostId;
     private List<String> images = new ArrayList<>();
     private Integer likes;
     private Integer commentCount;

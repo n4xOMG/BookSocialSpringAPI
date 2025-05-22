@@ -20,7 +20,7 @@ public interface UserService {
 
 	public User sendForgotPasswordMail(User user) throws UnsupportedEncodingException, MessagingException;
 
-	public User findUserById(Integer userId);
+	public User findUserById(Long userId);
 
 	public User findUserByEmail(String email);
 
@@ -37,35 +37,35 @@ public interface UserService {
 
 	public void updateUserLastLoginDate(String email);
 
-	public User updateUserRole(Integer userId, String roleName);
+	public User updateUserRole(Long userId, String roleName);
 
-	public User updateUser(Integer userId, User user);
+	public User updateUser(Long userId, User user);
 
-	public String deleteUser(Integer userId);
+	public String deleteUser(Long userId);
 
 	public User updateUserPassword(String password, User user);
 
 	public User verifyUser(String verificationCode);
 
-	public User suspendUser(Integer userId);
+	public User suspendUser(Long userId);
 
-	public User unsuspendUser(Integer userId);
+	public User unsuspendUser(Long userId);
 
-	public User banUser(Integer userId, String banReason);
+	public User banUser(Long userId, String banReason);
 
-	public User unbanUser(Integer userId);
+	public User unbanUser(Long userId);
 
-	public User followUser(Integer currentUserId, Integer followedUserId);
+	public User followUser(Long currentUserId, Long followedUserId);
 
-	public User unFollowUser(Integer currentUserId, Integer unfollowedUserId);
+	public User unFollowUser(Long currentUserId, Long unfollowedUserId);
 
 	public boolean isFollowedByCurrentUser(User currentUser, User otherUser);
 
-	public UserDTO getUserPreferences(Integer userId);
+	public UserDTO getUserPreferences(Long userId);
 
-	public List<User> getUserFollowers(Integer userId);
+	public List<User> getUserFollowers(Long userId);
 
-	public List<User> getUserFollowing(Integer userId);
+	public List<User> getUserFollowing(Long userId);
 
 	public List<Long> getNewUsersByMonth();
 

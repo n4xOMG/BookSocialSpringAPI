@@ -47,7 +47,7 @@ public class ChatController {
 
 	// Create or get existing chat between two users
 	@PostMapping("/{otherUserId}")
-	public ChatDTO createChat(@PathVariable("otherUserId") Integer otherUserId,
+	public ChatDTO createChat(@PathVariable("otherUserId") Long otherUserId,
 			@RequestHeader("Authorization") String jwt) {
 		User currentUser = userService.findUserByJwt(jwt);
 		User otherUser = userService.findUserById(otherUserId);

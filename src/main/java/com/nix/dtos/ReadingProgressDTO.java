@@ -12,12 +12,12 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ReadingProgressDTO {
-	private Integer id;
-	private Integer userId;
-	private Integer chapterId;
+	private Long id;
+	private Long userId;
+	private Long chapterId;
 	private String chapterNum;
 	private String chapterName;
-	private Integer bookId;
+	private Long bookId;
 	private String bookTitle;
 	private String bookCover;
 	private String bookAuthor;

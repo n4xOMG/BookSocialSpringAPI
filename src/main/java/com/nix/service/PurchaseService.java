@@ -7,7 +7,7 @@ import com.nix.dtos.SalesPerUserDTO;
 
 public interface PurchaseService {
 
-	List<PurchaseDTO> getPurchaseHistoryForUser(Integer userId);
+	List<PurchaseDTO> getPurchaseHistoryForUser(Long userId);
 
 	Double getTotalSalesAmount();
 

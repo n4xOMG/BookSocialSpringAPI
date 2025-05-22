@@ -11,7 +11,7 @@ public interface CategoryService {
 
 	public List<Category> findAllCategories();
 	
-	public List<Category> findALlCategoriesByBookId(Integer bookId);
+	public List<Category> findALlCategoriesByBookId(Long bookId);
 
 	public Category addNewCategory(Category category);
 

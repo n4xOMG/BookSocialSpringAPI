@@ -65,7 +65,7 @@ public class PostController {
 	}
 
 	@GetMapping("/posts/{postId}")
-	public ResponseEntity<PostDTO> getPostById(@PathVariable Integer postId,
+	public ResponseEntity<PostDTO> getPostById(@PathVariable Long postId,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 
 		User currentUser = getCurrentUser(jwt);
@@ -74,7 +74,7 @@ public class PostController {
 	}
 
 	@GetMapping("/posts/user/{userId}")
-	public ResponseEntity<List<PostDTO>> getPostsByUser(@PathVariable("userId") Integer userId,
+	public ResponseEntity<List<PostDTO>> getPostsByUser(@PathVariable("userId") Long userId,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 
 		User user = userService.findUserById(userId);
@@ -96,7 +96,7 @@ public class PostController {
 	}
 
 	@PutMapping("/api/posts/{id}")
-	public ResponseEntity<PostDTO> updatePost(@PathVariable Integer id, @RequestBody PostDTO postDetails,
+	public ResponseEntity<PostDTO> updatePost(@PathVariable Long id, @RequestBody PostDTO postDetails,
 			@RequestHeader("Authorization") String jwt) {
 		User currentUser = getCurrentUser(jwt);
 		PostDTO updatedPost = postService.updatePost(currentUser, id, postDetails);
@@ -104,14 +104,14 @@ public class PostController {
 	}
 
 	@DeleteMapping("/api/posts/{id}")
-	public ResponseEntity<Void> deletePost(@PathVariable Integer id, @RequestHeader("Authorization") String jwt) {
+	public ResponseEntity<Void> deletePost(@PathVariable Long id, @RequestHeader("Authorization") String jwt) {
 		User currentUser = getCurrentUser(jwt);
 		postService.deletePost(currentUser, id);
 		return ResponseEntity.noContent().build();
 	}
 
 	@PostMapping("/api/posts/{postId}/like")
-	public ResponseEntity<PostDTO> likePost(@PathVariable Integer postId, @RequestHeader("Authorization") String jwt) {
+	public ResponseEntity<PostDTO> likePost(@PathVariable Long postId, @RequestHeader("Authorization") String jwt) {
 		User currentUser = getCurrentUser(jwt);
 		if (currentUser == null) {
 			throw new ResourceNotFoundException("Cannot find user");
@@ -121,7 +121,7 @@ public class PostController {
 	}
 
 	@PostMapping("/posts/share-chapter/{chapterId}")
-	public ResponseEntity<PostDTO> shareChapterAsPost(@PathVariable Integer chapterId, @RequestBody PostDTO postDTO,
+	public ResponseEntity<PostDTO> shareChapterAsPost(@PathVariable Long chapterId, @RequestBody PostDTO postDTO,
 			@RequestHeader("Authorization") String jwt) {
 
 		User currentUser = getCurrentUser(jwt);
@@ -131,7 +131,7 @@ public class PostController {
 	}
 
 	@PostMapping("/posts/share-book/{bookId}")
-	public ResponseEntity<PostDTO> shareBookAsPost(@PathVariable Integer bookId, @RequestBody PostDTO postDTO,
+	public ResponseEntity<PostDTO> shareBookAsPost(@PathVariable Long bookId, @RequestBody PostDTO postDTO,
 			@RequestHeader("Authorization") String jwt) {
 
 		User currentUser = getCurrentUser(jwt);

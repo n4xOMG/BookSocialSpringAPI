@@ -85,7 +85,7 @@ public class AdminController {
 	}
 
 	@PutMapping("/users/update/{userId}")
-	public ResponseEntity<?> updateUser(@PathVariable Integer userId, @RequestBody User user) throws Exception {
+	public ResponseEntity<?> updateUser(@PathVariable Long userId, @RequestBody User user) throws Exception {
 		try {
 			UserDTO updateUser = userMapper.mapToDTO(userService.updateUser(userId, user));
 
@@ -96,7 +96,7 @@ public class AdminController {
 	}
 
 	@DeleteMapping("/users/delete/{userId}")
-	public ResponseEntity<?> deleteUser(@RequestHeader("Authorization") String jwt, @PathVariable Integer userId)
+	public ResponseEntity<?> deleteUser(@RequestHeader("Authorization") String jwt, @PathVariable Long userId)
 			throws Exception {
 		try {
 			User user = userService.findUserByJwt(jwt);
@@ -111,7 +111,7 @@ public class AdminController {
 	}
 
 	@PatchMapping("/users/suspend/{userId}")
-	public ResponseEntity<?> suspendUser(@RequestHeader("Authorization") String jwt, @PathVariable Integer userId)
+	public ResponseEntity<?> suspendUser(@RequestHeader("Authorization") String jwt, @PathVariable Long userId)
 			throws Exception {
 		try {
 			User user = userService.findUserByJwt(jwt);
@@ -127,7 +127,7 @@ public class AdminController {
 	}
 
 	@PatchMapping("/users/unsuspend/{userId}")
-	public ResponseEntity<?> unsuspendUser(@RequestHeader("Authorization") String jwt, @PathVariable Integer userId)
+	public ResponseEntity<?> unsuspendUser(@RequestHeader("Authorization") String jwt, @PathVariable Long userId)
 			throws Exception {
 		try {
 			User user = userService.findUserByJwt(jwt);
@@ -150,7 +150,7 @@ public class AdminController {
 			if (user == null) {
 				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
 			}
-			Integer userId = Integer.parseInt(request.get("userId"));
+			Long userId = Long.parseLong(request.get("userId"));
 			String banReason = request.get("banReason");
 
 			User bannedUser = userService.banUser(userId, banReason);
@@ -162,7 +162,7 @@ public class AdminController {
 	}
 
 	@PatchMapping("/users/unban/{userId}")
-	public ResponseEntity<?> unbanUser(@RequestHeader("Authorization") String jwt, @PathVariable Integer userId)
+	public ResponseEntity<?> unbanUser(@RequestHeader("Authorization") String jwt, @PathVariable Long userId)
 			throws Exception {
 		try {
 			User user = userService.findUserByJwt(jwt);
@@ -178,7 +178,7 @@ public class AdminController {
 	}
 
 	@PutMapping("/users/{id}/role")
-	public ResponseEntity<?> updateUserRole(@PathVariable("id") Integer userId, @RequestParam String roleName) {
+	public ResponseEntity<?> updateUserRole(@PathVariable("id") Long userId, @RequestParam String roleName) {
 		try {
 			User updatedUser = userService.updateUserRole(userId, roleName);
 			return ResponseEntity.ok(userMapper.mapToDTO(updatedUser));

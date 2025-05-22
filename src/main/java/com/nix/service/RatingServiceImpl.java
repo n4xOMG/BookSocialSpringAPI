@@ -26,7 +26,7 @@ public class RatingServiceImpl implements RatingService {
 	BookRepository bookRepository;
 
 	@Override
-	public Rating findRatingById(Integer ratingId) throws Exception {
+	public Rating findRatingById(Long ratingId) throws Exception {
 		Optional<Rating> rating = ratingRepo.findById(ratingId);
 		if (rating == null) {
 			throw new Exception("No rating found!");
@@ -35,14 +35,14 @@ public class RatingServiceImpl implements RatingService {
 	}
 
 	@Override
-	public Double getAverageBookRating(Integer bookId) {
+	public Double getAverageBookRating(Long bookId) {
 		return ratingRepo.getAverageRatingByBookId(bookId);
 
 	}
 
 	@Override
 	@Transactional
-	public Rating addNewRating(User user, Integer bookId, Integer rating) throws Exception {
+	public Rating addNewRating(User user, Long bookId, Integer rating) throws Exception {
 
 		Optional<Book> book = bookRepository.findById(bookId);
 
@@ -58,7 +58,7 @@ public class RatingServiceImpl implements RatingService {
 	}
 
 	@Override
-	public Rating editRating(Integer ratingId, Rating rating) throws Exception {
+	public Rating editRating(Long ratingId, Rating rating) throws Exception {
 
 		Rating editRating = findRatingById(ratingId);
 
@@ -68,17 +68,17 @@ public class RatingServiceImpl implements RatingService {
 	}
 
 	@Override
-	public List<Rating> getAllRatingsForBook(Integer bookId) {
+	public List<Rating> getAllRatingsForBook(Long bookId) {
 		return ratingRepo.findByBookId(bookId);
 	}
 
 	@Override
-	public List<Rating> getAllRatingsByUser(Integer userId) {
+	public List<Rating> getAllRatingsByUser(Long userId) {
 		return ratingRepo.findByUserId(userId);
 	}
 
 	@Override
-	public Rating findRatingByUserAndBook(Integer userId, Integer bookId) {
+	public Rating findRatingByUserAndBook(Long userId, Long bookId) {
 		return ratingRepo.findRatingByBookAndUserId(bookId, userId);
 	}
 

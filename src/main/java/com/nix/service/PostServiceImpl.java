@@ -2,6 +2,7 @@ package com.nix.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -74,7 +75,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
-	public PostDTO getPostById(Integer postId, User currentUser) {
+	public PostDTO getPostById(Long postId, User currentUser) {
 		Post post = postRepository.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post not found with id " + postId));
 
@@ -86,7 +87,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
-	public PostDTO getPostById(Integer postId) {
+	public PostDTO getPostById(Long postId) {
 		return getPostById(postId, null);
 	}
 
@@ -112,7 +113,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
-	public PostDTO updatePost(User user, Integer postId, PostDTO postDetails) {
+	public PostDTO updatePost(User user, Long postId, PostDTO postDetails) {
 		Post post = postRepository.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post not found with id " + postId));
 
@@ -129,7 +130,7 @@ public class PostServiceImpl implements PostService {
 
 	@Override
 	@Transactional
-	public void deletePost(User user, Integer postId) {
+	public void deletePost(User user, Long postId) {
 		Post post = postRepository.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post not found with id " + postId));
 
@@ -147,7 +148,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
-	public PostDTO likePost(Integer postId, User user) {
+	public PostDTO likePost(Long postId, User user) {
 		Post post = postRepository.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post not found with id " + postId));
 
@@ -160,14 +161,14 @@ public class PostServiceImpl implements PostService {
 			post.getLikedUsers().add(user);
 			post.setLikes(post.getLikes() + 1);
 			String message = "User" + user.getUsername() + " liked your post!";
-			notificationService.createNotification(post.getUser(), message);
+			notificationService.createNotification(post.getUser(), message, "POST", postId);
 		}
 
 		Post savedPost = postRepository.save(post);
 		return postMapper.mapToDTO(savedPost, user);
 	}
 
-	public PostDTO createChapterSharePost(Integer chapterId, User user, PostDTO postDTO) {
+	public PostDTO createChapterSharePost(Long chapterId, User user, PostDTO postDTO) {
 
 		// Find chapter and verify it's published
 		Chapter chapter = chapterRepository.findById(chapterId)
@@ -196,7 +197,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	// Method to create a post just sharing a book
-	public PostDTO createBookSharePost(Integer bookId, User user, PostDTO postDTO) {
+	public PostDTO createBookSharePost(Long bookId, User user, PostDTO postDTO) {
 
 		// Find book
 		Book book = bookRepository.findById(bookId).orElseThrow(() -> new ResourceNotFoundException("Book not found"));
@@ -216,5 +217,11 @@ public class PostServiceImpl implements PostService {
 
 		Post savedPost = postRepository.save(post);
 		return postMapper.mapToDTO(savedPost);
+	}
+
+	@Override
+	public boolean isPostLikedByCurrentUser(User user, Long postId) {
+		Optional<Post> post = postRepository.findById(postId);
+		return post.isPresent() && user.getLikedPosts().contains(post.get());
 	}
 }

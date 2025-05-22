@@ -26,15 +26,15 @@ public class PurchaseServiceImpl implements PurchaseService {
 	private UserRepository userRepository;
 
 	@Autowired
-	private PurchaseMapper purchaseMapper; // Add this mapper injection
+	private PurchaseMapper purchaseMapper;
 
 	@Override
-	public List<PurchaseDTO> getPurchaseHistoryForUser(Integer userId) {
+	public List<PurchaseDTO> getPurchaseHistoryForUser(Long userId) {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + userId));
 
 		List<Purchase> purchases = purchaseRepository.findByUser(user);
-		return purchaseMapper.mapToDTOs(purchases); // Convert entities to DTOs
+		return purchaseMapper.mapToDTOs(purchases);
 	}
 
 	@Override

@@ -39,7 +39,7 @@ public class Post implements Serializable {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
+	private Long id;
 
 	// The user who created the post
 	@ManyToOne(fetch = FetchType.LAZY)

@@ -75,7 +75,7 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	public Page<BookDTO> getBooksByAuthor(Integer authorId, Pageable pageable) {
+	public Page<BookDTO> getBooksByAuthor(Long authorId, Pageable pageable) {
 		Page<Book> booksPage = bookRepo.findByAuthorId(authorId, pageable);
 		return booksPage.map(book -> bookMapper.mapToDTO(book));
 	}
@@ -87,11 +87,11 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	public Page<BookDTO> getFollowedBooksByUserId(Integer id, Pageable pageable) {
-		User user = userRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+	public Page<BookDTO> getFollowedBooksByUserId(Long userId, Pageable pageable) {
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
-		return bookRepo.findByUserFavoured(id, pageable).map(book -> bookMapper.mapToDTO(book));
+		return bookRepo.findByUserFavoured(userId, pageable).map(book -> bookMapper.mapToDTO(book));
 
 	}
 
@@ -101,9 +101,9 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	public BookDTO getBookById(Integer id) {
-		Book book = bookRepo.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
+	public BookDTO getBookById(Long bookId) {
+		Book book = bookRepo.findById(bookId)
+				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 		book.setViewCount(book.getViewCount() + 1);
 		return bookMapper.mapToDTO(book);
 	}
@@ -135,9 +135,9 @@ public class BookServiceImpl implements BookService {
 
 	@Override
 	@Transactional
-	public BookDTO updateBook(Integer id, BookDTO bookDTO) {
-		Book existingBook = bookRepo.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
+	public BookDTO updateBook(Long bookId, BookDTO bookDTO) {
+		Book existingBook = bookRepo.findById(bookId)
+				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 		existingBook.setTitle(bookDTO.getTitle());
 		existingBook.setBookCover(bookDTO.getBookCover());
 		existingBook.setAuthorName(bookDTO.getAuthorName());
@@ -154,9 +154,9 @@ public class BookServiceImpl implements BookService {
 
 	@Override
 	@Transactional
-	public void deleteBook(Integer id) {
-		Book existingBook = bookRepo.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
+	public void deleteBook(Long bookId) {
+		Book existingBook = bookRepo.findById(bookId)
+				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 
 		// Remove this book from tags
 		existingBook.getTags().clear();
@@ -175,7 +175,7 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	public List<BookDTO> getRelatedBooks(Integer bookId, List<Integer> tagIds) {
+	public List<BookDTO> getRelatedBooks(Long bookId, List<Integer> tagIds) {
 		Book currentBook = bookRepo.findById(bookId)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 		return bookMapper.mapToDTOs(
@@ -215,24 +215,24 @@ public class BookServiceImpl implements BookService {
 			user.getFollowedBooks().add(book);
 
 			String message = "User" + user.getUsername() + " favoured your book!";
-			notificationService.createNotification(book.getAuthor(), message);
+			notificationService.createNotification(book.getAuthor(), message, "BOOK", book.getId());
 			return true;
 		}
 	}
 
 	@Override
-	public BookDTO setEditorChoice(Integer id, BookDTO bookDTO) {
-		Book existingBook = bookRepo.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + id));
+	public BookDTO setEditorChoice(Long bookId, BookDTO bookDTO) {
+		Book existingBook = bookRepo.findById(bookId)
+				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 		existingBook.setSuggested(!existingBook.isSuggested());
 		String message = "Your book has been set as editor choice!";
-		notificationService.createNotification(existingBook.getAuthor(), message);
+		notificationService.createNotification(existingBook.getAuthor(), message, "BOOK", bookId);
 
 		return bookMapper.mapToDTO(bookRepo.save(existingBook));
 	}
 
 	@Override
-	public boolean isBookLikedByUser(Integer userId, Integer bookId) {
+	public boolean isBookLikedByUser(Long userId, Long bookId) {
 		Optional<User> userOpt = userRepository.findById(userId);
 		Optional<Book> bookOpt = bookRepo.findById(bookId);
 		return userOpt.isPresent() && bookOpt.isPresent() && userOpt.get().getFollowedBooks().contains(bookOpt.get());
@@ -245,7 +245,7 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	public Long getCommentCountForBook(Integer bookId) {
+	public Long getCommentCountForBook(Long bookId) {
 		return commentRepository.countCommentsByBookId(bookId);
 	}
 

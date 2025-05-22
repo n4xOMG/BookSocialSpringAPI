@@ -5,32 +5,32 @@ import java.util.List;
 import com.nix.models.Chapter;
 
 public interface ChapterService {
-	public Chapter findChapterById(Integer chapterId);
+	public Chapter findChapterById(Long chapterId);
 
-	public List<Chapter> findChaptersByBookId(Integer bookId);
+	public List<Chapter> findChaptersByBookId(Long bookId);
 
-	public List<Chapter> findNotDraftedChaptersByBookId(Integer bookId);
+	public List<Chapter> findNotDraftedChaptersByBookId(Long bookId);
 
 	public List<Chapter> getAllChapters();
 
 	public Chapter getChapterByRoomId(String roomId);
 
-	public Chapter createDraftChapter(Integer bookId, Chapter chapter);
+	public Chapter createDraftChapter(Long bookId, Chapter chapter);
 
-	public Chapter publishChapter(Integer bookId, Chapter chapter);
+	public Chapter publishChapter(Long bookId, Chapter chapter);
 
-	public Chapter editChapter(Integer chapterId, Chapter chapter) throws Exception;
+	public Chapter editChapter(Long chapterId, Chapter chapter) throws Exception;
 
-	public String deleteChapter(Integer chapterId) throws Exception;
+	public String deleteChapter(Long chapterId) throws Exception;
 
-	public void unlockChapter(Integer userId, Integer chapterId) throws Exception;
+	public void unlockChapter(Long userId, Long chapterId) throws Exception;
 
-	public boolean isChapterUnlockedByUser(Integer userId, Integer chapterId);
+	public boolean isChapterUnlockedByUser(Long userId, Long chapterId);
 
-	public Boolean likeChapter(Integer userId, Integer chapterId) throws Exception;
+	public Boolean likeChapter(Long userId, Long chapterId) throws Exception;
 
-	public Chapter unlikeChapter(Integer userId, Integer chapterId) throws Exception;
+	public Chapter unlikeChapter(Long userId, Long chapterId) throws Exception;
 
-	public boolean isChapterLikedByUser(Integer userId, Integer chapterId);
+	public boolean isChapterLikedByUser(Long userId, Long chapterId);
 
 }

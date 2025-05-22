@@ -12,12 +12,12 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChapterSummaryDTO {
-	private Integer id;
+	private Long id;
 	private String chapterNum;
 	private String title;
 	private int price;
 	private boolean isLocked;
 	private LocalDateTime uploadDate;
-	private Integer bookId;
+	private Long bookId;
 	private boolean isUnlockedByUser = false;
 }

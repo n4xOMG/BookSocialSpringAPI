@@ -59,7 +59,7 @@ public class ChapterController {
 	}
 
 	@GetMapping("/books/{bookId}/chapters")
-	public ResponseEntity<List<ChapterSummaryDTO>> getAllChaptersByBookId(@PathVariable("bookId") Integer bookId,
+	public ResponseEntity<List<ChapterSummaryDTO>> getAllChaptersByBookId(@PathVariable("bookId") Long bookId,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		List<Chapter> chapters = chapterService.findNotDraftedChaptersByBookId(bookId);
 		List<ChapterSummaryDTO> chapterDTOs = chapterSummaryMapper.mapToDTOs(chapters);
@@ -90,14 +90,14 @@ public class ChapterController {
 	}
 
 	@GetMapping("/api/books/{bookId}/chapters")
-	public ResponseEntity<List<ChapterDTO>> manageChaptersByBookId(@PathVariable("bookId") Integer bookId) {
+	public ResponseEntity<List<ChapterDTO>> manageChaptersByBookId(@PathVariable("bookId") Long bookId) {
 		List<Chapter> chapters = chapterService.findChaptersByBookId(bookId);
 
 		return ResponseEntity.ok(chapterMapper.mapToDTOs(chapters));
 	}
 
 	@GetMapping("/chapters/{chapterId}")
-	public ResponseEntity<?> getChapterById(@PathVariable("chapterId") Integer chapterId,
+	public ResponseEntity<?> getChapterById(@PathVariable("chapterId") Long chapterId,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		Chapter chapter = chapterService.findChapterById(chapterId);
 		ChapterDTO chapterDTO = chapterMapper.mapToDTO(chapter);
@@ -129,8 +129,8 @@ public class ChapterController {
 	}
 
 	@PostMapping("/api/books/{bookId}/chapters/draft")
-	public ResponseEntity<Chapter> createDraftChapter(@PathVariable("bookId") Integer bookId,
-			@RequestBody Chapter chapter) throws Exception {
+	public ResponseEntity<Chapter> createDraftChapter(@PathVariable("bookId") Long bookId, @RequestBody Chapter chapter)
+			throws Exception {
 		BookDTO book = bookService.getBookById(bookId);
 		if (book == null) {
 			throw new Exception("Book not found");
@@ -141,7 +141,7 @@ public class ChapterController {
 	}
 
 	@PostMapping("/api/books/{bookId}/chapters")
-	public ResponseEntity<Chapter> publishChapter(@PathVariable("bookId") Integer bookId, @RequestBody Chapter chapter)
+	public ResponseEntity<Chapter> publishChapter(@PathVariable("bookId") Long bookId, @RequestBody Chapter chapter)
 			throws Exception {
 		BookDTO book = bookService.getBookById(bookId);
 		if (book == null) {
@@ -153,7 +153,7 @@ public class ChapterController {
 	}
 
 	@PutMapping("/api/chapters/{chapterId}")
-	public ResponseEntity<ChapterDTO> editChapter(@PathVariable("chapterId") Integer chapterId,
+	public ResponseEntity<ChapterDTO> editChapter(@PathVariable("chapterId") Long chapterId,
 			@RequestBody Chapter chapter) throws Exception {
 
 		Chapter editChapter = chapterService.editChapter(chapterId, chapter);
@@ -161,14 +161,14 @@ public class ChapterController {
 	}
 
 	@DeleteMapping("/api/chapters/{chapterId}")
-	public ResponseEntity<ApiResponse> deleteChapter(@PathVariable("chapterId") Integer chapterId) throws Exception {
-		Chapter chapter = chapterService.findChapterById(chapterId);
+	public ResponseEntity<ApiResponse> deleteChapter(@PathVariable("chapterId") Long chapterId) throws Exception {
+
 		ApiResponse res = new ApiResponse(chapterService.deleteChapter(chapterId), true);
 		return new ResponseEntity<>(res, HttpStatus.OK);
 	}
 
 	@PostMapping("/api/unlock/{chapterId}")
-	public ResponseEntity<?> unlockChapter(@PathVariable("chapterId") Integer chapterId,
+	public ResponseEntity<?> unlockChapter(@PathVariable("chapterId") Long chapterId,
 			@RequestHeader("Authorization") String jwt) {
 		try {
 			User user = userService.findUserByJwt(jwt);
@@ -180,7 +180,7 @@ public class ChapterController {
 	}
 
 	@PutMapping("/api/chapters/{chapterId}/like")
-	public ResponseEntity<?> likeChapter(@RequestHeader("Authorization") String jwt, @PathVariable Integer chapterId) {
+	public ResponseEntity<?> likeChapter(@RequestHeader("Authorization") String jwt, @PathVariable Long chapterId) {
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
@@ -206,7 +206,7 @@ public class ChapterController {
 	 */
 	@GetMapping("/api/chapters/{chapterId}/isLiked")
 	public ResponseEntity<Boolean> isChapterLiked(@RequestHeader("Authorization") String jwt,
-			@PathVariable Integer chapterId) {
+			@PathVariable Long chapterId) {
 		try {
 			User user = userService.findUserByJwt(jwt);
 			boolean isLiked = chapterService.isChapterLikedByUser(user.getId(), chapterId);
