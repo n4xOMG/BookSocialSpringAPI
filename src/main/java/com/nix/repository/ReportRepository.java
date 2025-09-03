@@ -1,15 +1,16 @@
 package com.nix.repository;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.nix.models.Report;
 
-public interface ReportRepository extends JpaRepository<Report, Long> {
-	public List<Report> findByCommentId(Long commentId);
+public interface ReportRepository extends JpaRepository<Report, UUID> {
+	public List<Report> findByCommentId(UUID commentId);
 
-	public List<Report> findByChapterId(Long chapterId);
+	public List<Report> findByChapterId(UUID chapterId);
 
-	public List<Report> findByBookId(Long bookId);
+	public List<Report> findByBookId(UUID bookId);
 }

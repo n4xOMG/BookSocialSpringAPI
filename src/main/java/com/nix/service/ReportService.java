@@ -1,6 +1,7 @@
 package com.nix.service;
 
 import java.util.List;
+import java.util.UUID;
 
 import com.nix.dtos.ReportDTO;
 import com.nix.models.Report;
@@ -12,13 +13,13 @@ public interface ReportService {
 
 	Long getReportsCount();
 
-	ReportDTO getReportById(Long id) throws Exception;
+	ReportDTO getReportById(UUID id) throws Exception;
 
-	void resolveReport(Long id) throws Exception;
+	void resolveReport(UUID id) throws Exception;
 
-	void deleteReport(Long id) throws Exception;
+	void deleteReport(UUID id) throws Exception;
 
-	void deleteReportedObject(Long id, String jwt) throws Exception;
+	void deleteReportedObject(UUID id, String jwt) throws Exception;
 
 	Report saveReport(Report report);
 }

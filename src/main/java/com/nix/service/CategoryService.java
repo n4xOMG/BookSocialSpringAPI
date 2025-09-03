@@ -1,6 +1,7 @@
 package com.nix.service;
 
 import java.util.List;
+import java.util.UUID;
 
 import com.nix.models.Category;
 
@@ -11,7 +12,7 @@ public interface CategoryService {
 
 	public List<Category> findAllCategories();
 	
-	public List<Category> findALlCategoriesByBookId(Long bookId);
+	public List<Category> findALlCategoriesByBookId(UUID bookId);
 
 	public Category addNewCategory(Category category);
 

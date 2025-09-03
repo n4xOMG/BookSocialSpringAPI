@@ -1,6 +1,7 @@
 package com.nix.controller;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +33,7 @@ public class PurchaseController {
     }
     
     @GetMapping("/admin/purchases/history/users/{userId}")
-    public ResponseEntity<List<PurchaseDTO>> getPurchaseHistoryByUser(@PathVariable Long userId) {
+    public ResponseEntity<List<PurchaseDTO>> getPurchaseHistoryByUser(@PathVariable UUID userId) {
         List<PurchaseDTO> purchaseHistory = purchaseService.getPurchaseHistoryForUser(userId);
         return ResponseEntity.ok(purchaseHistory);
     }

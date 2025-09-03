@@ -1,5 +1,8 @@
 package com.nix.service;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +25,11 @@ import com.nix.repository.ChapterUnlockRecordRepository;
 import com.nix.repository.ReadingProgressRepository;
 import com.nix.repository.ReportRepository;
 import com.nix.repository.UserRepository;
+
+import nl.siegmann.epublib.domain.Resource;
+import nl.siegmann.epublib.domain.TOCReference;
+import nl.siegmann.epublib.domain.TableOfContents;
+import nl.siegmann.epublib.epub.EpubReader;
 
 @Service
 public class ChapterServiceImpl implements ChapterService {
@@ -48,19 +56,19 @@ public class ChapterServiceImpl implements ChapterService {
 	private UserRepository userRepository;
 
 	@Override
-	public Chapter findChapterById(Long chapterId) {
+	public Chapter findChapterById(UUID chapterId) {
 		Chapter chapter = chapterRepo.findById(chapterId)
 				.orElseThrow(() -> new ResourceNotFoundException("Cannot found chapter with id: " + chapterId));
 		return chapter;
 	}
 
 	@Override
-	public List<Chapter> findChaptersByBookId(Long bookId) {
+	public List<Chapter> findChaptersByBookId(UUID bookId) {
 		return chapterRepo.findByBookId(bookId);
 	}
 
 	@Override
-	public List<Chapter> findNotDraftedChaptersByBookId(Long bookId) {
+	public List<Chapter> findNotDraftedChaptersByBookId(UUID bookId) {
 		return chapterRepo.findNotDraftedChaptersByBookId(bookId);
 	}
 
@@ -70,7 +78,7 @@ public class ChapterServiceImpl implements ChapterService {
 	}
 
 	@Override
-	public Chapter createDraftChapter(Long bookId, Chapter chapter) {
+	public Chapter createDraftChapter(UUID bookId, Chapter chapter) {
 		Book book = bookRepo.findById(bookId)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 
@@ -84,7 +92,7 @@ public class ChapterServiceImpl implements ChapterService {
 
 	@Override
 	@Transactional
-	public Chapter publishChapter(Long bookId, Chapter chapter) {
+	public Chapter publishChapter(UUID bookId, Chapter chapter) {
 		Book book = bookRepo.findById(bookId)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 
@@ -101,7 +109,7 @@ public class ChapterServiceImpl implements ChapterService {
 	}
 
 	@Override
-	public Chapter editChapter(Long chapterId, Chapter chapter) throws Exception {
+	public Chapter editChapter(UUID chapterId, Chapter chapter) throws Exception {
 		Chapter editChapter = findChapterById(chapterId);
 		if (editChapter == null) {
 			throw new Exception("Chapter not found");
@@ -119,7 +127,7 @@ public class ChapterServiceImpl implements ChapterService {
 
 	@Override
 	@Transactional
-	public String deleteChapter(Long chapterId) throws Exception {
+	public String deleteChapter(UUID chapterId) throws Exception {
 		Chapter deleteChapter = findChapterById(chapterId);
 		if (deleteChapter == null) {
 			throw new Exception("Chapter not found");
@@ -158,7 +166,7 @@ public class ChapterServiceImpl implements ChapterService {
 	}
 
 	@Override
-	public void unlockChapter(Long userId, Long chapterId) throws Exception {
+	public void unlockChapter(UUID userId, UUID chapterId) throws Exception {
 		Chapter chapter = chapterRepo.findById(chapterId).orElseThrow(() -> new Exception("Chapter not found"));
 
 		if (!chapter.isLocked()) {
@@ -195,7 +203,7 @@ public class ChapterServiceImpl implements ChapterService {
 	}
 
 	@Override
-	public boolean isChapterUnlockedByUser(Long userId, Long chapterId) {
+	public boolean isChapterUnlockedByUser(UUID userId, UUID chapterId) {
 		Optional<ChapterUnlockRecord> unlockRecord = unlockRecordRepository.findByUserIdAndChapterId(userId, chapterId);
 		return unlockRecord.isPresent();
 	}
@@ -207,7 +215,7 @@ public class ChapterServiceImpl implements ChapterService {
 
 	@Override
 	@Transactional
-	public Boolean likeChapter(Long userId, Long chapterId) throws Exception {
+	public Boolean likeChapter(UUID userId, UUID chapterId) throws Exception {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 		Chapter chapter = chapterRepo.findById(chapterId)
@@ -236,7 +244,7 @@ public class ChapterServiceImpl implements ChapterService {
 
 	@Override
 	@Transactional
-	public Chapter unlikeChapter(Long userId, Long chapterId) throws Exception {
+	public Chapter unlikeChapter(UUID userId, UUID chapterId) throws Exception {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 		Chapter chapter = chapterRepo.findById(chapterId)
@@ -252,13 +260,68 @@ public class ChapterServiceImpl implements ChapterService {
 	}
 
 	@Override
-	public boolean isChapterLikedByUser(Long userId, Long chapterId) {
+	public boolean isChapterLikedByUser(UUID userId, UUID chapterId) {
 		Optional<User> userOpt = userRepository.findById(userId);
 		Optional<Chapter> chapterOpt = chapterRepo.findById(chapterId);
 		if (userOpt.isPresent() && chapterOpt.isPresent()) {
 			return userOpt.get().getLikedChapters().contains(chapterOpt.get());
 		}
 		return false;
+	}
+
+	@Override
+	public void processChaptersByEpubFile(UUID bookId, InputStream inputStream, Integer startByChapterNum)
+			throws IOException {
+		try {
+			EpubReader epubReader = new EpubReader();
+			nl.siegmann.epublib.domain.Book book = epubReader.readEpub(inputStream);
+			TableOfContents tableOfContents = book.getTableOfContents();
+
+			if (tableOfContents == null || tableOfContents.getTocReferences() == null) {
+				throw new IllegalStateException("Table of contents is missing or invalid in the EPUB file.");
+			}
+
+			List<TOCReference> tocReferences = tableOfContents.getTocReferences();
+
+			int chapterNum = startByChapterNum;
+			for (TOCReference tocReference : tocReferences) {
+				if (tocReference == null || tocReference.getResource() == null) {
+					// Log warning and skip invalid TOC reference
+					continue;
+				}
+
+				Resource chapterResource = tocReference.getResource();
+				String chapterTitle = chapterResource.getTitle() != null ? chapterResource.getTitle()
+						: "Untitled Chapter";
+
+				byte[] contentBytes = chapterResource.getData();
+				String htmlContent = new String(contentBytes, StandardCharsets.UTF_8);
+
+				Chapter chapter = new Chapter();
+				chapter.setTitle(chapterTitle);
+				chapter.setChapterNum(String.valueOf(chapterNum));
+				chapter.setContent(htmlContent);
+
+				try {
+					createDraftChapter(bookId, chapter);
+				} catch (Exception e) {
+					// Log and handle specific exceptions from createDraftChapter
+					throw new RuntimeException("Failed to create draft chapter for: " + chapterTitle, e);
+				}
+				chapterNum++;
+			}
+		} catch (IOException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new RuntimeException("Error processing EPUB file for book ID: " + bookId, e);
+		}
+	}
+
+	@Override
+	public void processChaptersByDocFile(UUID bookId, InputStream inputStream, Integer startByChapterNum)
+			throws IOException {
+		// TODO Auto-generated method stub
+
 	}
 
 }

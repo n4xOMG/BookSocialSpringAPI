@@ -2,6 +2,7 @@ package com.nix.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,7 @@ public class RatingServiceImpl implements RatingService {
 	BookRepository bookRepository;
 
 	@Override
-	public Rating findRatingById(Long ratingId) throws Exception {
+	public Rating findRatingById(UUID ratingId) throws Exception {
 		Optional<Rating> rating = ratingRepo.findById(ratingId);
 		if (rating == null) {
 			throw new Exception("No rating found!");
@@ -35,14 +36,14 @@ public class RatingServiceImpl implements RatingService {
 	}
 
 	@Override
-	public Double getAverageBookRating(Long bookId) {
+	public Double getAverageBookRating(UUID bookId) {
 		return ratingRepo.getAverageRatingByBookId(bookId);
 
 	}
 
 	@Override
 	@Transactional
-	public Rating addNewRating(User user, Long bookId, Integer rating) throws Exception {
+	public Rating addNewRating(User user, UUID bookId, Integer rating) throws Exception {
 
 		Optional<Book> book = bookRepository.findById(bookId);
 
@@ -58,7 +59,7 @@ public class RatingServiceImpl implements RatingService {
 	}
 
 	@Override
-	public Rating editRating(Long ratingId, Rating rating) throws Exception {
+	public Rating editRating(UUID ratingId, Rating rating) throws Exception {
 
 		Rating editRating = findRatingById(ratingId);
 
@@ -68,17 +69,17 @@ public class RatingServiceImpl implements RatingService {
 	}
 
 	@Override
-	public List<Rating> getAllRatingsForBook(Long bookId) {
+	public List<Rating> getAllRatingsForBook(UUID bookId) {
 		return ratingRepo.findByBookId(bookId);
 	}
 
 	@Override
-	public List<Rating> getAllRatingsByUser(Long userId) {
+	public List<Rating> getAllRatingsByUser(UUID userId) {
 		return ratingRepo.findByUserId(userId);
 	}
 
 	@Override
-	public Rating findRatingByUserAndBook(Long userId, Long bookId) {
+	public Rating findRatingByUserAndBook(UUID userId, UUID bookId) {
 		return ratingRepo.findRatingByBookAndUserId(bookId, userId);
 	}
 

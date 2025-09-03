@@ -1,10 +1,11 @@
 package com.nix.models;
 
 import java.io.Serializable;
+import java.util.UUID;
+
+import org.hibernate.annotations.UuidGenerator;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -20,10 +21,10 @@ import lombok.Setter;
 @NoArgsConstructor
 public class UserNotification implements Serializable {
 	private static final long serialVersionUID = 1L;
-	
+
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+	@UuidGenerator
+	private UUID id;
 
 	private boolean isRead = false; // Tracks read status per user
 

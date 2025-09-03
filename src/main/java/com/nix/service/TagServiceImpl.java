@@ -1,6 +1,7 @@
 package com.nix.service;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,7 +36,7 @@ public class TagServiceImpl implements TagService {
 	}
 
 	@Override
-	public List<Tag> findALlTagsByBookId(Integer bookId) {
+	public List<Tag> findALlTagsByBookId(UUID bookId) {
 		return tagRepository.findByBookId(bookId);
 	}
 

@@ -30,6 +30,12 @@
 	<properties>
 		<java.version>17</java.version>
 	</properties>
+	<repositories>
+		<repository>
+			<id>psiegman-repo</id>
+			<url>https://github.com/psiegman/mvn-repo/raw/master/releases</url>
+		</repository>
+	</repositories>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -122,6 +128,12 @@
 			<groupId>org.sejda.imageio</groupId>
 			<artifactId>webp-imageio</artifactId>
 			<version>0.1.6</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/nl.siegmann.epublib/epublib-core -->
+		<dependency>
+			<groupId>nl.siegmann.epublib</groupId>
+			<artifactId>epublib-core</artifactId>
+			<version>3.1</version>
 		</dependency>
 	</dependencies>
 

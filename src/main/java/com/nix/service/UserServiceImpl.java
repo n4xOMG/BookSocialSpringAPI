@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -135,7 +136,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public User findUserById(Long userId) {
+	public User findUserById(UUID userId) {
 		return userRepo.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
@@ -194,7 +195,7 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	@Transactional
-	public String deleteUser(Long userId) {
+	public String deleteUser(UUID userId) {
 		User user = findUserById(userId);
 		try {
 			if (user != null) {
@@ -265,7 +266,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public User suspendUser(Long userId) {
+	public User suspendUser(UUID userId) {
 		User user = findUserById(userId);
 		user.setIsSuspended(true);
 
@@ -273,7 +274,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public User unsuspendUser(Long userId) {
+	public User unsuspendUser(UUID userId) {
 		User user = findUserById(userId);
 		user.setIsSuspended(false);
 
@@ -281,7 +282,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public User banUser(Long userId, String banReason) {
+	public User banUser(UUID userId, String banReason) {
 		User user = findUserById(userId);
 		user.setBanned(true);
 		user.setBanReason(banReason);
@@ -291,7 +292,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public User unbanUser(Long userId) {
+	public User unbanUser(UUID userId) {
 		User user = findUserById(userId);
 		user.setBanned(false);
 		user.setBanReason(null);
@@ -301,7 +302,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public User updateUser(Long userId, User user) {
+	public User updateUser(UUID userId, User user) {
 
 		User userUpdate = findUserById(userId);
 
@@ -324,7 +325,7 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	@Transactional
-	public User updateUserRole(Long userId, String roleName) {
+	public User updateUserRole(UUID userId, String roleName) {
 		User user = userRepo.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
@@ -344,7 +345,7 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	@Transactional
-	public User followUser(Long currentUserId, Long followedUserId) {
+	public User followUser(UUID currentUserId, UUID followedUserId) {
 		if (currentUserId.equals(followedUserId)) {
 			throw new IllegalArgumentException("Users cannot follow themselves.");
 		}
@@ -378,7 +379,7 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	@Transactional
-	public User unFollowUser(Long currentUserId, Long unfollowedUserId) {
+	public User unFollowUser(UUID currentUserId, UUID unfollowedUserId) {
 		if (currentUserId.equals(unfollowedUserId)) {
 			throw new IllegalArgumentException("Users cannot unfollow themselves.");
 		}
@@ -409,7 +410,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public UserDTO getUserPreferences(Long userId) {
+	public UserDTO getUserPreferences(UUID userId) {
 		User user = userRepo.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
@@ -417,10 +418,10 @@ public class UserServiceImpl implements UserService {
 		List<ReadingProgress> progresses = readingProgressRepository.findByUserId(userId);
 
 		// Map to store total progress per book
-		Map<Long, Double> bookProgressMap = new HashMap<>();
+		Map<UUID, Double> bookProgressMap = new HashMap<>();
 
 		for (ReadingProgress progress : progresses) {
-			Long bookId = progress.getChapter().getBook().getId();
+			UUID bookId = progress.getChapter().getBook().getId();
 			Double chapterProgress = progress.getProgress(); // Assuming 0.0 to 100.0
 
 			// Normalize chapter progress to 0.0 - 1.0
@@ -431,7 +432,7 @@ public class UserServiceImpl implements UserService {
 		}
 
 		// Fetch books based on aggregated progress
-		Set<Long> bookIds = bookProgressMap.keySet();
+		Set<UUID> bookIds = bookProgressMap.keySet();
 		List<Book> books = bookRepository.findAllById(bookIds);
 
 		// Calculate preferred categories
@@ -480,7 +481,7 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<User> getUserFollowers(Long userId) throws ResourceNotFoundException {
+	public List<User> getUserFollowers(UUID userId) throws ResourceNotFoundException {
 
 		List<UserFollow> followerRelations = userFollowRepository.findByFollowedId(userId);
 
@@ -491,7 +492,7 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<User> getUserFollowing(Long userId) throws ResourceNotFoundException {
+	public List<User> getUserFollowing(UUID userId) throws ResourceNotFoundException {
 
 		List<UserFollow> followingRelations = userFollowRepository.findByFollowerId(userId);
 
@@ -531,22 +532,17 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public List<Long> getNewUsersByMonth() {
-		return userRepo.countNewUsersByMonth();
-	}
-
-	@Override
-	public long getTotalUsers() {
+	public Long getTotalUsers() {
 		return userRepo.count();
 	}
 
 	@Override
-	public long getBannedUsersCount() {
+	public Long getBannedUsersCount() {
 		return userRepo.countBannedUsers();
 	}
 
 	@Override
-	public long getSuspendedUsersCount() {
+	public Long getSuspendedUsersCount() {
 		return userRepo.countSuspendedUsers();
 	}
 }

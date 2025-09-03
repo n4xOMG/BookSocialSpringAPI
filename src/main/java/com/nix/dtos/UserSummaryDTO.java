@@ -1,7 +1,7 @@
 package com.nix.dtos;
 
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,12 +17,8 @@ public class UserSummaryDTO implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private Long id;
+	private UUID id;
 	private String username;
-	private String email;
-	private String fullname;
-	private String gender;
-	private LocalDate birthdate;
 	private String avatarUrl;
 	private String bio;
 	private boolean isFollowedByCurrentUser;

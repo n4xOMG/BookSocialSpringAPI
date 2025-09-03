@@ -2,6 +2,7 @@ package com.nix.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import com.nix.dtos.MessageDTO;
 import com.nix.models.Chat;
@@ -11,7 +12,7 @@ import com.nix.models.User;
 public interface ChatService {
 	Chat createOrGetChat(User userOne, User userTwo);
 
-	Optional<Chat> findById(Long id);
+	Optional<Chat> findById(UUID id);
 
 	List<Chat> getChatsForUser(User user);
 

@@ -1,6 +1,7 @@
 package com.nix.dtos;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,7 +12,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PurchaseDTO {
-	private Long id;
+	private UUID id;
     private int amount;
     private LocalDateTime purchaseDate;
     private String paymentIntentId;

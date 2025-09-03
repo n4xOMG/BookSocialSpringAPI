@@ -1,6 +1,7 @@
 package com.nix.dtos;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,12 +13,12 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ReadingProgressDTO {
-	private Long id;
-	private Long userId;
-	private Long chapterId;
+	private UUID id;
+	private UUID userId;
+	private UUID chapterId;
 	private String chapterNum;
 	private String chapterName;
-	private Long bookId;
+	private UUID bookId;
 	private String bookTitle;
 	private String bookCover;
 	private String bookAuthor;

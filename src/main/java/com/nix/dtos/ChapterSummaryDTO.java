@@ -1,6 +1,7 @@
 package com.nix.dtos;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,12 +13,12 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChapterSummaryDTO {
-	private Long id;
+	private UUID id;
 	private String chapterNum;
 	private String title;
 	private int price;
 	private boolean isLocked;
 	private LocalDateTime uploadDate;
-	private Long bookId;
+	private UUID bookId;
 	private boolean isUnlockedByUser = false;
 }

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -75,21 +76,21 @@ public class CommentServiceImpl implements CommentService {
 	}
 
 	@Override
-	public Page<Comment> getPagerBookComments(int page, int size, Long bookId) {
+	public Page<Comment> getPagerBookComments(int page, int size, UUID bookId) {
 		Pageable pageable = PageRequest.of(page, size);
 
 		return commentRepo.findParentCommentsByBookId(bookId, pageable);
 	}
 
 	@Override
-	public Page<Comment> getPagerChapterComments(int page, int size, Long chapterId) {
+	public Page<Comment> getPagerChapterComments(int page, int size, UUID chapterId) {
 		Pageable pageable = PageRequest.of(page, size);
 
 		return commentRepo.findParentCommentsByChapterId(chapterId, pageable);
 	}
 
 	@Override
-	public Page<Comment> getPagerPostComments(int page, int size, Long postId) {
+	public Page<Comment> getPagerPostComments(int page, int size, UUID postId) {
 		Pageable pageable = PageRequest.of(page, size);
 		
 		return commentRepo.findParentCommentsByPostId(postId, pageable);
@@ -97,7 +98,7 @@ public class CommentServiceImpl implements CommentService {
 	}
 
 	@Override
-	public Page<Comment> getRecentCommentsByUserId(Long userId, int page, int size) {
+	public Page<Comment> getRecentCommentsByUserId(UUID userId, int page, int size) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 		return commentRepo.findByUserIdOrderByCreatedAtDesc(userId, pageable);
 	}
@@ -159,7 +160,7 @@ public class CommentServiceImpl implements CommentService {
 	}
 
 	@Transactional
-	public Comment createComment(Comment comment, Long bookId, Long chapterId, Long postId, User user,
+	public Comment createComment(Comment comment, UUID bookId, UUID chapterId, UUID postId, User user,
 			boolean isBookComment, boolean isChapterComment, boolean isPostComment) throws Exception {
 
 		if (containsSensitiveWords(comment.getContent())) {
@@ -203,24 +204,24 @@ public class CommentServiceImpl implements CommentService {
 
 	@Override
 	@Transactional
-	public Comment createBookComment(Comment comment, Long bookId, User user) throws Exception {
+	public Comment createBookComment(Comment comment, UUID bookId, User user) throws Exception {
 		return createComment(comment, bookId, null, null, user, true, false, false);
 	}
 
 	@Override
 	@Transactional
-	public Comment createChapterComment(Comment comment, Long chapterId, User user) throws Exception {
+	public Comment createChapterComment(Comment comment, UUID chapterId, User user) throws Exception {
 		return createComment(comment, null, chapterId, null, user, false, true, false);
 	}
 
 	@Override
-	public Comment createPostComment(Comment comment, Long postId, User user) throws Exception {
+	public Comment createPostComment(Comment comment, UUID postId, User user) throws Exception {
 		return createComment(comment, null, null, postId, user, false, false, true);
 	}
 
 	@Override
 	@Transactional
-	public Boolean likeComment(Long commentId, Long userId) throws Exception {
+	public Boolean likeComment(UUID commentId, UUID userId) throws Exception {
 
 		Optional<User> user = userRepo.findById(userId);
 		if (user == null) {
@@ -245,7 +246,7 @@ public class CommentServiceImpl implements CommentService {
 	}
 
 	@Override
-	public Comment findCommentById(Long commentId) {
+	public Comment findCommentById(UUID commentId) {
 		Comment comment = commentRepo.findById(commentId)
 				.orElseThrow(() -> new ResourceNotFoundException("Comment not found with id " + commentId));
 		return comment;
@@ -254,7 +255,7 @@ public class CommentServiceImpl implements CommentService {
 
 	@Override
 	@Transactional
-	public String deleteComment(Long commentId, Long userId) throws Exception {
+	public String deleteComment(UUID commentId, UUID userId) throws Exception {
 		Comment comment = findCommentById(commentId);
 		User requestingUser = userRepo.findById(userId).orElseThrow(() -> new Exception("User not found"));
 
@@ -296,8 +297,8 @@ public class CommentServiceImpl implements CommentService {
 	}
 
 	@Override
-	public Comment editComment(Long userId, Long commentId, Comment comment) throws Exception {
-		Comment editComment = findCommentById(commentId);
+	public Comment editComment(UUID userId, UUID commentId, Comment comment) throws Exception {
+		Comment editComment = findCommentById(commentId); 
 
 		if (editComment.getUser().getId() != userId) {
 			throw new Exception("Cannot edit comment, invaid user!");
@@ -312,7 +313,7 @@ public class CommentServiceImpl implements CommentService {
 	}
 
 	@Transactional
-	public Comment createReplyComment(Comment comment, Long parentCommentId, User user, boolean isBookComment,
+	public Comment createReplyComment(Comment comment, UUID parentCommentId, User user, boolean isBookComment,
 			boolean isChapterComment, boolean isPostComment) throws Exception {
 		Comment parentComment = findCommentById(parentCommentId);
 
@@ -349,24 +350,24 @@ public class CommentServiceImpl implements CommentService {
 
 	@Override
 	@Transactional
-	public Comment createReplyBookComment(Comment comment, Long parentCommentId, User user) throws Exception {
+	public Comment createReplyBookComment(Comment comment, UUID parentCommentId, User user) throws Exception {
 		return createReplyComment(comment, parentCommentId, user, true, false, false);
 	}
 
 	@Override
 	@Transactional
-	public Comment createReplyChapterComment(Comment comment, Long parentCommentId, User user) throws Exception {
+	public Comment createReplyChapterComment(Comment comment, UUID parentCommentId, User user) throws Exception {
 		return createReplyComment(comment, parentCommentId, user, false, true, false);
 	}
 
 	@Override
 	@Transactional
-	public Comment createReplyPostComment(Comment comment, Long parentCommentId, User user) throws Exception {
+	public Comment createReplyPostComment(Comment comment, UUID parentCommentId, User user) throws Exception {
 		return createReplyComment(comment, parentCommentId, user, false, false, true);
 	}
 
 	@Override
-	public Boolean isCommentLikedByCurrentUser(Long commentId, User user) {
+	public Boolean isCommentLikedByCurrentUser(UUID commentId, User user) {
 		Optional<Comment> commentOpt = commentRepo.findById(commentId);
 		if (commentOpt.isPresent()) {
 			return user.getLikedComments().contains(commentOpt.get());

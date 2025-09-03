@@ -1,6 +1,7 @@
 package com.nix.repository;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,7 +12,7 @@ import org.springframework.data.repository.query.Param;
 import com.nix.models.Notification;
 import com.nix.models.User;
 
-public interface NotificationRepository extends JpaRepository<Notification, Long> {
+public interface NotificationRepository extends JpaRepository<Notification, UUID> {
 	Page<Notification> findByUser(User user, Pageable pageable);
 
 	@Query("SELECT n FROM Notification n " + "WHERE n.user = :user "

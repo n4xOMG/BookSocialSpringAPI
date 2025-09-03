@@ -1,6 +1,7 @@
 package com.nix.controller;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -49,7 +50,7 @@ public class CategoryController {
 	}
 
 	@GetMapping("/books/{bookId}/categories")
-	public ResponseEntity<?> getCategoriesByBook(@PathVariable Long bookId) throws Exception {
+	public ResponseEntity<?> getCategoriesByBook(@PathVariable UUID bookId) throws Exception {
 		try {
 			List<Category> categories = categoryService.findALlCategoriesByBookId(bookId);
 

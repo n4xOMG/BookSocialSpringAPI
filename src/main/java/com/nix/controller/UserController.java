@@ -1,6 +1,7 @@
 package com.nix.controller;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -37,7 +38,7 @@ public class UserController {
 	UserSummaryMapper userSummaryDTO = new UserSummaryMapper();
 
 	@GetMapping("/user/profile/{userId}")
-	public ResponseEntity<?> getUserProfile(@PathVariable("userId") Long userId,
+	public ResponseEntity<?> getUserProfile(@PathVariable("userId") UUID userId,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		try {
 			User otherUser = userService.findUserById(userId);
@@ -51,6 +52,8 @@ public class UserController {
 			}
 
 			return new ResponseEntity<>(userSummaryDTO, HttpStatus.OK);
+		} catch (ResourceNotFoundException e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -103,8 +106,7 @@ public class UserController {
 	}
 
 	@PostMapping("/user/follow/{userIdToFollow}")
-	public ResponseEntity<?> followUser(@RequestHeader("Authorization") String jwt,
-			@PathVariable Long userIdToFollow) {
+	public ResponseEntity<?> followUser(@RequestHeader("Authorization") String jwt, @PathVariable UUID userIdToFollow) {
 		try {
 			UserSummaryDTO userSummaryDTO = new UserSummaryDTO();
 			User currentUser = userService.findUserByJwt(jwt);
@@ -123,7 +125,7 @@ public class UserController {
 
 	@PostMapping("/unfollow/{userIdToUnfollow}")
 	public ResponseEntity<?> unFollowUser(@RequestHeader("Authorization") String jwt,
-			@PathVariable Long userIdToUnfollow) {
+			@PathVariable UUID userIdToUnfollow) {
 		try {
 			UserSummaryDTO userSummaryDTO = new UserSummaryDTO();
 			User currentUser = userService.findUserByJwt(jwt);
@@ -152,7 +154,7 @@ public class UserController {
 	}
 
 	@GetMapping("/api/user/{userId}/followers")
-	public ResponseEntity<?> getFollowers(@PathVariable Long userId) {
+	public ResponseEntity<?> getFollowers(@PathVariable UUID userId) {
 		try {
 
 			List<User> followers = userService.getUserFollowers(userId);
@@ -165,7 +167,7 @@ public class UserController {
 	}
 
 	@GetMapping("/api/user/{userId}/following")
-	public ResponseEntity<?> getFollowing(@RequestHeader("Authorization") String jwt, @PathVariable Long userId) {
+	public ResponseEntity<?> getFollowing(@RequestHeader("Authorization") String jwt, @PathVariable UUID userId) {
 		try {
 			User currentUser = userService.findUserByJwt(jwt);
 			if (!currentUser.getId().equals(userId)) {

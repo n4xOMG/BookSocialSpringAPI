@@ -3,6 +3,7 @@ package com.nix.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
@@ -100,7 +101,7 @@ public class ReportServiceImpl implements ReportService {
 	}
 
 	@Override
-	public ReportDTO getReportById(Long id) throws Exception {
+	public ReportDTO getReportById(UUID id) throws Exception {
 		Optional<Report> optionalReport = reportRepository.findById(id);
 		if (optionalReport.isPresent()) {
 			return reportMapper.mapToDTO(optionalReport.get());
@@ -109,7 +110,7 @@ public class ReportServiceImpl implements ReportService {
 	}
 
 	@Override
-	public void resolveReport(Long id) throws Exception {
+	public void resolveReport(UUID id) throws Exception {
 		Report report = getReportEntityById(id);
 		report.setResolved(true);
 		reportRepository.save(report);
@@ -118,13 +119,13 @@ public class ReportServiceImpl implements ReportService {
 	}
 
 	@Override
-	public void deleteReport(Long id) throws Exception {
+	public void deleteReport(UUID id) throws Exception {
 		Report report = getReportEntityById(id);
 		reportRepository.delete(report);
 	}
 
 	@Override
-	public void deleteReportedObject(Long id, String jwt) throws Exception {
+	public void deleteReportedObject(UUID id, String jwt) throws Exception {
 		User user = userService.findUserByJwt(jwt);
 		if (user == null) {
 			throw new Exception("User has not logged in!");
@@ -132,19 +133,19 @@ public class ReportServiceImpl implements ReportService {
 
 		Report report = getReportEntityById(id);
 		if (report.getBook() != null) {
-			Long bookId = report.getBook().getId();
+			UUID bookId = report.getBook().getId();
 			report.setBook(null);
 			reportRepository.save(report);
 			bookService.deleteBook(bookId);
 		}
 		if (report.getChapter() != null) {
-			Long chapterId = report.getChapter().getId();
+			UUID chapterId = report.getChapter().getId();
 			report.setChapter(null);
 			reportRepository.save(report);
 			chapterService.deleteChapter(chapterId);
 		}
 		if (report.getComment() != null) {
-			Long commentId = report.getComment().getId();
+			UUID commentId = report.getComment().getId();
 			report.setComment(null);
 			reportRepository.save(report);
 			commentService.deleteComment(commentId, user.getId());
@@ -158,7 +159,7 @@ public class ReportServiceImpl implements ReportService {
 		return reportRepository.save(report);
 	}
 
-	private Report getReportEntityById(Long id) throws NotFoundException {
+	private Report getReportEntityById(UUID id) throws NotFoundException {
 		Optional<Report> optionalReport = reportRepository.findById(id);
 		if (optionalReport.isPresent()) {
 			return optionalReport.get();

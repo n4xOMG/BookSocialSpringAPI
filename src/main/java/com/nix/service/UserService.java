@@ -2,6 +2,7 @@ package com.nix.service;
 
 import java.io.UnsupportedEncodingException;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 
@@ -20,7 +21,7 @@ public interface UserService {
 
 	public User sendForgotPasswordMail(User user) throws UnsupportedEncodingException, MessagingException;
 
-	public User findUserById(Long userId);
+	public User findUserById(UUID userId);
 
 	public User findUserByEmail(String email);
 
@@ -37,42 +38,40 @@ public interface UserService {
 
 	public void updateUserLastLoginDate(String email);
 
-	public User updateUserRole(Long userId, String roleName);
+	public User updateUserRole(UUID userId, String roleName);
 
-	public User updateUser(Long userId, User user);
+	public User updateUser(UUID userId, User user);
 
-	public String deleteUser(Long userId);
+	public String deleteUser(UUID userId);
 
 	public User updateUserPassword(String password, User user);
 
 	public User verifyUser(String verificationCode);
 
-	public User suspendUser(Long userId);
+	public User suspendUser(UUID userId);
 
-	public User unsuspendUser(Long userId);
+	public User unsuspendUser(UUID userId);
 
-	public User banUser(Long userId, String banReason);
+	public User banUser(UUID userId, String banReason);
 
-	public User unbanUser(Long userId);
+	public User unbanUser(UUID userId);
 
-	public User followUser(Long currentUserId, Long followedUserId);
+	public User followUser(UUID currentUserId, UUID followedUserId);
 
-	public User unFollowUser(Long currentUserId, Long unfollowedUserId);
+	public User unFollowUser(UUID currentUserId, UUID unfollowedUserId);
 
 	public boolean isFollowedByCurrentUser(User currentUser, User otherUser);
 
-	public UserDTO getUserPreferences(Long userId);
+	public UserDTO getUserPreferences(UUID userId);
 
-	public List<User> getUserFollowers(Long userId);
+	public List<User> getUserFollowers(UUID userId);
 
-	public List<User> getUserFollowing(Long userId);
+	public List<User> getUserFollowing(UUID userId);
 
-	public List<Long> getNewUsersByMonth();
+	public Long getTotalUsers();
 
-	public long getTotalUsers();
+	public Long getBannedUsersCount();
 
-	public long getBannedUsersCount();
-
-	public long getSuspendedUsersCount();
+	public Long getSuspendedUsersCount();
 
 }

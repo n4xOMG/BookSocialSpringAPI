@@ -1,6 +1,7 @@
 package com.nix.service;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 
@@ -12,33 +13,33 @@ public interface CommentService {
 
 	public List<Comment> getAllParentComments();
 
-	public Page<Comment> getPagerBookComments(int page, int size, Long bookId);
+	public Page<Comment> getPagerBookComments(int page, int size, UUID bookId);
 
-	public Page<Comment> getPagerChapterComments(int page, int size, Long chapterId);
+	public Page<Comment> getPagerChapterComments(int page, int size, UUID chapterId);
 
-	public Page<Comment> getPagerPostComments(int page, int size, Long postId);
+	public Page<Comment> getPagerPostComments(int page, int size, UUID postId);
 	
-	public Page<Comment> getRecentCommentsByUserId(Long userId, int page, int size);
+	public Page<Comment> getRecentCommentsByUserId(UUID userId, int page, int size);
 
-	public Comment createPostComment(Comment comment, Long postId, User user) throws Exception;
+	public Comment createPostComment(Comment comment, UUID postId, User user) throws Exception;
 
-	public Comment createBookComment(Comment comment, Long bookId, User user) throws Exception;
+	public Comment createBookComment(Comment comment, UUID bookId, User user) throws Exception;
 
-	public Comment createChapterComment(Comment comment, Long chapterId, User user) throws Exception;
+	public Comment createChapterComment(Comment comment, UUID chapterId, User user) throws Exception;
 
-	public Boolean likeComment(Long commentId, Long userId) throws Exception;
+	public Boolean likeComment(UUID commentId, UUID userId) throws Exception;
 	
-	public Boolean isCommentLikedByCurrentUser(Long commentId, User user);
+	public Boolean isCommentLikedByCurrentUser(UUID commentId, User user);
 
-	public Comment findCommentById(Long commentId) throws Exception;
+	public Comment findCommentById(UUID commentId) throws Exception;
 
-	public String deleteComment(Long commentId, Long userId) throws Exception;
+	public String deleteComment(UUID commentId, UUID userId) throws Exception;
 
-	public Comment editComment(Long userId, Long commentId, Comment comment) throws Exception;
+	public Comment editComment(UUID userId, UUID commentId, Comment comment) throws Exception;
 
-	public Comment createReplyBookComment(Comment comment, Long parentCommentId, User user) throws Exception;
+	public Comment createReplyBookComment(Comment comment, UUID parentCommentId, User user) throws Exception;
 
-	public Comment createReplyChapterComment(Comment comment, Long parentCommentId, User user) throws Exception;
+	public Comment createReplyChapterComment(Comment comment, UUID parentCommentId, User user) throws Exception;
 
-	public Comment createReplyPostComment(Comment comment, Long parentCommentId, User user) throws Exception;
+	public Comment createReplyPostComment(Comment comment, UUID parentCommentId, User user) throws Exception;
 }

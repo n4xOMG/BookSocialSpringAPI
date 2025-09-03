@@ -1,6 +1,7 @@
 package com.nix.dtos;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,7 +13,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class NotificationDTO {
-	private Long id;
+	private UUID id;
 	private String message;
 	private boolean isRead; //return read
 	private LocalDateTime createdDate;

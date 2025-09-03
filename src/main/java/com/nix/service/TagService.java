@@ -1,6 +1,7 @@
 package com.nix.service;
 
 import java.util.List;
+import java.util.UUID;
 
 import com.nix.models.Tag;
 
@@ -11,7 +12,7 @@ public interface TagService {
 
 	public List<Tag> findAllTags();
 
-	public List<Tag> findALlTagsByBookId(Integer bookId);
+	public List<Tag> findALlTagsByBookId(UUID bookId);
 
 	public Tag addNewTag(Tag category);
 

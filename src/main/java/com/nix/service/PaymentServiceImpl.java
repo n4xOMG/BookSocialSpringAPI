@@ -2,6 +2,7 @@ package com.nix.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,7 +43,7 @@ public class PaymentServiceImpl implements PaymentService {
 	}
 
 	@Override
-	public String createPaymentIntent(long amount, String currency, Long userId, Long creditPackageId)
+	public String createPaymentIntent(long amount, String currency, UUID userId, Long creditPackageId)
 			throws StripeException {
 		PaymentIntentCreateParams params = PaymentIntentCreateParams.builder().setAmount(amount).setCurrency(currency)
 				.putMetadata("userId", userId.toString()).putMetadata("creditPackageId", creditPackageId.toString())
@@ -63,7 +64,7 @@ public class PaymentServiceImpl implements PaymentService {
 	}
 
 	@Override
-	public void confirmPayment(Long userId, Long creditPackageId, String paymentIntentId) throws Exception {
+	public void confirmPayment(UUID userId, Long creditPackageId, String paymentIntentId) throws Exception {
 		// Check if purchase already exists for idempotency
 		if (purchaseRepository.existsByPaymentIntentId(paymentIntentId)) {
 			throw new Exception("Purchase already processed for PaymentIntent ID: " + paymentIntentId);

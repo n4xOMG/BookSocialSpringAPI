@@ -1,36 +1,45 @@
 package com.nix.service;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.UUID;
 
 import com.nix.models.Chapter;
 
 public interface ChapterService {
-	public Chapter findChapterById(Long chapterId);
+	public Chapter findChapterById(UUID chapterId);
 
-	public List<Chapter> findChaptersByBookId(Long bookId);
+	public void processChaptersByEpubFile(UUID bookId, InputStream inputStream, Integer startByChapterNum)
+			throws IOException;
 
-	public List<Chapter> findNotDraftedChaptersByBookId(Long bookId);
+	public void processChaptersByDocFile(UUID bookId, InputStream inputStream, Integer startByChapterNum)
+			throws IOException;
+
+	public List<Chapter> findChaptersByBookId(UUID bookId);
+
+	public List<Chapter> findNotDraftedChaptersByBookId(UUID bookId);
 
 	public List<Chapter> getAllChapters();
 
 	public Chapter getChapterByRoomId(String roomId);
 
-	public Chapter createDraftChapter(Long bookId, Chapter chapter);
+	public Chapter createDraftChapter(UUID bookId, Chapter chapter);
 
-	public Chapter publishChapter(Long bookId, Chapter chapter);
+	public Chapter publishChapter(UUID bookId, Chapter chapter);
 
-	public Chapter editChapter(Long chapterId, Chapter chapter) throws Exception;
+	public Chapter editChapter(UUID chapterId, Chapter chapter) throws Exception;
 
-	public String deleteChapter(Long chapterId) throws Exception;
+	public String deleteChapter(UUID chapterId) throws Exception;
 
-	public void unlockChapter(Long userId, Long chapterId) throws Exception;
+	public void unlockChapter(UUID userId, UUID chapterId) throws Exception;
 
-	public boolean isChapterUnlockedByUser(Long userId, Long chapterId);
+	public boolean isChapterUnlockedByUser(UUID userId, UUID chapterId);
 
-	public Boolean likeChapter(Long userId, Long chapterId) throws Exception;
+	public Boolean likeChapter(UUID userId, UUID chapterId) throws Exception;
 
-	public Chapter unlikeChapter(Long userId, Long chapterId) throws Exception;
+	public Chapter unlikeChapter(UUID userId, UUID chapterId) throws Exception;
 
-	public boolean isChapterLikedByUser(Long userId, Long chapterId);
+	public boolean isChapterLikedByUser(UUID userId, UUID chapterId);
 
 }

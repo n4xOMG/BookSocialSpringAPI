@@ -2,6 +2,7 @@ package com.nix.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -9,15 +10,15 @@ import org.springframework.data.jpa.repository.Query;
 import com.nix.models.Book;
 import com.nix.models.Chapter;
 
-public interface ChapterRepository extends JpaRepository<Chapter, Long> {
+public interface ChapterRepository extends JpaRepository<Chapter, UUID> {
 	public Chapter findByTitle(String title);
 
-	public List<Chapter> findByBookId(Long bookId);
+	public List<Chapter> findByBookId(UUID bookId);
 
 	@Query("select c from Chapter c where c.isDraft=false and c.book.id=:bookId")
-	public List<Chapter> findNotDraftedChaptersByBookId(Long bookId);
+	public List<Chapter> findNotDraftedChaptersByBookId(UUID bookId);
 
-	Optional<Chapter> findByIdAndIsLocked(Long id, boolean isLocked);
+	Optional<Chapter> findByIdAndIsLocked(UUID id, boolean isLocked);
 
 	@Query("select c.book b from Chapter c order by c.uploadDate DESC limit 5 ")
 	public List<Book> findTopByOrderByUploadDateDesc();

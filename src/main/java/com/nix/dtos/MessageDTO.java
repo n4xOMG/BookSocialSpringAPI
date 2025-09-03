@@ -2,6 +2,7 @@ package com.nix.dtos;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,8 +18,8 @@ public class MessageDTO implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private Long id;
-	private Long chatId;
+	private UUID id;
+	private UUID chatId;
 	private UserSummaryDTO sender;
 	private UserSummaryDTO receiver;
 	private String imageUrl;

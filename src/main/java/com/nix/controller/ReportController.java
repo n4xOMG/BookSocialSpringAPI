@@ -1,6 +1,7 @@
 package com.nix.controller;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
@@ -69,7 +70,7 @@ public class ReportController {
 
     // Get report by ID (Admin Only)
     @GetMapping("/{id}")
-    public ResponseEntity<?> getReportById(@PathVariable Long id) {
+    public ResponseEntity<?> getReportById(@PathVariable UUID id) {
         try {
             ReportDTO report = reportService.getReportById(id);
             return new ResponseEntity<>(report, HttpStatus.OK);
@@ -82,7 +83,7 @@ public class ReportController {
 
     // Resolve a report (Admin Only)
     @PutMapping("/{id}/resolve")
-    public ResponseEntity<?> resolveReport(@PathVariable Long id) {
+    public ResponseEntity<?> resolveReport(@PathVariable UUID id) {
         try {
             reportService.resolveReport(id);
             return new ResponseEntity<>("Report resolved successfully.", HttpStatus.OK);
@@ -95,7 +96,7 @@ public class ReportController {
 
     // Delete a report (Admin Only)
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteReport(@PathVariable Long id) {
+    public ResponseEntity<?> deleteReport(@PathVariable UUID id) {
         try {
             reportService.deleteReport(id);
             return new ResponseEntity<>("Report deleted successfully.", HttpStatus.NO_CONTENT);
@@ -108,7 +109,7 @@ public class ReportController {
 
     // Delete reported object (Admin Only)
     @DeleteMapping("/{id}/delete-object")
-    public ResponseEntity<?> deleteReportedObject(@PathVariable Long id, @RequestHeader("Authorization") String jwt) {
+    public ResponseEntity<?> deleteReportedObject(@PathVariable UUID id, @RequestHeader("Authorization") String jwt) {
         try {
             reportService.deleteReportedObject(id, jwt);
             return new ResponseEntity<>("Reported object deleted successfully.", HttpStatus.NO_CONTENT);

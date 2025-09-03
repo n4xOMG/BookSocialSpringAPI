@@ -3,6 +3,7 @@ package com.nix.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -75,7 +76,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
-	public PostDTO getPostById(Long postId, User currentUser) {
+	public PostDTO getPostById(UUID postId, User currentUser) {
 		Post post = postRepository.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post not found with id " + postId));
 
@@ -87,7 +88,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
-	public PostDTO getPostById(Long postId) {
+	public PostDTO getPostById(UUID postId) {
 		return getPostById(postId, null);
 	}
 
@@ -113,7 +114,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
-	public PostDTO updatePost(User user, Long postId, PostDTO postDetails) {
+	public PostDTO updatePost(User user, UUID postId, PostDTO postDetails) {
 		Post post = postRepository.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post not found with id " + postId));
 
@@ -130,7 +131,7 @@ public class PostServiceImpl implements PostService {
 
 	@Override
 	@Transactional
-	public void deletePost(User user, Long postId) {
+	public void deletePost(User user, UUID postId) {
 		Post post = postRepository.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post not found with id " + postId));
 
@@ -148,7 +149,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
-	public PostDTO likePost(Long postId, User user) {
+	public PostDTO likePost(UUID postId, User user) {
 		Post post = postRepository.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post not found with id " + postId));
 
@@ -168,7 +169,7 @@ public class PostServiceImpl implements PostService {
 		return postMapper.mapToDTO(savedPost, user);
 	}
 
-	public PostDTO createChapterSharePost(Long chapterId, User user, PostDTO postDTO) {
+	public PostDTO createChapterSharePost(UUID chapterId, User user, PostDTO postDTO) {
 
 		// Find chapter and verify it's published
 		Chapter chapter = chapterRepository.findById(chapterId)
@@ -197,7 +198,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	// Method to create a post just sharing a book
-	public PostDTO createBookSharePost(Long bookId, User user, PostDTO postDTO) {
+	public PostDTO createBookSharePost(UUID bookId, User user, PostDTO postDTO) {
 
 		// Find book
 		Book book = bookRepository.findById(bookId).orElseThrow(() -> new ResourceNotFoundException("Book not found"));
@@ -220,7 +221,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
-	public boolean isPostLikedByCurrentUser(User user, Long postId) {
+	public boolean isPostLikedByCurrentUser(User user, UUID postId) {
 		Optional<Post> post = postRepository.findById(postId);
 		return post.isPresent() && user.getLikedPosts().contains(post.get());
 	}

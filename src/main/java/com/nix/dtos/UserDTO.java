@@ -1,7 +1,9 @@
 package com.nix.dtos;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,12 +15,12 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserDTO {
-	private Long id;
+	private UUID id;
 	private String username;
 	private String email;
 	private String fullname;
 	private String gender;
-	private LocalDateTime birthdate;
+	private LocalDate birthdate;
 	private String avatarUrl;
 	private String bio;
 	private Boolean isVerified;

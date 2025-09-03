@@ -2,6 +2,7 @@ package com.nix.controller;
 
 import java.nio.file.AccessDeniedException;
 import java.util.List;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,7 @@ public class ChatController {
 
 	// Create or get existing chat between two users
 	@PostMapping("/{otherUserId}")
-	public ChatDTO createChat(@PathVariable("otherUserId") Long otherUserId,
+	public ChatDTO createChat(@PathVariable("otherUserId") UUID otherUserId,
 			@RequestHeader("Authorization") String jwt) {
 		User currentUser = userService.findUserByJwt(jwt);
 		User otherUser = userService.findUserById(otherUserId);
@@ -75,7 +76,7 @@ public class ChatController {
 	}
 
 	@GetMapping("/{chatId}/messages")
-	public List<MessageDTO> getChatMessages(@PathVariable Long chatId, @RequestHeader("Authorization") String jwt)
+	public List<MessageDTO> getChatMessages(@PathVariable UUID chatId, @RequestHeader("Authorization") String jwt)
 			throws AccessDeniedException {
 		User currentUser = userService.findUserByJwt(jwt);
 		Chat chat = chatService.findById(chatId).orElseThrow(() -> new IllegalArgumentException("Chat not found"));

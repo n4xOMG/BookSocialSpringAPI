@@ -2,6 +2,7 @@ package com.nix.dtos;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,7 +14,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BookDTO {
-	private Long id;
+	private UUID id;
 	private String title;
 	private UserSummaryDTO author;
 	private String authorName;

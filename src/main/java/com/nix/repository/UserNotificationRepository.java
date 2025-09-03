@@ -2,6 +2,7 @@ package com.nix.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,7 +14,7 @@ import com.nix.models.User;
 import com.nix.models.UserNotification;
 
 @Repository
-public interface UserNotificationRepository extends JpaRepository<UserNotification, Long> {
+public interface UserNotificationRepository extends JpaRepository<UserNotification, UUID> {
 
 	boolean existsByUserAndNotification(User user, Notification notification);
 
@@ -23,5 +24,5 @@ public interface UserNotificationRepository extends JpaRepository<UserNotificati
 
 	// Lấy danh sách các notificationId mà user đã đọc
 	@Query("SELECT un.notification.id FROM UserNotification un WHERE un.user = :user")
-	List<Long> findReadNotificationIdsByUser(@Param("user") User user);
+	List<UUID> findReadNotificationIdsByUser(@Param("user") User user);
 }

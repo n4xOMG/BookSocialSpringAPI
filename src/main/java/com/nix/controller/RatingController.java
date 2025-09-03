@@ -1,5 +1,7 @@
 package com.nix.controller;
 
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +38,7 @@ public class RatingController {
 	RatingMapper ratingMapper = new RatingMapper();
 
 	@GetMapping("/books/rating/average/{bookId}")
-	public ResponseEntity<?> getAverageBookRating(@PathVariable("bookId") Long bookId) throws Exception {
+	public ResponseEntity<?> getAverageBookRating(@PathVariable("bookId") UUID bookId) throws Exception {
 		try {
 			BookDTO book = bookService.getBookById(bookId);
 
@@ -52,7 +54,7 @@ public class RatingController {
 
 	@GetMapping("/api/books/rating/{bookId}")
 	public ResponseEntity<?> getRatingByBookAndUser(@RequestHeader("Authorization") String jwt,
-			@PathVariable("bookId") Long bookId) throws Exception {
+			@PathVariable("bookId") UUID bookId) throws Exception {
 		try {
 			User reqUser = userService.findUserByJwt(jwt);
 			if (reqUser == null) {
@@ -73,7 +75,7 @@ public class RatingController {
 	}
 
 	@PatchMapping("/api/books/rating/{bookId}")
-	public ResponseEntity<RatingDTO> rateBook(@RequestHeader("Authorization") String jwt, @PathVariable Long bookId,
+	public ResponseEntity<RatingDTO> rateBook(@RequestHeader("Authorization") String jwt, @PathVariable UUID bookId,
 			@RequestBody Rating rating) throws Exception {
 
 		BookDTO book = bookService.getBookById(bookId);

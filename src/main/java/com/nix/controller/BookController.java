@@ -2,6 +2,7 @@ package com.nix.controller;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,7 +54,7 @@ public class BookController {
 			User user = userService.findUserByJwt(jwt);
 			if (user != null) {
 				// Get the list of followed book IDs in a single query
-				List<Long> followedBookIds = user.getFollowedBooks().stream().map(Book::getId)
+				List<UUID> followedBookIds = user.getFollowedBooks().stream().map(Book::getId)
 						.collect(Collectors.toList());
 
 				booksPage.getContent().forEach(bookDTO -> {
@@ -71,7 +72,7 @@ public class BookController {
 	}
 
 	@GetMapping("/books/author/{authorId}")
-	public ResponseEntity<Page<BookDTO>> getBooksByAuthor(@PathVariable Long authorId,
+	public ResponseEntity<Page<BookDTO>> getBooksByAuthor(@PathVariable UUID authorId,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
 			@RequestParam(defaultValue = "id") String sortBy) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
@@ -110,12 +111,12 @@ public class BookController {
 	}
 
 	@GetMapping("/books/{bookId}/comments-count")
-	public Long getBookCommentCountCount(@PathVariable Long bookId) {
+	public Long getBookCommentCountCount(@PathVariable UUID bookId) {
 		return bookService.getCommentCountForBook(bookId);
 	}
 
 	@GetMapping("/books/{bookId}")
-	public ResponseEntity<BookDTO> getBookById(@PathVariable Long bookId,
+	public ResponseEntity<BookDTO> getBookById(@PathVariable UUID bookId,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		BookDTO bookDTO = bookService.getBookById(bookId);
 		boolean isAuthenticated = jwt != null;
@@ -140,7 +141,7 @@ public class BookController {
 	}
 
 	@GetMapping("/books/{bookId}/related")
-	public ResponseEntity<List<BookDTO>> getRelatedBooks(@PathVariable("bookId") Long bookId,
+	public ResponseEntity<List<BookDTO>> getRelatedBooks(@PathVariable("bookId") UUID bookId,
 			@RequestParam(value = "tagIds", required = false) List<Integer> tagIds) {
 		return ResponseEntity.ok(bookService.getRelatedBooks(bookId, tagIds));
 	}
@@ -157,7 +158,7 @@ public class BookController {
 
 	@GetMapping("/api/books/{bookId}/isLiked")
 	public ResponseEntity<Boolean> checkBookLikedByUser(@RequestHeader("Authorization") String jwt,
-			@PathVariable Long bookId) {
+			@PathVariable UUID bookId) {
 		User user = userService.findUserByJwt(jwt);
 		return ResponseEntity.ok(bookService.isBookLikedByUser(user.getId(), bookId));
 	}
@@ -174,7 +175,7 @@ public class BookController {
 			return new ResponseEntity<>("You are currently suspended! Contact Admin for support", HttpStatus.FORBIDDEN);
 		}
 		BookDTO createdBook = bookService.createBook(bookDTO);
-		Long authorId = createdBook.getAuthor().getId();
+		UUID authorId = createdBook.getAuthor().getId();
 		if (authorId != null) {
 			User author = userService.findUserById(authorId);
 			notificationService.createNotification(author,
@@ -184,11 +185,11 @@ public class BookController {
 	}
 
 	@PutMapping("/api/books/{bookId}")
-	public ResponseEntity<?> updateBook(@PathVariable("bookId") Long bookId, @RequestBody BookDTO bookDTO,
+	public ResponseEntity<?> updateBook(@PathVariable("bookId") UUID bookId, @RequestBody BookDTO bookDTO,
 			@RequestHeader("Authorization") String jwt) {
 		BookDTO book = bookService.getBookById(bookId);
 		User user = userService.findUserByJwt(jwt);
-		Long authorId = book.getAuthor().getId();
+		UUID authorId = book.getAuthor().getId();
 
 		if (user.getId() != authorId && user.getRole().getName().equals("ADMIN")) {
 			return new ResponseEntity<>("You dont have any permission to edit this book", HttpStatus.UNAUTHORIZED);
@@ -203,12 +204,12 @@ public class BookController {
 	}
 
 	@DeleteMapping("/api/books/{bookId}")
-	public ResponseEntity<?> deleteBook(@PathVariable("bookId") Long bookId,
+	public ResponseEntity<?> deleteBook(@PathVariable("bookId") UUID bookId,
 			@RequestHeader("Authorization") String jwt) {
 		BookDTO book = bookService.getBookById(bookId);
 		User user = userService.findUserByJwt(jwt);
 
-		Long authorId = book.getAuthor().getId();
+		UUID authorId = book.getAuthor().getId();
 		if (user.getId() != authorId && user.getRole().getName().equals("ADMIN")) {
 			return new ResponseEntity<>("You dont have any permission to delete this book", HttpStatus.UNAUTHORIZED);
 		}
@@ -223,16 +224,16 @@ public class BookController {
 
 	@PutMapping("/api/books/follow/{bookId}")
 	public ResponseEntity<Boolean> markBookAsFavoured(@RequestHeader("Authorization") String jwt,
-			@PathVariable Long bookId) {
+			@PathVariable UUID bookId) {
 		User reqUser = userService.findUserByJwt(jwt);
 		boolean isFollowed = bookService.markAsFavouriteBook(bookService.getBookById(bookId), reqUser);
 		return ResponseEntity.ok(isFollowed);
 	}
 
 	@PutMapping("/api/books/{bookId}/editor-choice")
-	public ResponseEntity<BookDTO> setEditorChoice(@PathVariable Long bookId, @RequestBody BookDTO bookDTO) {
+	public ResponseEntity<BookDTO> setEditorChoice(@PathVariable UUID bookId, @RequestBody BookDTO bookDTO) {
 		BookDTO updatedBook = bookService.setEditorChoice(bookId, bookDTO);
-		Long authorId = updatedBook.getAuthor().getId();
+		UUID authorId = updatedBook.getAuthor().getId();
 		if (authorId != null) {
 			User author = userService.findUserById(authorId);
 			notificationService.createNotification(author,

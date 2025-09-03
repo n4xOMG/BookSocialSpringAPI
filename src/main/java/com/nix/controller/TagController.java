@@ -1,6 +1,7 @@
 package com.nix.controller;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -49,7 +50,7 @@ public class TagController {
 	}
 
 	@GetMapping("/books/{bookId}/tags")
-	public ResponseEntity<?> getTagsByBook(@PathVariable Integer bookId) throws Exception {
+	public ResponseEntity<?> getTagsByBook(@PathVariable UUID bookId) throws Exception {
 		try {
 			List<Tag> tags = tagService.findALlTagsByBookId(bookId);
 

@@ -1,6 +1,7 @@
 package com.nix.controller;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -38,7 +39,7 @@ public class ProgressController {
 
 	@GetMapping("/api/reading-progress/chapters/{chapterId}")
 	public ResponseEntity<ReadingProgressDTO> getReadingProgressByUserAndChapter(
-			@RequestHeader("Authorization") String jwt, @PathVariable("chapterId") Long chapterId) throws Exception {
+			@RequestHeader("Authorization") String jwt, @PathVariable("chapterId") UUID chapterId) throws Exception {
 
 		User user = userService.findUserByJwt(jwt);
 		if (user == null) {
@@ -56,7 +57,7 @@ public class ProgressController {
 
 	@GetMapping("/api/reading-progress/books/{bookId}")
 	public ResponseEntity<?> getReadingProgressByUserAndBook(@RequestHeader("Authorization") String jwt,
-			@PathVariable("bookId") Long bookId) throws Exception {
+			@PathVariable("bookId") UUID bookId) throws Exception {
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
@@ -89,7 +90,7 @@ public class ProgressController {
 
 	@PostMapping("/api/chapters/{chapterId}/progress")
 	public ResponseEntity<ReadingProgressDTO> saveReadingProgress(@RequestHeader("Authorization") String jwt,
-			@PathVariable("chapterId") Long chapterId, @RequestBody ReadingProgressDTO progressDTO)
+			@PathVariable("chapterId") UUID chapterId, @RequestBody ReadingProgressDTO progressDTO)
 			throws Exception {
 
 		User reqUser = userService.findUserByJwt(jwt);

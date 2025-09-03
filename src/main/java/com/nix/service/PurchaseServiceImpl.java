@@ -1,6 +1,7 @@
 package com.nix.service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,7 @@ public class PurchaseServiceImpl implements PurchaseService {
 	private PurchaseMapper purchaseMapper;
 
 	@Override
-	public List<PurchaseDTO> getPurchaseHistoryForUser(Long userId) {
+	public List<PurchaseDTO> getPurchaseHistoryForUser(UUID userId) {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + userId));
 

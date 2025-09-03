@@ -4,13 +4,14 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+
+import org.hibernate.annotations.UuidGenerator;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -28,8 +29,8 @@ public class Notification implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @UuidGenerator
+    private UUID id;
 
     private String message;
 
@@ -43,5 +44,5 @@ public class Notification implements Serializable {
     private List<UserNotification> userNotifications = new ArrayList<>();
     
     private String entityType; // e.g., "BOOK", "CHAPTER", "COMMENT", "PAYMENT"
-    private Long entityId; 
+    private UUID entityId; 
 }

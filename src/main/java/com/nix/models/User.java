@@ -1,17 +1,19 @@
 package com.nix.models;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+
+import org.hibernate.annotations.UuidGenerator;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -35,10 +37,11 @@ public class User implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+	@UuidGenerator
+	private UUID id;
+
 	private String fullname;
-	private LocalDateTime birthdate;
+	private LocalDate birthdate;
 	private String gender;
 	private String username;
 	private String email;
@@ -60,20 +63,20 @@ public class User implements Serializable {
 	private int credits;
 	private boolean isBanned;
 	private String banReason;
-	
+
 	@Column(updatable = false)
-    private LocalDateTime accountCreatedDate;
+	private LocalDateTime accountCreatedDate;
 
-    private LocalDateTime suspendDate;
+	private LocalDateTime suspendDate;
 
-    private LocalDateTime banDate;
+	private LocalDateTime banDate;
 
-    private LocalDateTime lastLoginDate;
+	private LocalDateTime lastLoginDate;
 
-    @Column(columnDefinition = "TEXT")
-    private String suspensionReason;
+	@Column(columnDefinition = "TEXT")
+	private String suspensionReason;
 
-    private Integer loginAttempts;
+	private Integer loginAttempts;
 
 	@JsonIgnore
 	@ManyToMany

@@ -2,6 +2,7 @@ package com.nix.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -33,7 +34,7 @@ public class NotificationServiceImpl implements NotificationService {
 	private SimpMessagingTemplate messagingTemplate;
 
 	@Override
-	public void createNotification(User user, String message, String entityType, Long entityId) {
+	public void createNotification(User user, String message, String entityType, UUID entityId) {
 		Notification notification = new Notification();
 		notification.setUser(user);
 		notification.setMessage(message);
@@ -68,7 +69,7 @@ public class NotificationServiceImpl implements NotificationService {
 	}
 
 	@Override
-	public void markAsRead(Long notificationId, User user) {
+	public void markAsRead(UUID notificationId, User user) {
 		Notification notification = notificationRepository.findById(notificationId)
 				.orElseThrow(() -> new RuntimeException("Notification not found"));
 
@@ -84,7 +85,7 @@ public class NotificationServiceImpl implements NotificationService {
 	@Override
 	public void markAllAsRead(User user) {
 		List<Notification> notifications = notificationRepository.findAllByUser(user);
-		List<Long> readNotificationIds = userNotificationRepository.findReadNotificationIdsByUser(user);
+		List<UUID> readNotificationIds = userNotificationRepository.findReadNotificationIdsByUser(user);
 
 		notifications.stream().filter(notification -> !readNotificationIds.contains(notification.getId()))
 				.forEach(notification -> {

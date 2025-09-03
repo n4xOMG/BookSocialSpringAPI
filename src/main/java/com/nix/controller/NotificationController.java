@@ -1,5 +1,7 @@
 package com.nix.controller;
 
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -62,7 +64,7 @@ public class NotificationController {
 	}
 
 	@PutMapping("/api/notifications/{id}/read")
-	public ResponseEntity<Void> markAsRead(@PathVariable Long id, @RequestHeader("Authorization") String jwt) {
+	public ResponseEntity<Void> markAsRead(@PathVariable UUID id, @RequestHeader("Authorization") String jwt) {
 		User user = userService.findUserByJwt(jwt);
 		if (user == null) {
 			return ResponseEntity.status(401).build();

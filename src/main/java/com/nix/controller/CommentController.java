@@ -3,6 +3,7 @@ package com.nix.controller;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +70,7 @@ public class CommentController {
 	}
 
 	@GetMapping("/posts/{postId}/comments")
-	public ResponseEntity<?> getAllPostComments(@PathVariable("postId") Long postId,
+	public ResponseEntity<?> getAllPostComments(@PathVariable("postId") UUID postId,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		try {
@@ -98,7 +99,7 @@ public class CommentController {
 	}
 
 	@GetMapping("/books/{bookId}/comments")
-	public ResponseEntity<?> getPagerBookComments(@PathVariable("bookId") Long bookId,
+	public ResponseEntity<?> getPagerBookComments(@PathVariable("bookId") UUID bookId,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		try {
@@ -135,7 +136,7 @@ public class CommentController {
 	}
 
 	@GetMapping("/chapters/{chapterId}/comments")
-	public ResponseEntity<?> getPagerChapterComments(@PathVariable("chapterId") Long chapterId,
+	public ResponseEntity<?> getPagerChapterComments(@PathVariable("chapterId") UUID chapterId,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		try {
@@ -163,7 +164,7 @@ public class CommentController {
 	}
 
 	@GetMapping("/admin/comments/recent/{userId}")
-	public ResponseEntity<?> getRecentCommentsByUserId(@PathVariable Long userId) {
+	public ResponseEntity<?> getRecentCommentsByUserId(@PathVariable UUID userId) {
 		try {
 			Page<Comment> comments = commentService.getRecentCommentsByUserId(userId, 0, 5);
 			return ResponseEntity.ok(commentMapper.mapToDTOs(comments.getContent()));
@@ -173,7 +174,7 @@ public class CommentController {
 	}
 
 	private ResponseEntity<?> handleCommentCreation(User user, Supplier<Comment> commentCreator, String context,
-			Long entityId) {
+			UUID entityId) {
 		try {
 			if (user == null) {
 				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
@@ -187,7 +188,7 @@ public class CommentController {
 			if ("book".equals(context) && entityId != null) {
 
 				BookDTO book = bookService.getBookById(entityId);
-				Long authorId = book.getAuthor().getId();
+				UUID authorId = book.getAuthor().getId();
 				User author = userService.findUserById(authorId);
 
 				if (author != null && !author.equals(user)) { // Don't notify if commenter is the author
@@ -207,7 +208,7 @@ public class CommentController {
 			} else if ("post".equals(context) && entityId != null) {
 				// Assuming Post has an author; adjust based on your Post model
 				PostDTO post = postService.getPostById(entityId);
-				Long authorId = post.getUser().getId();
+				UUID authorId = post.getUser().getId();
 				User author = userService.findUserById(authorId);
 
 				if (post.getUser() != null && !author.equals(user)) {
@@ -227,7 +228,7 @@ public class CommentController {
 
 	@PostMapping("/api/books/{bookId}/comments")
 	public ResponseEntity<?> createBookComment(@RequestHeader("Authorization") String jwt, @RequestBody Comment comment,
-			@PathVariable("bookId") Long bookId) {
+			@PathVariable("bookId") UUID bookId) {
 		User user = userService.findUserByJwt(jwt);
 		return handleCommentCreation(user, () -> {
 			try {
@@ -241,7 +242,7 @@ public class CommentController {
 
 	@PostMapping("/api/chapters/{chapterId}/comments")
 	public ResponseEntity<?> createChapterComment(@RequestHeader("Authorization") String jwt,
-			@RequestBody Comment comment, @PathVariable("chapterId") Long chapterId) {
+			@RequestBody Comment comment, @PathVariable("chapterId") UUID chapterId) {
 		User user = userService.findUserByJwt(jwt);
 		return handleCommentCreation(user, () -> {
 			try {
@@ -255,7 +256,7 @@ public class CommentController {
 
 	@PostMapping("/api/posts/{postId}/comments")
 	public ResponseEntity<?> createPostComment(@RequestHeader("Authorization") String jwt, @RequestBody Comment comment,
-			@PathVariable("postId") Long postId) {
+			@PathVariable("postId") UUID postId) {
 		User user = userService.findUserByJwt(jwt);
 		return handleCommentCreation(user, () -> {
 			try {
@@ -268,7 +269,7 @@ public class CommentController {
 	}
 
 	@PostMapping("/api/books/{bookId}/comments/{parentCommentId}/reply")
-	public ResponseEntity<?> createReplyBookComment(@RequestBody Comment comment, @PathVariable Long parentCommentId,
+	public ResponseEntity<?> createReplyBookComment(@RequestBody Comment comment, @PathVariable UUID parentCommentId,
 			@RequestHeader("Authorization") String jwt) {
 		try {
 			User user = userService.findUserByJwt(jwt);
@@ -296,7 +297,7 @@ public class CommentController {
 	}
 
 	@PostMapping("/api/chapters/{chapterId}/comments/{parentCommentId}/reply")
-	public ResponseEntity<?> createReplyChapterComment(@RequestBody Comment comment, @PathVariable Long parentCommentId,
+	public ResponseEntity<?> createReplyChapterComment(@RequestBody Comment comment, @PathVariable UUID parentCommentId,
 			@RequestHeader("Authorization") String jwt) {
 		try {
 			User user = userService.findUserByJwt(jwt);
@@ -323,7 +324,7 @@ public class CommentController {
 	}
 
 	@PostMapping("/api/posts/{postId}/comments/{parentCommentId}/reply")
-	public ResponseEntity<?> createReplyPostComment(@RequestBody Comment comment, @PathVariable Long parentCommentId,
+	public ResponseEntity<?> createReplyPostComment(@RequestBody Comment comment, @PathVariable UUID parentCommentId,
 			@RequestHeader("Authorization") String jwt) {
 		try {
 			User user = userService.findUserByJwt(jwt);
@@ -351,7 +352,7 @@ public class CommentController {
 
 	@PutMapping("/api/comments/{commentId}/like")
 	public ResponseEntity<?> likeComment(@RequestHeader("Authorization") String jwt,
-			@PathVariable("commentId") Long commentId) throws Exception {
+			@PathVariable("commentId") UUID commentId) throws Exception {
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
@@ -383,7 +384,7 @@ public class CommentController {
 
 	@PutMapping("/api/comments/{commentId}")
 	public ResponseEntity<?> editComment(@RequestHeader("Authorization") String jwt,
-			@PathVariable("commentId") Long commentId, @RequestBody Comment comment) throws Exception {
+			@PathVariable("commentId") UUID commentId, @RequestBody Comment comment) throws Exception {
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
@@ -399,14 +400,14 @@ public class CommentController {
 
 	@DeleteMapping("/api/comments/{commentId}")
 	public ResponseEntity<?> deleteComment(@RequestHeader("Authorization") String jwt,
-			@PathVariable("commentId") Long commentId) throws Exception {
+			@PathVariable("commentId") UUID commentId) throws Exception {
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
 				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
 			}
 
-			Comment comment = commentService.findCommentById(commentId); // Fetch before deletion
+			Comment comment = commentService.findCommentById(commentId); // Fetch besfore deletion
 			commentService.deleteComment(commentId, user.getId());
 
 			// Notify the comment's author or parent author if deleted by someone else

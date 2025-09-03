@@ -3,6 +3,7 @@ package com.nix.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,6 @@ import com.nix.models.Chat;
 import com.nix.models.Message;
 import com.nix.models.User;
 import com.nix.repository.ChatRepository;
-import com.nix.repository.MessageRepository;
 import com.nix.repository.UserRepository;
 
 @Service
@@ -22,9 +22,6 @@ public class ChatServiceImpl implements ChatService {
 
 	@Autowired
 	private ChatRepository chatRepository;
-
-	@Autowired
-	private MessageRepository messageRepository;
 
 	@Autowired
 	private UserRepository userRepository;
@@ -42,7 +39,7 @@ public class ChatServiceImpl implements ChatService {
 	}
 
 	@Override
-	public Optional<Chat> findById(Long id) {
+	public Optional<Chat> findById(UUID id) {
 		return chatRepository.findById(id);
 	}
 

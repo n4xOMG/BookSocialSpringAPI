@@ -3,6 +3,7 @@ package com.nix.dtos;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,10 +15,10 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PostDTO {
-    private Long id;
+    private UUID id;
     private UserSummaryDTO user;
     private String content;
-    private Long sharedPostId;
+    private UUID sharedPostId;
     private List<String> images = new ArrayList<>();
     private Integer likes;
     private Integer commentCount;

@@ -2,6 +2,7 @@ package com.nix.dtos;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,7 +14,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChapterDTO {
-	private Long id;
+	private UUID id;
 	private String roomId;
 	private String chapterNum;
 	private String title;
@@ -22,7 +23,7 @@ public class ChapterDTO {
 	private boolean isLocked;
 	private boolean isDraft;
 	private LocalDateTime uploadDate;
-	private Long bookId;
+	private UUID bookId;
 	private List<CommentDTO> comments;
 	private boolean isUnlockedByUser = false;
 	private boolean isLikedByCurrentUser = false;

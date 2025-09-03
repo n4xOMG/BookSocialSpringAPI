@@ -14,9 +14,7 @@ public class UserSummaryMapper implements Mapper<User, UserSummaryDTO> {
 		userDTO.setId(user.getId());
 		userDTO.setUsername(user.getUsername());
 		userDTO.setAvatarUrl(user.getAvatarUrl());
-		userDTO.setFullname(user.getFullname());
 		userDTO.setBio(user.getBio());
-		userDTO.setGender(user.getGender());
 		return userDTO;
 	}
 

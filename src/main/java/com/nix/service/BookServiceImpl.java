@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -20,7 +21,6 @@ import com.nix.dtos.mappers.CategoryMapper;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
 import com.nix.models.Category;
-import com.nix.models.UploadType;
 import com.nix.models.User;
 import com.nix.repository.BookRepository;
 import com.nix.repository.CategoryRepository;
@@ -75,7 +75,7 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	public Page<BookDTO> getBooksByAuthor(Long authorId, Pageable pageable) {
+	public Page<BookDTO> getBooksByAuthor(UUID authorId, Pageable pageable) {
 		Page<Book> booksPage = bookRepo.findByAuthorId(authorId, pageable);
 		return booksPage.map(book -> bookMapper.mapToDTO(book));
 	}
@@ -87,7 +87,7 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	public Page<BookDTO> getFollowedBooksByUserId(Long userId, Pageable pageable) {
+	public Page<BookDTO> getFollowedBooksByUserId(UUID userId, Pageable pageable) {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
@@ -101,7 +101,7 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	public BookDTO getBookById(Long bookId) {
+	public BookDTO getBookById(UUID bookId) {
 		Book book = bookRepo.findById(bookId)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 		book.setViewCount(book.getViewCount() + 1);
@@ -135,7 +135,7 @@ public class BookServiceImpl implements BookService {
 
 	@Override
 	@Transactional
-	public BookDTO updateBook(Long bookId, BookDTO bookDTO) {
+	public BookDTO updateBook(UUID bookId, BookDTO bookDTO) {
 		Book existingBook = bookRepo.findById(bookId)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 		existingBook.setTitle(bookDTO.getTitle());
@@ -154,7 +154,7 @@ public class BookServiceImpl implements BookService {
 
 	@Override
 	@Transactional
-	public void deleteBook(Long bookId) {
+	public void deleteBook(UUID bookId) {
 		Book existingBook = bookRepo.findById(bookId)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 
@@ -175,7 +175,7 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	public List<BookDTO> getRelatedBooks(Long bookId, List<Integer> tagIds) {
+	public List<BookDTO> getRelatedBooks(UUID bookId, List<Integer> tagIds) {
 		Book currentBook = bookRepo.findById(bookId)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 		return bookMapper.mapToDTOs(
@@ -221,7 +221,7 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	public BookDTO setEditorChoice(Long bookId, BookDTO bookDTO) {
+	public BookDTO setEditorChoice(UUID bookId, BookDTO bookDTO) {
 		Book existingBook = bookRepo.findById(bookId)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 		existingBook.setSuggested(!existingBook.isSuggested());
@@ -232,7 +232,7 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	public boolean isBookLikedByUser(Long userId, Long bookId) {
+	public boolean isBookLikedByUser(UUID userId, UUID bookId) {
 		Optional<User> userOpt = userRepository.findById(userId);
 		Optional<Book> bookOpt = bookRepo.findById(bookId);
 		return userOpt.isPresent() && bookOpt.isPresent() && userOpt.get().getFollowedBooks().contains(bookOpt.get());
@@ -245,7 +245,7 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	public Long getCommentCountForBook(Long bookId) {
+	public Long getCommentCountForBook(UUID bookId) {
 		return commentRepository.countCommentsByBookId(bookId);
 	}
 
