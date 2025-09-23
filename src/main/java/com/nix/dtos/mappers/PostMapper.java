@@ -38,7 +38,8 @@ public class PostMapper implements Mapper<Post, PostDTO> {
 			postDTO.setSharedPostId(p.getSharedPost().getId());
 			postDTO.setSharedPostUser(userSummaryMapper.mapToDTO(p.getSharedPost().getUser()));
 			postDTO.setSharedPostContent(p.getSharedPost().getContent());
-			postDTO.setSharePostImages(p.getSharedPost().getImages());
+			postDTO.setSharedPostImages(p.getSharedPost().getImages());
+			postDTO.setSharedPostTimestamp(p.getSharedPost().getTimestamp());
 		}
 
 		// Handle shared book

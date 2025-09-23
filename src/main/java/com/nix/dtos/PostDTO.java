@@ -24,9 +24,10 @@ public class PostDTO {
     private Integer commentCount;
     private LocalDateTime timestamp;
     private UserSummaryDTO sharedPostUser;
-    private List<String> sharePostImages = new ArrayList<>();
+    private List<String> sharedPostImages = new ArrayList<>();
     private String sharedPostContent;
     private boolean likedByCurrentUser;
+    private LocalDateTime sharedPostTimestamp;
     
     private BookDTO sharedBook;
     private ChapterSummaryDTO sharedChapter;
