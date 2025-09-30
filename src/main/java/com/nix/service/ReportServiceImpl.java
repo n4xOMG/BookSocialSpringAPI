@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import com.nix.dtos.ReportDTO;
 import com.nix.dtos.mappers.ReportMapper;
+import com.nix.enums.NotificationEntityType;
 import com.nix.models.Book;
 import com.nix.models.Chapter;
 import com.nix.models.Comment;
@@ -115,7 +116,8 @@ public class ReportServiceImpl implements ReportService {
 		report.setResolved(true);
 		reportRepository.save(report);
 		String message = "Your report has been resolved";
-		notificationService.createNotification(report.getReporter(), message, "REPORT", report.getId());
+		notificationService.createNotification(report.getReporter(), message, NotificationEntityType.REPORT,
+				report.getId());
 	}
 
 	@Override

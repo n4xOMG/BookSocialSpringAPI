@@ -9,9 +9,12 @@ import java.util.UUID;
 import org.hibernate.annotations.UuidGenerator;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.nix.enums.NotificationEntityType;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -26,23 +29,24 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Notification implements Serializable {
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    @Id
-    @UuidGenerator
-    private UUID id;
+	@Id
+	@UuidGenerator
+	private UUID id;
 
-    private String message;
+	private String message;
 
-    private LocalDateTime createdDate;
+	private LocalDateTime createdDate;
 
-    @JsonIgnore
-    @ManyToOne
-    private User user; //Receiver
-    
-    @OneToMany(mappedBy = "notification", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<UserNotification> userNotifications = new ArrayList<>();
-    
-    private String entityType; // e.g., "BOOK", "CHAPTER", "COMMENT", "PAYMENT"
-    private UUID entityId; 
+	@JsonIgnore
+	@ManyToOne
+	private User receiver; // Receiver
+
+	@OneToMany(mappedBy = "notification", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<UserNotification> userNotifications = new ArrayList<>();
+
+	@Enumerated(EnumType.STRING)
+	private NotificationEntityType entityType; // e.g., BOOK, CHAPTER, COMMENT, PAYMENT, GLOBAL
+	private UUID entityId;
 }

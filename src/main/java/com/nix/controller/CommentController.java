@@ -24,6 +24,7 @@ import com.nix.dtos.BookDTO;
 import com.nix.dtos.CommentDTO;
 import com.nix.dtos.PostDTO;
 import com.nix.dtos.mappers.CommentMapper;
+import com.nix.enums.NotificationEntityType;
 import com.nix.exception.SensitiveWordException;
 import com.nix.models.Book;
 import com.nix.models.Chapter;
@@ -193,28 +194,29 @@ public class CommentController {
 
 				if (author != null && !author.equals(user)) { // Don't notify if commenter is the author
 					notificationService.createNotification(author, "A new comment was posted on your book '"
-							+ book.getTitle() + "': " + newComment.getContent(), "COMMENT", book.getId());
+							+ book.getTitle() + "': " + newComment.getContent(), NotificationEntityType.COMMENT,
+							book.getId());
 				}
 			} else if ("chapter".equals(context) && entityId != null) {
-				// Assuming chapter has an author or links to a book
-				Chapter chapter = chapterService.findChapterById(entityId); // Add this method to BookService if needed
+
+				Chapter chapter = chapterService.findChapterById(entityId);
 				User author = chapter.getBook().getAuthor();
 				if (author != null && !author.equals(user)) {
 					notificationService.createNotification(
 							author, "A new comment was posted on a chapter of your book '"
 									+ chapter.getBook().getTitle() + "': " + newComment.getContent(),
-							"COMMENT", chapter.getId());
+							NotificationEntityType.COMMENT, chapter.getId());
 				}
 			} else if ("post".equals(context) && entityId != null) {
-				// Assuming Post has an author; adjust based on your Post model
+
 				PostDTO post = postService.getPostById(entityId);
 				UUID authorId = post.getUser().getId();
 				User author = userService.findUserById(authorId);
 
 				if (post.getUser() != null && !author.equals(user)) {
 					notificationService.createNotification(author,
-							"A new comment was posted on your post: " + newComment.getContent(), "COMMENT",
-							post.getId());
+							"A new comment was posted on your post: " + newComment.getContent(),
+							NotificationEntityType.COMMENT, post.getId());
 				}
 			}
 
@@ -285,7 +287,7 @@ public class CommentController {
 				BookDTO book = bookService.getBookById(parentComment.getBook().getId());
 				notificationService.createNotification(parentAuthor,
 						"Someone replied to your comment on '" + book.getTitle() + "': " + replyComment.getContent(),
-						"COMMENT", comment.getId());
+						NotificationEntityType.COMMENT, comment.getId());
 			}
 
 			return new ResponseEntity<>(commentMapper.mapToDTO(replyComment), HttpStatus.CREATED);
@@ -311,8 +313,11 @@ public class CommentController {
 			User parentAuthor = parentComment.getUser();
 			if (parentAuthor != null && !parentAuthor.equals(user)) {
 				Book book = parentComment.getChapter().getBook();
-				notificationService.createNotification(parentAuthor, "Someone replied to your comment on a chapter of '"
-						+ book.getTitle() + "': " + replyComment.getContent(), "COMMENT", parentCommentId);
+				notificationService
+						.createNotification(
+								parentAuthor, "Someone replied to your comment on a chapter of '" + book.getTitle()
+										+ "': " + replyComment.getContent(),
+								NotificationEntityType.COMMENT, parentCommentId);
 			}
 
 			return new ResponseEntity<>(commentMapper.mapToDTO(replyComment), HttpStatus.CREATED);
@@ -338,8 +343,8 @@ public class CommentController {
 			User parentAuthor = parentComment.getUser();
 			if (parentAuthor != null && !parentAuthor.equals(user)) {
 				notificationService.createNotification(parentAuthor,
-						"Someone replied to your comment on a post: " + replyComment.getContent(), "COMMENT",
-						parentCommentId);
+						"Someone replied to your comment on a post: " + replyComment.getContent(),
+						NotificationEntityType.COMMENT, parentCommentId);
 			}
 
 			return new ResponseEntity<>(commentMapper.mapToDTO(replyComment), HttpStatus.CREATED);
@@ -373,7 +378,8 @@ public class CommentController {
 				String context = comment.getBook() != null ? "book '" + comment.getBook().getTitle() + "'"
 						: comment.getChapter() != null ? "chapter" : comment.getPost() != null ? "post" : "content";
 				notificationService.createNotification(commentAuthor,
-						"Your comment on " + context + " was liked: " + comment.getContent(), "COMMENT", commentId);
+						"Your comment on " + context + " was liked: " + comment.getContent(),
+						NotificationEntityType.COMMENT, commentId);
 			}
 
 			return ResponseEntity.ok(commentDTO);
@@ -416,10 +422,11 @@ public class CommentController {
 				String context = comment.getBook() != null ? "book '" + comment.getBook().getTitle() + "'"
 						: comment.getChapter() != null ? "chapter" : comment.getPost() != null ? "post" : "content";
 				notificationService.createNotification(commentAuthor,
-						"Your comment on " + context + " was deleted: " + comment.getContent(), "COMMENT", commentId);
+						"Your comment on " + context + " was deleted: " + comment.getContent(),
+						NotificationEntityType.COMMENT, commentId);
 			}
 
-			return new ResponseEntity<>(HttpStatus.OK);
+			return new ResponseEntity<>(commentId, HttpStatus.OK);
 		} catch (Exception e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}

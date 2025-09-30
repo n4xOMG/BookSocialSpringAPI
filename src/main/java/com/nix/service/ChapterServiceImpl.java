@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.nix.enums.NotificationEntityType;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
 import com.nix.models.Chapter;
@@ -51,6 +52,9 @@ public class ChapterServiceImpl implements ChapterService {
 
 	@Autowired
 	private ChapterUnlockRecordRepository unlockRecordRepository;
+
+	@Autowired
+	private AuthorService authorService;
 
 	@Autowired
 	private UserRepository userRepository;
@@ -103,7 +107,7 @@ public class ChapterServiceImpl implements ChapterService {
 		List<User> followers = book.getFavoured();
 		String message = "New chapter added to " + book.getTitle() + ": " + chapter.getTitle();
 		for (User user : followers) {
-			notificationService.createNotification(user, message, "BOOK", bookId);
+			notificationService.createNotification(user, message, NotificationEntityType.BOOK, bookId);
 		}
 		return chapterRepo.save(chapter);
 	}
@@ -195,7 +199,19 @@ public class ChapterServiceImpl implements ChapterService {
 			unlockRecord.setUnlockDate(LocalDateTime.now());
 			unlockRecord.setUnlockCost(unlockCost);
 
-			unlockRecordRepository.save(unlockRecord);
+			unlockRecord = unlockRecordRepository.save(unlockRecord);
+
+			// Record author earnings
+			try {
+				authorService.recordChapterUnlockEarning(unlockRecord);
+				String message = "User " + user.getUsername() + " unlocked chapter " + chapter.getTitle() + ": "
+						+ chapter.getChapterNum() + " in " + chapter.getBook().getTitle();
+				notificationService.createNotification(chapter.getBook().getAuthor(), message,
+						NotificationEntityType.CHAPTER, chapterId);
+			} catch (Exception e) {
+				// Log error but don't fail the unlock process
+				System.err.println("Error recording author earnings: " + e.getMessage());
+			}
 		} else {
 			throw new Exception("Insufficient credits");
 		}
@@ -229,7 +245,8 @@ public class ChapterServiceImpl implements ChapterService {
 
 			String message = "User liked chapter " + chapter.getTitle() + ": " + chapter.getChapterNum() + " in "
 					+ chapter.getBook().getTitle();
-			notificationService.createNotification(chapter.getBook().getAuthor(), message, "CHAPTER", chapterId);
+			notificationService.createNotification(chapter.getBook().getAuthor(), message,
+					NotificationEntityType.CHAPTER, chapterId);
 
 			return true;
 		} else {

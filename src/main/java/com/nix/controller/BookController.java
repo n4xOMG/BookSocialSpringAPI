@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.nix.dtos.BookDTO;
 import com.nix.dtos.CategoryDTO;
+import com.nix.enums.NotificationEntityType;
 import com.nix.models.Book;
 import com.nix.models.User;
 import com.nix.service.BookService;
@@ -179,7 +180,8 @@ public class BookController {
 		if (authorId != null) {
 			User author = userService.findUserById(authorId);
 			notificationService.createNotification(author,
-					"Your book '" + createdBook.getTitle() + "' has been created!", "BOOK", bookDTO.getId());
+					"Your book '" + createdBook.getTitle() + "' has been created!", NotificationEntityType.BOOK,
+					bookDTO.getId());
 		}
 		return ResponseEntity.ok(createdBook);
 	}
@@ -198,7 +200,8 @@ public class BookController {
 		if (authorId != null) {
 			User author = userService.findUserById(authorId);
 			notificationService.createNotification(author,
-					"Your book '" + updatedBook.getTitle() + "' has been updated!", "BOOK", bookId);
+					"Your book '" + updatedBook.getTitle() + "' has been updated!", NotificationEntityType.BOOK,
+					bookId);
 		}
 		return ResponseEntity.ok(updatedBook);
 	}
@@ -217,7 +220,7 @@ public class BookController {
 		if (authorId != null) {
 			User author = userService.findUserById(authorId);
 			notificationService.createNotification(author, "Your book '" + book.getTitle() + "' has been deleted!",
-					"BOOK", null);
+					NotificationEntityType.BOOK, null);
 		}
 		return ResponseEntity.noContent().build();
 	}
@@ -237,7 +240,8 @@ public class BookController {
 		if (authorId != null) {
 			User author = userService.findUserById(authorId);
 			notificationService.createNotification(author,
-					"Your book '" + updatedBook.getTitle() + "' has been selected as Editor's Choice!", "BOOK", bookId);
+					"Your book '" + updatedBook.getTitle() + "' has been selected as Editor's Choice!",
+					NotificationEntityType.BOOK, bookId);
 		}
 		return ResponseEntity.ok(updatedBook);
 	}

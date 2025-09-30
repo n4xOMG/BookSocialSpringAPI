@@ -27,7 +27,7 @@ public class Purchase implements Serializable {
 	@Id
 	@UuidGenerator
 	private UUID id;
-	private int amount;
+	private double amount;
 	private LocalDateTime purchaseDate;
 	private String paymentIntentId;
 

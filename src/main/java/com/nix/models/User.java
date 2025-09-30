@@ -124,7 +124,7 @@ public class User implements Serializable {
 	private List<Book> books;
 
 	@JsonIgnore
-	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Notification> notifications;
 
 	@JsonIgnore

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.nix.enums.NotificationEntityType;
 import com.nix.models.CreditPackage;
 import com.nix.models.Purchase;
 import com.nix.models.User;
@@ -92,7 +93,7 @@ public class PaymentServiceImpl implements PaymentService {
 		purchaseRepository.save(purchase);
 
 		String message = "Payment succeed!" + creditPackage.getCreditAmount() + " has been added to your account.";
-		notificationService.createNotification(user, message, "PAYMENT", purchase.getId());
+		notificationService.createNotification(user, message, NotificationEntityType.PAYMENT, purchase.getId());
 	}
 
 }

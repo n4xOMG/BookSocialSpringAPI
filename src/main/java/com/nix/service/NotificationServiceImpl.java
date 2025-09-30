@@ -11,6 +11,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import com.nix.dtos.NotificationDTO;
+import com.nix.enums.NotificationEntityType;
 import com.nix.models.Notification;
 import com.nix.models.User;
 import com.nix.models.UserNotification;
@@ -34,13 +35,13 @@ public class NotificationServiceImpl implements NotificationService {
 	private SimpMessagingTemplate messagingTemplate;
 
 	@Override
-	public void createNotification(User user, String message, String entityType, UUID entityId) {
+	public void createNotification(User user, String message, NotificationEntityType entityType, UUID entityId) {
 		Notification notification = new Notification();
-		notification.setUser(user);
+		notification.setReceiver(user);
 		notification.setMessage(message);
 		notification.setCreatedDate(LocalDateTime.now());
 		notification.setEntityType(entityType);
-	    notification.setEntityId(entityId);
+		notification.setEntityId(entityId);
 		notificationRepository.save(notification);
 
 		messagingTemplate.convertAndSendToUser(user.getUsername(), "/notifications", new NotificationDTO(
@@ -49,7 +50,7 @@ public class NotificationServiceImpl implements NotificationService {
 
 	@Override
 	public Page<NotificationDTO> getUserNotifications(User user, Pageable pageable) {
-		Page<Notification> notifications = notificationRepository.findByUser(user, pageable);
+		Page<Notification> notifications = notificationRepository.findByReceiver(user, pageable);
 		return notifications.map(notification -> {
 			boolean isRead = userNotificationRepository.existsByUserAndNotificationAndIsRead(user, notification, true);
 			return new NotificationDTO(notification.getId(), notification.getMessage(), isRead,
@@ -59,7 +60,7 @@ public class NotificationServiceImpl implements NotificationService {
 
 	@Override
 	public Page<NotificationDTO> getUnreadNotifications(User user, Pageable pageable) {
-		Page<Notification> notifications = notificationRepository.findUnreadByUser(user, pageable);
+		Page<Notification> notifications = notificationRepository.findUnreadByReceiver(user, pageable);
 		return notifications
 				.map(notification -> new NotificationDTO(notification.getId(), notification.getMessage(), false, // All
 																													// notifications
@@ -84,7 +85,7 @@ public class NotificationServiceImpl implements NotificationService {
 
 	@Override
 	public void markAllAsRead(User user) {
-		List<Notification> notifications = notificationRepository.findAllByUser(user);
+		List<Notification> notifications = notificationRepository.findAllByReceiver(user);
 		List<UUID> readNotificationIds = userNotificationRepository.findReadNotificationIdsByUser(user);
 
 		notifications.stream().filter(notification -> !readNotificationIds.contains(notification.getId()))
@@ -101,7 +102,7 @@ public class NotificationServiceImpl implements NotificationService {
 	public void createGlobalAnnouncement(String message) {
 		List<User> users = userRepository.findAll();
 		for (User user : users) {
-			createNotification(user, message, "GLOBAL",null);
+			createNotification(user, message, NotificationEntityType.GLOBAL, null);
 		}
 
 		messagingTemplate.convertAndSend("/group/announcements", message);

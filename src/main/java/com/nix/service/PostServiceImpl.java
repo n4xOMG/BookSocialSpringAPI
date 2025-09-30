@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.nix.dtos.PostDTO;
 import com.nix.dtos.mappers.PostMapper;
+import com.nix.enums.NotificationEntityType;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
 import com.nix.models.Chapter;
@@ -162,7 +163,7 @@ public class PostServiceImpl implements PostService {
 			post.getLikedUsers().add(user);
 			post.setLikes(post.getLikes() + 1);
 			String message = "User" + user.getUsername() + " liked your post!";
-			notificationService.createNotification(post.getUser(), message, "POST", postId);
+			notificationService.createNotification(post.getUser(), message, NotificationEntityType.POST, postId);
 		}
 
 		Post savedPost = postRepository.save(post);

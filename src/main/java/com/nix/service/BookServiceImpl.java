@@ -18,6 +18,7 @@ import com.nix.dtos.BookDTO;
 import com.nix.dtos.CategoryDTO;
 import com.nix.dtos.mappers.BookMapper;
 import com.nix.dtos.mappers.CategoryMapper;
+import com.nix.enums.NotificationEntityType;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
 import com.nix.models.Category;
@@ -132,7 +133,6 @@ public class BookServiceImpl implements BookService {
 		return bookMapper.mapToDTO(bookRepo.save(book));
 	}
 
-
 	@Override
 	@Transactional
 	public BookDTO updateBook(UUID bookId, BookDTO bookDTO) {
@@ -215,7 +215,8 @@ public class BookServiceImpl implements BookService {
 			user.getFollowedBooks().add(book);
 
 			String message = "User" + user.getUsername() + " favoured your book!";
-			notificationService.createNotification(book.getAuthor(), message, "BOOK", book.getId());
+			notificationService.createNotification(book.getAuthor(), message, NotificationEntityType.BOOK,
+					book.getId());
 			return true;
 		}
 	}
@@ -226,7 +227,7 @@ public class BookServiceImpl implements BookService {
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 		existingBook.setSuggested(!existingBook.isSuggested());
 		String message = "Your book has been set as editor choice!";
-		notificationService.createNotification(existingBook.getAuthor(), message, "BOOK", bookId);
+		notificationService.createNotification(existingBook.getAuthor(), message, NotificationEntityType.BOOK, bookId);
 
 		return bookMapper.mapToDTO(bookRepo.save(existingBook));
 	}
