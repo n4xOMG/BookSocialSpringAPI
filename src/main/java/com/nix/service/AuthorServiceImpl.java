@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.nix.dtos.AuthorDashboardDTO;
 import com.nix.dtos.AuthorEarningDTO;
 import com.nix.dtos.AuthorPayoutDTO;
+import com.nix.dtos.AuthorPayoutSettingsDTO;
+import com.nix.dtos.mappers.AuthorEarningMapper;
+import com.nix.dtos.mappers.AuthorPayoutMapper;
+import com.nix.dtos.mappers.AuthorPayoutSettingsMapper;
 import com.nix.models.AuthorEarning;
 import com.nix.models.AuthorPayout;
 import com.nix.models.AuthorPayoutSettings;
@@ -28,12 +32,6 @@ import com.nix.repository.AuthorEarningRepository;
 import com.nix.repository.AuthorPayoutRepository;
 import com.nix.repository.AuthorPayoutSettingsRepository;
 import com.nix.repository.BookRepository;
-import com.stripe.model.Account;
-import com.stripe.model.AccountLink;
-import com.stripe.model.Transfer;
-import com.stripe.param.AccountCreateParams;
-import com.stripe.param.AccountLinkCreateParams;
-import com.stripe.param.TransferCreateParams;
 
 @Service
 @Transactional
@@ -42,11 +40,11 @@ public class AuthorServiceImpl implements AuthorService {
 	@Value("${app.platform.fee.percentage:7.5}")
 	private BigDecimal platformFeePercentage;
 
-	@Value("${stripe.apiKey}")
-	private String stripeApiKey;
-
 	@Value("${frontend.url}")
 	private String frontendUrl;
+
+	@Autowired
+	private PayPalPayoutService payPalPayoutService;
 
 	@Value("${app.minimum.payout.amount:25.00}")
 	private BigDecimal defaultMinimumPayoutAmount;
@@ -63,10 +61,19 @@ public class AuthorServiceImpl implements AuthorService {
 	@Autowired
 	private BookRepository bookRepository;
 
+	@Autowired
+	private AuthorEarningMapper authorEarningMapper;
+
+	@Autowired
+	private AuthorPayoutMapper authorPayoutMapper;
+
+	@Autowired
+	private AuthorPayoutSettingsMapper authorPayoutSettingsMapper;
+
 	// === EARNINGS METHODS ===
 
 	@Override
-	public AuthorEarning recordChapterUnlockEarning(ChapterUnlockRecord unlockRecord) {
+	public void recordChapterUnlockEarning(ChapterUnlockRecord unlockRecord) {
 		Chapter chapter = unlockRecord.getChapter();
 		User author = chapter.getBook().getAuthor();
 
@@ -74,7 +81,7 @@ public class AuthorServiceImpl implements AuthorService {
 
 		AuthorEarning earning = new AuthorEarning(author, chapter, unlockRecord, grossAmount, platformFeePercentage);
 
-		return authorEarningRepository.save(earning);
+		authorEarningRepository.save(earning);
 	}
 
 	@Override
@@ -118,12 +125,12 @@ public class AuthorServiceImpl implements AuthorService {
 
 		List<AuthorPayout> recentPayouts = authorPayoutRepository
 				.findByAuthorOrderByRequestedDateDesc(author, Pageable.ofSize(5)).getContent();
-		dashboard.setRecentPayouts(recentPayouts.stream().map(this::convertToPayoutDTO).collect(Collectors.toList()));
+		dashboard.setRecentPayouts(authorPayoutMapper.mapToDTOs(recentPayouts));
 
 		// Payout settings
-		AuthorPayoutSettings settings = getPayoutSettings(author);
+		AuthorPayoutSettings settings = getOrCreatePayoutSettingsEntity(author);
 		dashboard.setMinimumPayoutAmount(settings.getMinimumPayoutAmount());
-		dashboard.setStripeConnected(settings.isStripeAccountVerified());
+		dashboard.setPayoutMethodConfigured(settings.getPaypalEmail() != null && !settings.getPaypalEmail().isBlank());
 		dashboard.setCanRequestPayout(canRequestPayout(author));
 
 		return dashboard;
@@ -133,8 +140,7 @@ public class AuthorServiceImpl implements AuthorService {
 	public Page<AuthorEarningDTO> getAuthorEarnings(User author, Pageable pageable) {
 		Page<AuthorEarning> earnings = authorEarningRepository.findByAuthorOrderByEarnedDateDesc(author, pageable);
 
-		List<AuthorEarningDTO> dtos = earnings.getContent().stream().map(this::convertToEarningDTO)
-				.collect(Collectors.toList());
+		List<AuthorEarningDTO> dtos = authorEarningMapper.mapToDTOs(earnings.getContent());
 
 		return new PageImpl<>(dtos, pageable, earnings.getTotalElements());
 	}
@@ -152,7 +158,7 @@ public class AuthorServiceImpl implements AuthorService {
 	// === PAYOUT METHODS ===
 
 	@Override
-	public AuthorPayout requestPayout(User author, BigDecimal amount) throws Exception {
+	public AuthorPayoutDTO requestPayout(User author, BigDecimal amount) throws Exception {
 		if (!canRequestPayout(author)) {
 			throw new Exception("Payout requirements not met");
 		}
@@ -162,7 +168,7 @@ public class AuthorServiceImpl implements AuthorService {
 			throw new Exception("Requested amount exceeds available balance");
 		}
 
-		AuthorPayoutSettings settings = getPayoutSettings(author);
+		AuthorPayoutSettings settings = getOrCreatePayoutSettingsEntity(author);
 		if (amount.compareTo(settings.getMinimumPayoutAmount()) < 0) {
 			throw new Exception("Amount below minimum payout threshold");
 		}
@@ -184,21 +190,72 @@ public class AuthorServiceImpl implements AuthorService {
 		});
 		authorEarningRepository.saveAll(unpaidEarnings);
 
-		return savedPayout;
+		return authorPayoutMapper.mapToDTO(savedPayout);
 	}
 
 	@Override
 	public Page<AuthorPayoutDTO> getAuthorPayouts(User author, Pageable pageable) {
 		Page<AuthorPayout> payouts = authorPayoutRepository.findByAuthorOrderByRequestedDateDesc(author, pageable);
 
-		List<AuthorPayoutDTO> dtos = payouts.getContent().stream().map(this::convertToPayoutDTO)
-				.collect(Collectors.toList());
+		List<AuthorPayoutDTO> dtos = authorPayoutMapper.mapToDTOs(payouts.getContent());
 
 		return new PageImpl<>(dtos, pageable, payouts.getTotalElements());
 	}
 
 	@Override
-	public AuthorPayoutSettings getPayoutSettings(User author) {
+	public AuthorPayoutSettingsDTO getPayoutSettings(User author) {
+		AuthorPayoutSettings settings = getOrCreatePayoutSettingsEntity(author);
+		return authorPayoutSettingsMapper.mapToDTO(settings);
+	}
+
+	@Override
+	public AuthorPayoutSettingsDTO updatePayoutSettings(User author, AuthorPayoutSettings settings) {
+		AuthorPayoutSettings existing = getOrCreatePayoutSettingsEntity(author);
+		existing.setPaypalEmail(settings.getPaypalEmail());
+		existing.setMinimumPayoutAmount(settings.getMinimumPayoutAmount());
+		existing.setPayoutFrequency(settings.getPayoutFrequency());
+		existing.setAutoPayoutEnabled(settings.isAutoPayoutEnabled());
+		existing.setUpdatedDate(LocalDateTime.now());
+
+		AuthorPayoutSettings saved = authorPayoutSettingsRepository.save(existing);
+		return authorPayoutSettingsMapper.mapToDTO(saved);
+	}
+
+	// Stripe Connect onboarding removed; we use PayPal email configuration instead
+
+	@Override
+	public boolean canRequestPayout(User author) {
+		AuthorPayoutSettings settings = getOrCreatePayoutSettingsEntity(author);
+		BigDecimal availableBalance = getUnpaidEarnings(author);
+		boolean hasPayPal = settings.getPaypalEmail() != null && !settings.getPaypalEmail().isBlank();
+		return hasPayPal && availableBalance.compareTo(settings.getMinimumPayoutAmount()) >= 0;
+	}
+
+	@Override
+	public BigDecimal getPlatformFeePercentage() {
+		return platformFeePercentage;
+	}
+
+	// === PAYPAL PROCESSING (called by scheduler) ===
+	public void processPayPalPayout(AuthorPayout payout) throws Exception {
+		AuthorPayoutSettings settings = authorPayoutSettingsRepository.findByAuthor(payout.getAuthor())
+				.orElseThrow(() -> new Exception("Payout settings not found"));
+
+		if (settings.getPaypalEmail() == null || settings.getPaypalEmail().isBlank()) {
+			throw new Exception("PayPal email not configured for author");
+		}
+
+		String providerPayoutId = payPalPayoutService.createPayout(settings.getPaypalEmail(), payout.getTotalAmount(),
+				"USD", "Payout for author " + payout.getAuthor().getFullname());
+
+		payout.setStatus(AuthorPayout.PayoutStatus.PROCESSING);
+		payout.setProcessedDate(LocalDateTime.now());
+		payout.setProviderPayoutId(providerPayoutId);
+		authorPayoutRepository.save(payout);
+	}
+
+	// === HELPER METHODS ===
+	private AuthorPayoutSettings getOrCreatePayoutSettingsEntity(User author) {
 		return authorPayoutSettingsRepository.findByAuthor(author).orElseGet(() -> {
 			AuthorPayoutSettings settings = new AuthorPayoutSettings(author);
 			settings.setMinimumPayoutAmount(defaultMinimumPayoutAmount);
@@ -207,139 +264,22 @@ public class AuthorServiceImpl implements AuthorService {
 	}
 
 	@Override
-	public AuthorPayoutSettings updatePayoutSettings(User author, AuthorPayoutSettings settings) {
-		AuthorPayoutSettings existing = getPayoutSettings(author);
-
-		existing.setMinimumPayoutAmount(settings.getMinimumPayoutAmount());
-		existing.setPayoutFrequency(settings.getPayoutFrequency());
-		existing.setAutoPayoutEnabled(settings.isAutoPayoutEnabled());
-		existing.setUpdatedDate(LocalDateTime.now());
-
-		return authorPayoutSettingsRepository.save(existing);
+	public Page<AuthorPayoutDTO> listPayouts(AuthorPayout.PayoutStatus status, Pageable pageable) {
+		Page<AuthorPayout> page = (status != null) ? authorPayoutRepository.findByStatus(status, pageable)
+				: authorPayoutRepository.findAll(pageable);
+		return new PageImpl<>(authorPayoutMapper.mapToDTOs(page.getContent()), pageable, page.getTotalElements());
 	}
 
 	@Override
-	public String createStripeConnectAccountLink(User author) throws Exception {
-		com.stripe.Stripe.apiKey = stripeApiKey;
+	public AuthorPayoutDTO processPayout(UUID payoutId) throws Exception {
+		AuthorPayout payout = authorPayoutRepository.findById(payoutId)
+				.orElseThrow(() -> new IllegalArgumentException("Payout not found: " + payoutId));
 
-		AuthorPayoutSettings settings = getPayoutSettings(author);
-
-		Account account;
-		if (settings.getStripeAccountId() == null) {
-			AccountCreateParams accountParams = AccountCreateParams.builder().setType(AccountCreateParams.Type.EXPRESS)
-					.setCountry("US").setEmail(author.getEmail()).putMetadata("author_id", author.getId().toString())
-					.putMetadata("author_name", author.getFullname()).build();
-
-			account = Account.create(accountParams);
-
-			settings.setStripeAccountId(account.getId());
-			authorPayoutSettingsRepository.save(settings);
-		} else {
-			account = Account.retrieve(settings.getStripeAccountId());
+		if (payout.getStatus() == AuthorPayout.PayoutStatus.PENDING) {
+			processPayPalPayout(payout);
+			payout = authorPayoutRepository.findById(payoutId).orElse(payout);
 		}
 
-		AccountLinkCreateParams linkParams = AccountLinkCreateParams.builder().setAccount(account.getId())
-				.setRefreshUrl(frontendUrl + "/author/payout-settings?refresh=true")
-				.setReturnUrl(frontendUrl + "/author/payout-settings?success=true")
-				.setType(AccountLinkCreateParams.Type.ACCOUNT_ONBOARDING).build();
-
-		AccountLink accountLink = AccountLink.create(linkParams);
-		return accountLink.getUrl();
-	}
-
-	@Override
-	public boolean canRequestPayout(User author) {
-		AuthorPayoutSettings settings = getPayoutSettings(author);
-		BigDecimal availableBalance = getUnpaidEarnings(author);
-
-		return settings.isStripeAccountVerified() && availableBalance.compareTo(settings.getMinimumPayoutAmount()) >= 0;
-	}
-
-	@Override
-	public BigDecimal getPlatformFeePercentage() {
-		return platformFeePercentage;
-	}
-
-	// === STRIPE PROCESSING (called by scheduler) ===
-
-	public void processStripeTransfer(AuthorPayout payout) throws Exception {
-		com.stripe.Stripe.apiKey = stripeApiKey;
-
-		AuthorPayoutSettings settings = authorPayoutSettingsRepository.findByAuthor(payout.getAuthor())
-				.orElseThrow(() -> new Exception("Payout settings not found"));
-
-		if (!settings.isStripeAccountVerified()) {
-			throw new Exception("Stripe account not verified");
-		}
-
-		long amountInCents = payout.getTotalAmount().multiply(BigDecimal.valueOf(100)).longValue();
-
-		TransferCreateParams transferParams = TransferCreateParams.builder().setAmount(amountInCents).setCurrency("usd")
-				.setDestination(settings.getStripeAccountId()).putMetadata("payout_id", payout.getId().toString())
-				.putMetadata("author_id", payout.getAuthor().getId().toString()).build();
-
-		Transfer transfer = Transfer.create(transferParams);
-
-		payout.setStatus(AuthorPayout.PayoutStatus.PROCESSING);
-		payout.setProcessedDate(LocalDateTime.now());
-		payout.setStripePayoutId(transfer.getId());
-		authorPayoutRepository.save(payout);
-	}
-
-	public void handleStripePayoutWebhook(String payoutId, String status, String failureReason) {
-		AuthorPayout payout = authorPayoutRepository.findByStripePayoutId(payoutId);
-		if (payout != null) {
-			switch (status) {
-			case "paid":
-				payout.setStatus(AuthorPayout.PayoutStatus.COMPLETED);
-				payout.setCompletedDate(LocalDateTime.now());
-				break;
-			case "failed":
-				payout.setStatus(AuthorPayout.PayoutStatus.FAILED);
-				payout.setFailureReason(failureReason);
-				break;
-			}
-			authorPayoutRepository.save(payout);
-		}
-	}
-
-	// === HELPER METHODS ===
-
-	private AuthorEarningDTO convertToEarningDTO(AuthorEarning earning) {
-		AuthorEarningDTO dto = new AuthorEarningDTO();
-		dto.setId(earning.getId());
-		dto.setChapterId(earning.getChapter().getId());
-		dto.setChapterTitle(earning.getChapter().getTitle());
-		dto.setChapterNumber(earning.getChapter().getChapterNum());
-		dto.setBookId(earning.getChapter().getBook().getId());
-		dto.setBookTitle(earning.getChapter().getBook().getTitle());
-		dto.setGrossAmount(earning.getGrossAmount());
-		dto.setPlatformFee(earning.getPlatformFee());
-		dto.setNetAmount(earning.getNetAmount());
-		dto.setPlatformFeePercentage(earning.getPlatformFeePercentage());
-		dto.setEarnedDate(earning.getEarnedDate());
-		dto.setPaidOut(earning.isPaidOut());
-		if (earning.getPayout() != null) {
-			dto.setPayoutId(earning.getPayout().getId());
-		}
-		return dto;
-	}
-
-	private AuthorPayoutDTO convertToPayoutDTO(AuthorPayout payout) {
-		AuthorPayoutDTO dto = new AuthorPayoutDTO();
-		dto.setId(payout.getId());
-		dto.setAuthorId(payout.getAuthor().getId());
-		dto.setAuthorName(payout.getAuthor().getFullname());
-		dto.setTotalAmount(payout.getTotalAmount());
-		dto.setPlatformFeesDeducted(payout.getPlatformFeesDeducted());
-		dto.setRequestedDate(payout.getRequestedDate());
-		dto.setProcessedDate(payout.getProcessedDate());
-		dto.setCompletedDate(payout.getCompletedDate());
-		dto.setStatus(payout.getStatus());
-		dto.setStripePayoutId(payout.getStripePayoutId());
-		dto.setFailureReason(payout.getFailureReason());
-		dto.setNotes(payout.getNotes());
-		dto.setEarningsCount(payout.getEarnings().size());
-		return dto;
+		return authorPayoutMapper.mapToDTO(payout);
 	}
 }

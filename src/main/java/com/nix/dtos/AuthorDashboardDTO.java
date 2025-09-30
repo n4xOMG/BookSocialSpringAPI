@@ -40,5 +40,5 @@ public class AuthorDashboardDTO {
 	private boolean canRequestPayout;
 	private BigDecimal minimumPayoutAmount;
 	private String nextScheduledPayoutDate;
-	private boolean stripeConnected;
+	private boolean payoutMethodConfigured; // true if PayPal email is set
 }

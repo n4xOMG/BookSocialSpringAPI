@@ -1,6 +1,7 @@
 package com.nix.service;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -8,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 import com.nix.dtos.AuthorDashboardDTO;
 import com.nix.dtos.AuthorEarningDTO;
 import com.nix.dtos.AuthorPayoutDTO;
-import com.nix.models.AuthorEarning;
+import com.nix.dtos.AuthorPayoutSettingsDTO;
 import com.nix.models.AuthorPayout;
 import com.nix.models.AuthorPayoutSettings;
 import com.nix.models.ChapterUnlockRecord;
@@ -17,7 +18,7 @@ import com.nix.models.User;
 public interface AuthorService {
 
 	// Earnings methods
-	AuthorEarning recordChapterUnlockEarning(ChapterUnlockRecord unlockRecord);
+	void recordChapterUnlockEarning(ChapterUnlockRecord unlockRecord);
 
 	AuthorDashboardDTO getAuthorDashboard(User author, Pageable pageable);
 
@@ -28,18 +29,20 @@ public interface AuthorService {
 	BigDecimal getLifetimeEarnings(User author);
 
 	// Payout methods
-	AuthorPayout requestPayout(User author, BigDecimal amount) throws Exception;
+	AuthorPayoutDTO requestPayout(User author, BigDecimal amount) throws Exception;
 
 	Page<AuthorPayoutDTO> getAuthorPayouts(User author, Pageable pageable);
 
-	AuthorPayoutSettings getPayoutSettings(User author);
+	AuthorPayoutSettingsDTO getPayoutSettings(User author);
 
-	AuthorPayoutSettings updatePayoutSettings(User author, AuthorPayoutSettings settings);
-
-	String createStripeConnectAccountLink(User author) throws Exception;
+	AuthorPayoutSettingsDTO updatePayoutSettings(User author, AuthorPayoutSettings settings);
 
 	boolean canRequestPayout(User author);
 
 	// Platform configuration
 	BigDecimal getPlatformFeePercentage();
+
+	Page<AuthorPayoutDTO> listPayouts(AuthorPayout.PayoutStatus status, Pageable pageable);
+
+	AuthorPayoutDTO processPayout(UUID payoutId) throws Exception;
 }

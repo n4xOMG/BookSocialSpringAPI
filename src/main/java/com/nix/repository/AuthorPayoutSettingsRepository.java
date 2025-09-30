@@ -15,12 +15,14 @@ public interface AuthorPayoutSettingsRepository extends JpaRepository<AuthorPayo
 	// Find payout settings by author
 	Optional<AuthorPayoutSettings> findByAuthor(User author);
 
-	// Find by Stripe account ID
+	// Find by provider identifiers (legacy Stripe kept for migration)
 	Optional<AuthorPayoutSettings> findByStripeAccountId(String stripeAccountId);
+
+	Optional<AuthorPayoutSettings> findByPaypalEmail(String paypalEmail);
 
 	// Check if author has payout settings configured
 	boolean existsByAuthor(User author);
 
-	// Check if Stripe account is verified
-	boolean existsByAuthorAndIsStripeAccountVerifiedTrue(User author);
+	// Check if PayPal email configured
+	boolean existsByAuthorAndPaypalEmailNotNull(User author);
 }

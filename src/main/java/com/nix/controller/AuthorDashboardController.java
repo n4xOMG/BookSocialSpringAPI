@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,7 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.nix.dtos.AuthorDashboardDTO;
 import com.nix.dtos.AuthorEarningDTO;
 import com.nix.dtos.AuthorPayoutDTO;
-import com.nix.models.AuthorPayout;
+import com.nix.dtos.AuthorPayoutSettingsDTO;
+import com.nix.models.AuthorPayoutSettings;
 import com.nix.models.User;
 import com.nix.request.PayoutRequestDTO;
 import com.nix.service.AuthorService;
@@ -126,12 +128,42 @@ public class AuthorDashboardController {
 						.body("Payout requirements not met. Check minimum amount and Stripe connection.");
 			}
 
-			AuthorPayout payout = authorService.requestPayout(author, payoutRequest.getAmount());
+			var payout = authorService.requestPayout(author, payoutRequest.getAmount());
 			return ResponseEntity.ok("Payout requested successfully. Payout ID: " + payout.getId());
 
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 					.body("Error requesting payout: " + e.getMessage());
+		}
+	}
+
+	/**
+	 * Update payout settings
+	 */
+	@PutMapping("/payout-settings")
+	public ResponseEntity<?> updatePayoutSettings(@RequestHeader("Authorization") String jwt,
+			@RequestBody AuthorPayoutSettingsDTO dto) {
+		try {
+			User author = userService.findUserByJwt(jwt);
+			if (author == null) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+			}
+
+			AuthorPayoutSettings toUpdate = new AuthorPayoutSettings();
+			toUpdate.setMinimumPayoutAmount(dto.getMinimumPayoutAmount());
+			toUpdate.setPayoutFrequency(dto.getPayoutFrequency());
+			toUpdate.setAutoPayoutEnabled(dto.isAutoPayoutEnabled());
+			toUpdate.setPaypalEmail(dto.getPaypalEmail());
+			toUpdate.setPaymentMethodType(dto.getPaymentMethodType());
+			toUpdate.setAccountHolderName(dto.getAccountHolderName());
+			toUpdate.setBankName(dto.getBankName());
+			toUpdate.setAccountLastFour(dto.getAccountLastFour());
+
+			AuthorPayoutSettingsDTO updated = authorService.updatePayoutSettings(author, toUpdate);
+			return ResponseEntity.ok(updated);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Error updating payout settings: " + e.getMessage());
 		}
 	}
 
@@ -146,7 +178,7 @@ public class AuthorDashboardController {
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
 			}
 
-			var settings = authorService.getPayoutSettings(author);
+			AuthorPayoutSettingsDTO settings = authorService.getPayoutSettings(author);
 			return ResponseEntity.ok(settings);
 
 		} catch (Exception e) {
@@ -154,34 +186,4 @@ public class AuthorDashboardController {
 					.body("Error fetching payout settings: " + e.getMessage());
 		}
 	}
-
-	/**
-	 * Setup Stripe Connect account
-	 */
-	@PostMapping("/stripe-connect/setup")
-	public ResponseEntity<?> setupStripeConnect(@RequestHeader("Authorization") String jwt) {
-		try {
-			User author = userService.findUserByJwt(jwt);
-			if (author == null) {
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
-			}
-
-			String accountLink = authorService.createStripeConnectAccountLink(author);
-			return ResponseEntity.ok(new StripeConnectResponse(accountLink));
-
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body("Error setting up Stripe Connect: " + e.getMessage());
-		}
-	}
-
-	// Inner classes for response DTOs
-	public static class StripeConnectResponse {
-		public final String accountLinkUrl;
-
-		public StripeConnectResponse(String accountLinkUrl) {
-			this.accountLinkUrl = accountLinkUrl;
-		}
-	}
-
 }

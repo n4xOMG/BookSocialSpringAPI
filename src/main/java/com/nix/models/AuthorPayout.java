@@ -51,13 +51,13 @@ public class AuthorPayout implements Serializable {
 
 	private LocalDateTime requestedDate; // When payout was requested
 	private LocalDateTime processedDate; // When payout was processed
-	private LocalDateTime completedDate; // When payout was completed by Stripe
+	private LocalDateTime completedDate; // When payout was completed by payment provider
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private PayoutStatus status = PayoutStatus.PENDING;
 
-	private String stripePayoutId; // Stripe payout ID for tracking
+	private String providerPayoutId; // External provider payout ID for tracking (PayPal)
 
 	private String failureReason; // If payout failed, reason why
 
@@ -79,7 +79,7 @@ public class AuthorPayout implements Serializable {
 
 	public enum PayoutStatus {
 		PENDING, // Payout requested but not yet processed
-		PROCESSING, // Being processed by Stripe
+		PROCESSING, // Being processed by provider
 		COMPLETED, // Successfully completed
 		FAILED, // Failed to process
 		CANCELLED // Cancelled by admin or user

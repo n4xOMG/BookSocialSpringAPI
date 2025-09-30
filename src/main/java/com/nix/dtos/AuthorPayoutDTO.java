@@ -2,7 +2,6 @@ package com.nix.dtos;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 import com.nix.models.AuthorPayout.PayoutStatus;
@@ -26,7 +25,7 @@ public class AuthorPayoutDTO {
 	private LocalDateTime processedDate;
 	private LocalDateTime completedDate;
 	private PayoutStatus status;
-	private String stripePayoutId;
+	private String providerPayoutId;
 	private String failureReason;
 	private String notes;
 	private int earningsCount; // Number of earnings included in this payout

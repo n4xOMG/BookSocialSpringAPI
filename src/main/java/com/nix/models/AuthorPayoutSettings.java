@@ -43,9 +43,11 @@ public class AuthorPayoutSettings implements Serializable {
 	@Enumerated(EnumType.STRING)
 	private PayoutFrequency payoutFrequency = PayoutFrequency.MONTHLY;
 
-	private String stripeAccountId; // Stripe Connect account ID for payouts
+	// Provider-agnostic payout identifiers
+	private String stripeAccountId; // legacy, kept for migration
+	private boolean isStripeAccountVerified = false; // legacy, kept for migration
 
-	private boolean isStripeAccountVerified = false;
+	private String paypalEmail; // PayPal account email for payouts
 
 	private boolean autoPayoutEnabled = true; // Automatically process payouts when minimum reached
 

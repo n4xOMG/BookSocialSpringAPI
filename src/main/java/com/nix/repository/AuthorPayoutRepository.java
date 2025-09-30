@@ -23,11 +23,17 @@ public interface AuthorPayoutRepository extends JpaRepository<AuthorPayout, UUID
 	// Find payouts by status
 	List<AuthorPayout> findByStatusOrderByRequestedDateDesc(AuthorPayout.PayoutStatus status);
 
+	// Pageable filter by status
+	Page<AuthorPayout> findByStatus(AuthorPayout.PayoutStatus status, Pageable pageable);
+
+	// Pageable list all
+	Page<AuthorPayout> findAll(Pageable pageable);
+
 	// Find pending payouts for an author
 	List<AuthorPayout> findByAuthorAndStatus(User author, AuthorPayout.PayoutStatus status);
 
-	// Find payout by Stripe payout ID
-	AuthorPayout findByStripePayoutId(String stripePayoutId);
+	// Find payout by provider payout ID
+	AuthorPayout findByProviderPayoutId(String providerPayoutId);
 
 	// Calculate total amount paid out to an author
 	@Query("SELECT COALESCE(SUM(ap.totalAmount), 0) FROM AuthorPayout ap WHERE ap.author = :author AND ap.status = 'COMPLETED'")
