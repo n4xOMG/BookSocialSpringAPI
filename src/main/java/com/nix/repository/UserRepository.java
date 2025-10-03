@@ -1,5 +1,6 @@
 package com.nix.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,4 +39,20 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 	// Count suspended users
 	@Query("SELECT COUNT(u) FROM User u WHERE u.isSuspended = true")
 	long countSuspendedUsers();
+
+	// Analytics queries
+	@Query("SELECT COUNT(u) FROM User u WHERE u.accountCreatedDate >= :startDate")
+	long countUsersFromDate(@Param("startDate") LocalDateTime startDate);
+
+	@Query("SELECT COUNT(u) FROM User u WHERE u.lastLoginDate >= :startDate")
+	long countActiveUsersFromDate(@Param("startDate") LocalDateTime startDate);
+
+	@Query("SELECT DATE(u.accountCreatedDate), COUNT(u) FROM User u WHERE u.accountCreatedDate >= :startDate GROUP BY DATE(u.accountCreatedDate) ORDER BY DATE(u.accountCreatedDate)")
+	List<Object[]> getUserGrowthData(@Param("startDate") LocalDateTime startDate);
+
+	@Query("SELECT u FROM User u WHERE u.role.name = 'AUTHOR' ORDER BY (SELECT COUNT(b) FROM Book b WHERE b.author = u) DESC")
+	List<User> findTopAuthorsByBookCount(Pageable pageable);
+
+	@Query("SELECT u FROM User u WHERE u.role.name = 'AUTHOR' ORDER BY (SELECT SUM(ae.netAmount) FROM AuthorEarning ae WHERE ae.author = u) DESC")
+	List<User> findTopAuthorsByEarnings(Pageable pageable);
 }

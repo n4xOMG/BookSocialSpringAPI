@@ -1,4 +1,4 @@
-package com.nix.service;
+package com.nix.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,6 +19,12 @@ import com.nix.models.Report;
 import com.nix.models.User;
 import com.nix.repository.BookRepository;
 import com.nix.repository.ReportRepository;
+import com.nix.service.BookService;
+import com.nix.service.ChapterService;
+import com.nix.service.CommentService;
+import com.nix.service.NotificationService;
+import com.nix.service.ReportService;
+import com.nix.service.UserService;
 
 @Service
 public class ReportServiceImpl implements ReportService {

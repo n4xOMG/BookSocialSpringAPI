@@ -1,4 +1,4 @@
-package com.nix.service;
+package com.nix.service.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +26,9 @@ import com.nix.repository.ChapterUnlockRecordRepository;
 import com.nix.repository.ReadingProgressRepository;
 import com.nix.repository.ReportRepository;
 import com.nix.repository.UserRepository;
+import com.nix.service.AuthorService;
+import com.nix.service.ChapterService;
+import com.nix.service.NotificationService;
 
 import nl.siegmann.epublib.domain.Resource;
 import nl.siegmann.epublib.domain.TOCReference;
@@ -103,6 +106,9 @@ public class ChapterServiceImpl implements ChapterService {
 		chapter.setBook(book);
 		chapter.setComments(new ArrayList<>());
 		chapter.setDraft(false);
+		if (chapter.getRoomId() == null) {
+			chapter.setRoomId(UUID.randomUUID().toString());
+		}
 		chapter.setUploadDate(LocalDateTime.now());
 		List<User> followers = book.getFavoured();
 		String message = "New chapter added to " + book.getTitle() + ": " + chapter.getTitle();

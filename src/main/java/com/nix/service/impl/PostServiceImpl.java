@@ -1,4 +1,4 @@
-package com.nix.service;
+package com.nix.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,6 +24,8 @@ import com.nix.repository.BookRepository;
 import com.nix.repository.ChapterRepository;
 import com.nix.repository.PostRepository;
 import com.nix.repository.UserRepository;
+import com.nix.service.NotificationService;
+import com.nix.service.PostService;
 
 @Service
 public class PostServiceImpl implements PostService {

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.nix.models.AuthorPayout;
 import com.nix.repository.AuthorPayoutRepository;
+import com.nix.service.impl.AuthorServiceImpl;
 
 @Service
 public class PayoutSchedulerService {

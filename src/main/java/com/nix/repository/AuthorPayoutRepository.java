@@ -42,4 +42,12 @@ public interface AuthorPayoutRepository extends JpaRepository<AuthorPayout, UUID
 	// Find all pending payouts for processing
 	@Query("SELECT ap FROM AuthorPayout ap WHERE ap.status = 'PENDING' ORDER BY ap.requestedDate ASC")
 	List<AuthorPayout> findPendingPayoutsForProcessing();
+
+	long count();
+
+	@Query("SELECT COUNT(ap) FROM AuthorPayout ap WHERE ap.status = 'PENDING'")
+	long countPendingPayouts();
+
+	@Query("SELECT COALESCE(SUM(ap.totalAmount), 0) FROM AuthorPayout ap WHERE ap.status = 'PENDING'")
+	BigDecimal getTotalPendingPayoutAmount();
 }

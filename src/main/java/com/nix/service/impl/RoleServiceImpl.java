@@ -1,4 +1,4 @@
-package com.nix.service;
+package com.nix.service.impl;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,6 +11,7 @@ import com.nix.models.Role;
 import com.nix.models.User;
 import com.nix.repository.RoleRepository;
 import com.nix.repository.UserRepository;
+import com.nix.service.RoleService;
 
 @Service
 public class RoleServiceImpl implements RoleService {

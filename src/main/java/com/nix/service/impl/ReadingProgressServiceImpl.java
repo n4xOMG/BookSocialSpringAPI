@@ -1,4 +1,4 @@
-package com.nix.service;
+package com.nix.service.impl;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -16,6 +16,7 @@ import com.nix.models.ReadingProgress;
 import com.nix.repository.ChapterRepository;
 import com.nix.repository.ReadingProgressRepository;
 import com.nix.repository.UserRepository;
+import com.nix.service.ReadingProgressService;
 
 @Service
 public class ReadingProgressServiceImpl implements ReadingProgressService {

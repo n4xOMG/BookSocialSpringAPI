@@ -14,15 +14,18 @@ public class PurchaseMapper implements Mapper<Purchase, PurchaseDTO> {
 
 	@Override
 	public PurchaseDTO mapToDTO(Purchase p) {
-		if (p!=null) {
+		if (p != null) {
 			PurchaseDTO purchaseDTO = new PurchaseDTO();
-			if (p.getId()!=null) {
+			if (p.getId() != null) {
 				purchaseDTO.setId(p.getId());
 			}
 			purchaseDTO.setCreditPackage(creditPackageMapper.mapToDTO(p.getCreditPackage()));
 			purchaseDTO.setAmount(p.getAmount());
 			purchaseDTO.setPaymentIntentId(p.getPaymentIntentId());
 			purchaseDTO.setPurchaseDate(p.getPurchaseDate());
+			purchaseDTO.setPaymentProvider(p.getPaymentProvider());
+			purchaseDTO.setStatus(p.getStatus());
+			purchaseDTO.setCurrency(p.getCurrency());
 			return purchaseDTO;
 		}
 		return null;
@@ -32,6 +35,4 @@ public class PurchaseMapper implements Mapper<Purchase, PurchaseDTO> {
 	public List<PurchaseDTO> mapToDTOs(List<Purchase> purchases) {
 		return purchases.stream().map(this::mapToDTO).collect(Collectors.toList());
 	}
-	
-	
 }

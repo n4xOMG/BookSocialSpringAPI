@@ -36,4 +36,13 @@ public interface AuthorEarningRepository extends JpaRepository<AuthorEarning, UU
 	@Query("SELECT COALESCE(SUM(ae.netAmount), 0) FROM AuthorEarning ae WHERE ae.author = :author AND ae.earnedDate BETWEEN :startDate AND :endDate")
 	BigDecimal getEarningsForPeriod(@Param("author") User author, @Param("startDate") LocalDateTime startDate,
 			@Param("endDate") LocalDateTime endDate);
+
+	@Query("SELECT COALESCE(SUM(ae.netAmount), 0) FROM AuthorEarning ae")
+	BigDecimal getTotalAuthorEarnings();
+
+	@Query("SELECT COALESCE(SUM(ae.platformFee), 0) FROM AuthorEarning ae")
+	BigDecimal getTotalPlatformFees();
+
+	@Query("SELECT ae.author, SUM(ae.netAmount) FROM AuthorEarning ae GROUP BY ae.author ORDER BY SUM(ae.netAmount) DESC")
+	List<Object[]> getTopEarningAuthors(Pageable pageable);
 }

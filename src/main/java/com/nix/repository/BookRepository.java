@@ -59,4 +59,16 @@ public interface BookRepository extends JpaRepository<Book, UUID> {
 	List<Book> findRelatedBooks(@Param("categoryId") Integer categoryId, @Param("tagIds") List<Integer> tagIds,
 			@Param("bookId") UUID bookId, Pageable pageable);
 
+	@Query("SELECT b FROM Book b ORDER BY b.viewCount DESC")
+	List<Book> findMostViewedBooks(Pageable pageable);
+
+	@Query("SELECT b FROM Book b ORDER BY SIZE(b.favoured) DESC")
+	List<Book> findMostFavoriteBooks(Pageable pageable);
+
+	@Query("SELECT b FROM Book b LEFT JOIN ChapterUnlockRecord cur ON cur.chapter.book = b GROUP BY b ORDER BY COUNT(cur) DESC")
+	List<Book> findMostUnlockedBooks(Pageable pageable);
+
+	@Query("SELECT c.name, COUNT(b) FROM Book b JOIN b.category c GROUP BY c.name ORDER BY COUNT(b) DESC")
+	List<Object[]> getCategoryStats();
+
 }

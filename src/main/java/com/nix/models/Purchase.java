@@ -6,7 +6,12 @@ import java.util.UUID;
 
 import org.hibernate.annotations.UuidGenerator;
 
+import com.nix.enums.PaymentProvider;
+import com.nix.enums.PaymentStatus;
+
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
@@ -29,7 +34,15 @@ public class Purchase implements Serializable {
 	private UUID id;
 	private double amount;
 	private LocalDateTime purchaseDate;
-	private String paymentIntentId;
+	private String paymentIntentId; // For Stripe or PayPal transaction ID
+
+	@Enumerated(EnumType.STRING)
+	private PaymentProvider paymentProvider;
+
+	@Enumerated(EnumType.STRING)
+	private PaymentStatus status;
+
+	private String currency = "USD"; // Default currency
 
 	@ManyToOne
 	private User user;

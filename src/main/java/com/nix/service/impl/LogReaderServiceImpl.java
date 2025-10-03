@@ -1,4 +1,4 @@
-package com.nix.service;
+package com.nix.service.impl;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.nix.dtos.LogPageResponse;
+import com.nix.service.LogReaderService;
 
 @Service
 public class LogReaderServiceImpl implements LogReaderService {

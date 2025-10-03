@@ -1,4 +1,4 @@
-package com.nix.service;
+package com.nix.service.impl;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -17,6 +17,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+
+import com.nix.service.PayPalPayoutService;
+import com.nix.service.PayPalPayoutService.PayPalPayoutStatus;
 
 /**
  * Simple PayPal payout service using REST endpoints. This is intentionally

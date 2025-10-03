@@ -1,4 +1,4 @@
-package com.nix.service;
+package com.nix.service.impl;
 
 import java.util.List;
 import java.util.Optional;
@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.nix.models.SensitiveWord;
 import com.nix.repository.SensitiveWordRepository;
+import com.nix.service.SensitiveWordService;
 @Service
 public class SensitiveWordServiceImpl implements SensitiveWordService{
 

@@ -4,8 +4,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.nix.models.Book;
 import com.nix.models.Chapter;
@@ -23,6 +25,14 @@ public interface ChapterRepository extends JpaRepository<Chapter, UUID> {
 	@Query("select c.book b from Chapter c order by c.uploadDate DESC limit 5 ")
 	public List<Book> findTopByOrderByUploadDateDesc();
 
-
 	Optional<Chapter> findByRoomId(String roomId);
+
+	@Query("SELECT c FROM Chapter c LEFT JOIN c.unlockRecords ur GROUP BY c ORDER BY COUNT(ur) DESC")
+	List<Chapter> findMostUnlockedChapters(Pageable pageable);
+
+	@Query("SELECT COUNT(ur) FROM ChapterUnlockRecord ur")
+	long getTotalUnlocks();
+
+	@Query("SELECT c FROM Chapter c WHERE c.book.author.id = :authorId ORDER BY (SELECT COUNT(ur) FROM ChapterUnlockRecord ur WHERE ur.chapter = c) DESC")
+	List<Chapter> findPopularChaptersByAuthor(@Param("authorId") UUID authorId, Pageable pageable);
 }

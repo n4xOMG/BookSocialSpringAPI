@@ -1,4 +1,4 @@
-package com.nix.service;
+package com.nix.service.impl;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,6 +13,8 @@ import com.nix.models.Rating;
 import com.nix.models.User;
 import com.nix.repository.BookRepository;
 import com.nix.repository.RatingRepository;
+import com.nix.service.RatingService;
+import com.nix.service.UserService;
 
 @Service
 public class RatingServiceImpl implements RatingService {

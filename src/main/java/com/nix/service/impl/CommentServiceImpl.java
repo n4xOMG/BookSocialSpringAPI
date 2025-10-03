@@ -1,4 +1,4 @@
-package com.nix.service;
+package com.nix.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -34,6 +34,7 @@ import com.nix.repository.PostRepository;
 import com.nix.repository.ReportRepository;
 import com.nix.repository.SensitiveWordRepository;
 import com.nix.repository.UserRepository;
+import com.nix.service.CommentService;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;

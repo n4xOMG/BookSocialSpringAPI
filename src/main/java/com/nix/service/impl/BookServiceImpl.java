@@ -1,4 +1,4 @@
-package com.nix.service;
+package com.nix.service.impl;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -28,6 +28,9 @@ import com.nix.repository.CategoryRepository;
 import com.nix.repository.CommentRepository;
 import com.nix.repository.TagRepository;
 import com.nix.repository.UserRepository;
+import com.nix.service.BookService;
+import com.nix.service.ImageService;
+import com.nix.service.NotificationService;
 
 @Service
 public class BookServiceImpl implements BookService {

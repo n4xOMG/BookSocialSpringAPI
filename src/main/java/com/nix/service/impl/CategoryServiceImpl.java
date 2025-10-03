@@ -1,4 +1,4 @@
-package com.nix.service;
+package com.nix.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +11,7 @@ import com.nix.models.Book;
 import com.nix.models.Category;
 import com.nix.repository.BookRepository;
 import com.nix.repository.CategoryRepository;
+import com.nix.service.CategoryService;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {

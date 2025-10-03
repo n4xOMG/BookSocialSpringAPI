@@ -23,9 +23,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nix.dtos.AuthorPayoutDTO;
+import com.nix.dtos.ContentAnalyticsDTO;
+import com.nix.dtos.PlatformAnalyticsDTO;
+import com.nix.dtos.RevenueAnalyticsDTO;
+import com.nix.dtos.UserAnalyticsDTO;
 import com.nix.dtos.UserDTO;
 import com.nix.dtos.mappers.UserMapper;
 import com.nix.models.User;
+import com.nix.service.AdminService;
 import com.nix.service.AuthorService;
 import com.nix.service.UserService;
 
@@ -37,8 +42,53 @@ public class AdminController {
 
 	@Autowired
 	AuthorService authorService;
+	
+	@Autowired
+	AdminService adminService;
 
 	UserMapper userMapper = new UserMapper();
+
+	@GetMapping("/dashboard/users")
+	public ResponseEntity<?> getUserAnalytics(@RequestHeader("Authorization") String jwt) {
+		try {
+			UserAnalyticsDTO userAnalytics = adminService.getUserAnalytics();
+			return ResponseEntity.ok(userAnalytics);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+		}
+	}
+
+	@GetMapping("/dashboard/revenue")
+	public ResponseEntity<?> getRevenueAnalytics(@RequestHeader("Authorization") String jwt) {
+		try {
+
+			RevenueAnalyticsDTO revenueAnalytics = adminService.getRevenueAnalytics();
+			return ResponseEntity.ok(revenueAnalytics);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+		}
+	}
+
+	@GetMapping("/dashboard/content")
+	public ResponseEntity<?> getContentAnalytics(@RequestHeader("Authorization") String jwt) {
+		try {
+			ContentAnalyticsDTO contentAnalytics = adminService.getContentAnalytics();
+			return ResponseEntity.ok(contentAnalytics);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+		}
+	}
+
+	@GetMapping("/dashboard/platform")
+	public ResponseEntity<?> getPlatformAnalytics(@RequestHeader("Authorization") String jwt) {
+		try {
+
+			PlatformAnalyticsDTO platformAnalytics = adminService.getPlatformAnalytics();
+			return ResponseEntity.ok(platformAnalytics);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+		}
+	}
 
 	@GetMapping("/users")
 	public ResponseEntity<?> getAllUsers(@RequestHeader("Authorization") String jwt,

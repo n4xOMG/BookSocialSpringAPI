@@ -1,4 +1,4 @@
-package com.nix.service;
+package com.nix.service.impl;
 
 import java.util.List;
 import java.util.UUID;
@@ -14,6 +14,7 @@ import com.nix.models.Purchase;
 import com.nix.models.User;
 import com.nix.repository.PurchaseRepository;
 import com.nix.repository.UserRepository;
+import com.nix.service.PurchaseService;
 
 import jakarta.persistence.EntityNotFoundException;
 

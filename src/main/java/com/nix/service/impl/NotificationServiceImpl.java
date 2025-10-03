@@ -1,4 +1,4 @@
-package com.nix.service;
+package com.nix.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,6 +18,7 @@ import com.nix.models.UserNotification;
 import com.nix.repository.NotificationRepository;
 import com.nix.repository.UserNotificationRepository;
 import com.nix.repository.UserRepository;
+import com.nix.service.NotificationService;
 
 @Service
 public class NotificationServiceImpl implements NotificationService {

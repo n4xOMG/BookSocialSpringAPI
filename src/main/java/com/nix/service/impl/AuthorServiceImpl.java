@@ -1,4 +1,4 @@
-package com.nix.service;
+package com.nix.service.impl;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -32,6 +32,8 @@ import com.nix.repository.AuthorEarningRepository;
 import com.nix.repository.AuthorPayoutRepository;
 import com.nix.repository.AuthorPayoutSettingsRepository;
 import com.nix.repository.BookRepository;
+import com.nix.service.AuthorService;
+import com.nix.service.PayPalPayoutService;
 
 @Service
 @Transactional

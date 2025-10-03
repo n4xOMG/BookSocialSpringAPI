@@ -1,4 +1,4 @@
-package com.nix.service;
+package com.nix.service.impl;
 
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
@@ -42,6 +42,7 @@ import com.nix.repository.ReadingProgressRepository;
 import com.nix.repository.RoleRepository;
 import com.nix.repository.UserFollowRepository;
 import com.nix.repository.UserRepository;
+import com.nix.service.UserService;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;

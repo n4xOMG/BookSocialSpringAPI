@@ -1,4 +1,4 @@
-package com.nix.service;
+package com.nix.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,6 +16,7 @@ import com.nix.models.Message;
 import com.nix.models.User;
 import com.nix.repository.ChatRepository;
 import com.nix.repository.UserRepository;
+import com.nix.service.ChatService;
 
 @Service
 public class ChatServiceImpl implements ChatService {

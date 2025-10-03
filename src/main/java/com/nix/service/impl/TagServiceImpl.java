@@ -1,4 +1,4 @@
-package com.nix.service;
+package com.nix.service.impl;
 
 import java.util.List;
 import java.util.UUID;
@@ -10,6 +10,7 @@ import com.nix.models.Book;
 import com.nix.models.Tag;
 import com.nix.repository.BookRepository;
 import com.nix.repository.TagRepository;
+import com.nix.service.TagService;
 
 @Service
 public class TagServiceImpl implements TagService {

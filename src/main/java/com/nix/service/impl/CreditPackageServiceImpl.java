@@ -1,4 +1,4 @@
-package com.nix.service;
+package com.nix.service.impl;
 
 import java.util.List;
 
@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.CreditPackage;
 import com.nix.repository.CreditPackageRepository;
+import com.nix.service.CreditPackageService;
 
 @Service
 public class CreditPackageServiceImpl implements CreditPackageService {
