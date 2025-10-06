@@ -44,8 +44,8 @@ public interface BookRepository extends JpaRepository<Book, UUID> {
 	Page<Book> findByUserFavoured(@Param("userId") UUID userId, Pageable pageable);
 
 	List<Book> findByTagsIn(List<Integer> tagIds);
-
-	@Query("SELECT DISTINCT b FROM Book b JOIN b.chapters c ORDER BY c.uploadDate DESC")
+	
+	@Query("SELECT b FROM Book b JOIN b.chapters c GROUP BY b ORDER BY MAX(c.uploadDate) DESC")
 	List<Book> findTopBooksWithLatestChapters(Pageable pageable);
 
 	@Query("SELECT DISTINCT b FROM Book b " + "JOIN b.tags t "

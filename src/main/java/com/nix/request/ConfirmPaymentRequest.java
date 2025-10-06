@@ -1,5 +1,7 @@
 package com.nix.request;
 
+import com.nix.enums.PaymentProvider;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,7 +12,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ConfirmPaymentRequest {
-	 private String paymentIntentId;
-     private Integer userId;
-     private Long creditPackageId;
+	private String paymentIntentId; // Stripe payment intent ID or PayPal order ID
+	private Long creditPackageId;
+	private PaymentProvider paymentProvider;
 }

@@ -3,9 +3,12 @@ package com.nix.dtos.mappers;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Component;
+
 import com.nix.dtos.CreditPackageDTO;
 import com.nix.models.CreditPackage;
 
+@Component
 public class CreditPackageMapper implements Mapper<CreditPackage, CreditPackageDTO> {
 
 	@Override

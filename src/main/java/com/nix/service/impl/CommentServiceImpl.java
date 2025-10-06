@@ -266,35 +266,47 @@ public class CommentServiceImpl implements CommentService {
 		}
 
 		try {
-			// Remove associations in Reports to prevent FK constraints
-			List<Report> reports = reportRepository.findByCommentId(commentId);
-			for (Report report : reports) {
-				report.setComment(null);
-				reportRepository.save(report);
-			}
-
-			// Remove associations with liked users
-			for (User user : new ArrayList<>(comment.getLikedUsers())) {
-				user.getLikedComments().remove(comment);
-			}
-			comment.getLikedUsers().clear();
-
-			// Remove the comment from its parent if it has one
-			if (comment.getParentComment() != null) {
-				Comment parent = comment.getParentComment();
-				parent.getReplies().remove(comment);
-				comment.setParentComment(null);
-				entityManager.merge(parent);
-			}
-
-			// Delete the comment; child comments will be deleted due to cascade
-			entityManager.remove(entityManager.contains(comment) ? comment : entityManager.merge(comment));
+			// Recursively delete all child comments first
+			deleteCommentRecursively(comment);
 
 			return "Comment deleted successfully!";
 		} catch (Exception e) {
 			System.err.println("Error deleting comment: " + e.getMessage());
 			throw new Exception("Error deleting comment: " + e.getMessage(), e);
 		}
+	}
+
+	private void deleteCommentRecursively(Comment comment) {
+		// First, recursively delete all replies (depth-first)
+		List<Comment> replies = new ArrayList<>(comment.getReplies());
+		for (Comment reply : replies) {
+			deleteCommentRecursively(reply);
+		}
+
+		// Remove associations in Reports to prevent FK constraints
+		List<Report> reports = reportRepository.findByCommentId(comment.getId());
+		for (Report report : reports) {
+			report.setComment(null);
+			reportRepository.save(report);
+		}
+
+		// Remove associations with liked users
+		for (User user : new ArrayList<>(comment.getLikedUsers())) {
+			user.getLikedComments().remove(comment);
+		}
+		comment.getLikedUsers().clear();
+
+		// Remove the comment from its parent if it has one
+		if (comment.getParentComment() != null) {
+			Comment parent = comment.getParentComment();
+			parent.getReplies().remove(comment);
+			comment.setParentComment(null);
+			entityManager.merge(parent);
+		}
+
+		// Now safe to delete this comment
+		entityManager.remove(entityManager.contains(comment) ? comment : entityManager.merge(comment));
+		entityManager.flush(); // Force immediate deletion
 	}
 
 	@Override

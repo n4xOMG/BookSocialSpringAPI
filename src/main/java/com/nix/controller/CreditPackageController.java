@@ -23,9 +23,10 @@ public class CreditPackageController {
 	@Autowired
 	CreditPackageService creditPackageService;
 
-	CreditPackageMapper cpkMapper = new CreditPackageMapper();
+	@Autowired
+	CreditPackageMapper cpkMapper;
 
-	@GetMapping("/credit-packages")
+	@GetMapping("/admin/credit-packages")
 	public ResponseEntity<List<CreditPackageDTO>> getAllCreditPackages() {
 		List<CreditPackage> packages = creditPackageService.getAllCreditPackages();
 		return ResponseEntity.ok(cpkMapper.mapToDTOs(packages));
@@ -46,14 +47,14 @@ public class CreditPackageController {
 	}
 
 	// Create a new credit package
-	@PostMapping("/api/credit-packages")
+	@PostMapping("/admin/credit-packages")
 	public ResponseEntity<CreditPackageDTO> createCreditPackage(@RequestBody CreditPackage creditPackage) {
 		CreditPackage created = creditPackageService.createCreditPackage(creditPackage);
 		return ResponseEntity.ok(cpkMapper.mapToDTO(created));
 	}
 
 	// Update an existing credit package
-	@PutMapping("/api/credit-packages/{id}")
+	@PutMapping("/admin/credit-packages/{id}")
 	public ResponseEntity<CreditPackageDTO> updateCreditPackage(@PathVariable Long id,
 			@RequestBody CreditPackage creditPackage) {
 		CreditPackage updated = creditPackageService.updateCreditPackage(id, creditPackage);
@@ -61,7 +62,7 @@ public class CreditPackageController {
 	}
 
 	// Delete a credit package
-	@DeleteMapping("/api/credit-packages/{id}")
+	@DeleteMapping("/admin/credit-packages/{id}")
 	public ResponseEntity<Void> deleteCreditPackage(@PathVariable Long id) {
 		creditPackageService.deleteCreditPackage(id);
 		return ResponseEntity.noContent().build();
@@ -89,14 +90,14 @@ public class CreditPackageController {
 	}
 
 	// Activate a credit package
-	@PutMapping("/api/credit-packages/{id}/activate")
+	@PutMapping("/admin/credit-packages/{id}/activate")
 	public ResponseEntity<CreditPackageDTO> activateCreditPackage(@PathVariable Long id) {
 		CreditPackage activated = creditPackageService.activateCreditPackage(id);
 		return ResponseEntity.ok(cpkMapper.mapToDTO(activated));
 	}
 
 	// Deactivate a credit package
-	@PutMapping("/api/credit-packages/{id}/deactivate")
+	@PutMapping("/admin/credit-packages/{id}/deactivate")
 	public ResponseEntity<CreditPackageDTO> deactivateCreditPackage(@PathVariable Long id) {
 		CreditPackage deactivated = creditPackageService.deactivateCreditPackage(id);
 		return ResponseEntity.ok(cpkMapper.mapToDTO(deactivated));

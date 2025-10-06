@@ -69,7 +69,12 @@
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
-			<artifactId>gson</artifactId> <!-- Use the latest version available -->
+			<artifactId>gson</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.paypal.sdk</groupId>
+			<artifactId>paypal-server-sdk</artifactId>
+			<version>1.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.mysql</groupId>

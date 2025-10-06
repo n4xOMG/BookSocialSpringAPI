@@ -40,7 +40,7 @@ public interface PurchaseRepository extends JpaRepository<Purchase, UUID> {
 	@Query("SELECT p.paymentProvider, COUNT(p) FROM Purchase p WHERE p.status = 'COMPLETED' GROUP BY p.paymentProvider")
 	List<Object[]> getPaymentProviderStats();
 
-	@Query("SELECT DATE(p.purchaseDate), SUM(p.amount) FROM Purchase p WHERE p.status = 'COMPLETED' AND p.purchaseDate >= :startDate GROUP BY DATE(p.purchaseDate) ORDER BY DATE(p.purchaseDate)")
+	@Query("SELECT CAST(p.purchaseDate AS LocalDate), SUM(p.amount) FROM Purchase p WHERE p.status = 'COMPLETED' AND p.purchaseDate >= :startDate GROUP BY CAST(p.purchaseDate AS LocalDate) ORDER BY CAST(p.purchaseDate AS LocalDate)")
 	List<Object[]> getDailyRevenue(@Param("startDate") LocalDateTime startDate);
 
 	List<Purchase> findByStatusAndPaymentProvider(PaymentStatus status, PaymentProvider provider);
