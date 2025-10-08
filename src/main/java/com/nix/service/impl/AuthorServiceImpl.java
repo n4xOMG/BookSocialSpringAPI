@@ -18,6 +18,7 @@ import com.nix.dtos.AuthorDashboardDTO;
 import com.nix.dtos.AuthorEarningDTO;
 import com.nix.dtos.AuthorPayoutDTO;
 import com.nix.dtos.AuthorPayoutSettingsDTO;
+import com.nix.dtos.BookPerformanceDTO;
 import com.nix.dtos.mappers.AuthorEarningMapper;
 import com.nix.dtos.mappers.AuthorPayoutMapper;
 import com.nix.dtos.mappers.AuthorPayoutSettingsMapper;
@@ -33,6 +34,7 @@ import com.nix.repository.AuthorPayoutRepository;
 import com.nix.repository.AuthorPayoutSettingsRepository;
 import com.nix.repository.BookRepository;
 import com.nix.service.AuthorService;
+import com.nix.service.BookService;
 import com.nix.service.PayPalPayoutService;
 
 @Service
@@ -62,6 +64,9 @@ public class AuthorServiceImpl implements AuthorService {
 
 	@Autowired
 	private BookRepository bookRepository;
+
+	@Autowired
+	private BookService bookService;
 
 	@Autowired
 	private AuthorEarningMapper authorEarningMapper;
@@ -117,10 +122,18 @@ public class AuthorServiceImpl implements AuthorService {
 		}
 
 		// Book overview
-
 		Page<Book> authorBooks = bookRepository.findByAuthorId(author.getId(), pageable);
 		dashboard.setTotalBooks(authorBooks.getTotalElements());
 		dashboard.setTotalChapters(authorBooks.stream().mapToInt(book -> book.getChapters().size()).sum());
+		
+		// Calculate total views, likes, and comments across all books
+		long totalViews = authorBooks.stream().mapToLong(Book::getViewCount).sum();
+		long totalFavourites = authorBooks.stream().mapToLong(book -> book.getFavoured().size()).sum();
+		long totalComments = authorBooks.stream().mapToLong(book -> book.getComments().size()).sum();
+		
+		dashboard.setTotalViews(totalViews);
+		dashboard.setTotalLikes(totalFavourites);
+		dashboard.setTotalComments(totalComments);
 
 		// Recent activity
 		dashboard.setRecentEarnings(getAuthorEarnings(author, Pageable.ofSize(5)).getContent());
@@ -128,6 +141,15 @@ public class AuthorServiceImpl implements AuthorService {
 		List<AuthorPayout> recentPayouts = authorPayoutRepository
 				.findByAuthorOrderByRequestedDateDesc(author, Pageable.ofSize(5)).getContent();
 		dashboard.setRecentPayouts(authorPayoutMapper.mapToDTOs(recentPayouts));
+		
+		// Top performing books (limited to top 5)
+		List<BookPerformanceDTO> allBookPerformance = bookService.getAuthorBookPerformance(author.getId());
+		List<BookPerformanceDTO> topPerformingBooks = allBookPerformance.stream()
+			.sorted((a, b) -> Long.compare(b.getDailyViewsGrowth() + b.getWeeklyViewsGrowth(), 
+										  a.getDailyViewsGrowth() + a.getWeeklyViewsGrowth()))
+			.limit(5)
+			.toList();
+		dashboard.setTopPerformingBooks(topPerformingBooks);
 
 		// Payout settings
 		AuthorPayoutSettings settings = getOrCreatePayoutSettingsEntity(author);
@@ -222,8 +244,6 @@ public class AuthorServiceImpl implements AuthorService {
 		AuthorPayoutSettings saved = authorPayoutSettingsRepository.save(existing);
 		return authorPayoutSettingsMapper.mapToDTO(saved);
 	}
-
-	// Stripe Connect onboarding removed; we use PayPal email configuration instead
 
 	@Override
 	public boolean canRequestPayout(User author) {

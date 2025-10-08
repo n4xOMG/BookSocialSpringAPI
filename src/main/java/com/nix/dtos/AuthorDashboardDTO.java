@@ -35,6 +35,7 @@ public class AuthorDashboardDTO {
 	// Recent activity
 	private List<AuthorEarningDTO> recentEarnings;
 	private List<AuthorPayoutDTO> recentPayouts;
+	private List<BookPerformanceDTO> topPerformingBooks;
 
 	// Payout information
 	private boolean canRequestPayout;

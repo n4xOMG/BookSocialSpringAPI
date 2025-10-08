@@ -2,6 +2,7 @@ package com.nix.service.impl;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -15,15 +16,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.nix.dtos.BookDTO;
+import com.nix.dtos.BookPerformanceDTO;
 import com.nix.dtos.CategoryDTO;
 import com.nix.dtos.mappers.BookMapper;
 import com.nix.dtos.mappers.CategoryMapper;
 import com.nix.enums.NotificationEntityType;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
+import com.nix.models.BookViewHistory;
 import com.nix.models.Category;
 import com.nix.models.User;
 import com.nix.repository.BookRepository;
+import com.nix.repository.BookViewHistoryRepository;
 import com.nix.repository.CategoryRepository;
 import com.nix.repository.CommentRepository;
 import com.nix.repository.TagRepository;
@@ -52,6 +56,9 @@ public class BookServiceImpl implements BookService {
 
 	@Autowired
 	CommentRepository commentRepository;
+
+	@Autowired
+	BookViewHistoryRepository bookViewHistoryRepository;
 
 	@Autowired
 	ImageService imageService;
@@ -92,7 +99,7 @@ public class BookServiceImpl implements BookService {
 
 	@Override
 	public Page<BookDTO> getFollowedBooksByUserId(UUID userId, Pageable pageable) {
-		User user = userRepository.findById(userId)
+		userRepository.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
 		return bookRepo.findByUserFavoured(userId, pageable).map(book -> bookMapper.mapToDTO(book));
@@ -109,6 +116,11 @@ public class BookServiceImpl implements BookService {
 		Book book = bookRepo.findById(bookId)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 		book.setViewCount(book.getViewCount() + 1);
+		bookRepo.save(book);
+		
+		// Track daily view count for trending analysis
+		trackDailyView(book);
+		
 		return bookMapper.mapToDTO(book);
 	}
 
@@ -256,6 +268,81 @@ public class BookServiceImpl implements BookService {
 	@Override
 	public List<Long> getBookUploadedPerMonthNumber() {
 		return bookRepo.countBooksUploadedPerMonth();
+	}
+
+	@Override
+	public List<BookDTO> getTrendingBooks(int hours, long minViews, int limit) {
+		LocalDateTime since = LocalDateTime.now().minusHours(hours);
+		PageRequest pageRequest = PageRequest.of(0, limit);
+		List<Book> trendingBooks = bookViewHistoryRepository.findTrendingBooks(since, minViews, pageRequest);
+		return bookMapper.mapToDTOs(trendingBooks);
+	}
+
+	@Override
+	public List<BookPerformanceDTO> getAuthorBookPerformance(UUID authorId) {
+		Page<Book> authorBooks = bookRepo.findByAuthorId(authorId, Pageable.unpaged());
+		List<BookPerformanceDTO> performanceList = new ArrayList<>();
+
+		LocalDateTime now = LocalDateTime.now();
+		LocalDateTime oneDayAgo = now.minusDays(1);
+		LocalDateTime oneWeekAgo = now.minusWeeks(1);
+		LocalDateTime oneMonthAgo = now.minusMonths(1);
+
+		for (Book book : authorBooks.getContent()) {
+			BookPerformanceDTO performance = new BookPerformanceDTO();
+			performance.setBookId(book.getId());
+			performance.setTitle(book.getTitle());
+			performance.setBookCover(book.getBookCover());
+			performance.setStatus(book.getStatus());
+			performance.setTotalChapters(book.getChapters().size());
+			performance.setLastUpdated(book.getUploadDate());
+
+			// Current metrics
+			performance.setCurrentViews(book.getViewCount());
+			performance.setCurrentFavourites(book.getFavoured().size());
+			performance.setCurrentComments(commentRepository.countCommentsByBookId(book.getId()));
+
+			// Calculate growth metrics using view history
+			long dailyViews = bookViewHistoryRepository.getViewCountForBookBetweenDates(
+					book.getId(), oneDayAgo, now);
+			long weeklyViews = bookViewHistoryRepository.getViewCountForBookBetweenDates(
+					book.getId(), oneWeekAgo, now);
+			long monthlyViews = bookViewHistoryRepository.getViewCountForBookBetweenDates(
+					book.getId(), oneMonthAgo, now);
+
+			performance.setDailyViewsGrowth(dailyViews);
+			performance.setWeeklyViewsGrowth(weeklyViews);
+			performance.setMonthlyViewsGrowth(monthlyViews);
+
+			// For favourites and comments, we'll show current numbers as growth
+			// (since we don't track historical data for these yet)
+			performance.setDailyFavouritesGrowth(0); // Could be enhanced later
+			performance.setWeeklyFavouritesGrowth(0);
+			performance.setMonthlyFavouritesGrowth(0);
+
+			performance.setDailyCommentsGrowth(0); // Could be enhanced later
+			performance.setWeeklyCommentsGrowth(0);
+			performance.setMonthlyCommentsGrowth(0);
+
+			performanceList.add(performance);
+		}
+
+		return performanceList;
+	}
+
+	private void trackDailyView(Book book) {
+		LocalDateTime today = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+		
+		Optional<BookViewHistory> existingHistory = bookViewHistoryRepository.findByBookAndDate(book, today);
+		
+		if (existingHistory.isPresent()) {
+			BookViewHistory history = existingHistory.get();
+			history.setDailyViewCount(history.getDailyViewCount() + 1);
+			bookViewHistoryRepository.save(history);
+		} else {
+			BookViewHistory newHistory = new BookViewHistory(book, today, 1);
+			bookViewHistoryRepository.save(newHistory);
+		}
 	}
 
 }

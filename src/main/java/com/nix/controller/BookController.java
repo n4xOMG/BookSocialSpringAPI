@@ -157,6 +157,14 @@ public class BookController {
 		return ResponseEntity.ok(bookService.getTopRecentChapterBooks(limit));
 	}
 
+	@GetMapping("/books/trending")
+	public ResponseEntity<List<BookDTO>> getTrendingBooks(
+			@RequestParam(defaultValue = "24") int hours,
+			@RequestParam(defaultValue = "10") long minViews,
+			@RequestParam(defaultValue = "10") int limit) {
+		return ResponseEntity.ok(bookService.getTrendingBooks(hours, minViews, limit));
+	}
+
 	@GetMapping("/api/books/{bookId}/isLiked")
 	public ResponseEntity<Boolean> checkBookLikedByUser(@RequestHeader("Authorization") String jwt,
 			@PathVariable UUID bookId) {

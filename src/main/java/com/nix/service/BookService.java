@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.nix.dtos.BookDTO;
+import com.nix.dtos.BookPerformanceDTO;
 import com.nix.dtos.CategoryDTO;
 import com.nix.models.User;
 
@@ -56,4 +57,10 @@ public interface BookService {
 	public boolean isBookLikedByUser(UUID userId, UUID bookId);
 
 	public Long getCommentCountForBook(UUID bookId);
+	
+	// Trending books functionality
+	List<BookDTO> getTrendingBooks(int hours, long minViews, int limit);
+	
+	// Book performance for author dashboard
+	List<BookPerformanceDTO> getAuthorBookPerformance(UUID authorId);
 }

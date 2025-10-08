@@ -1,6 +1,7 @@
 package com.nix.controller;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,10 +23,12 @@ import com.nix.dtos.AuthorDashboardDTO;
 import com.nix.dtos.AuthorEarningDTO;
 import com.nix.dtos.AuthorPayoutDTO;
 import com.nix.dtos.AuthorPayoutSettingsDTO;
+import com.nix.dtos.BookPerformanceDTO;
 import com.nix.models.AuthorPayoutSettings;
 import com.nix.models.User;
 import com.nix.request.PayoutRequestDTO;
 import com.nix.service.AuthorService;
+import com.nix.service.BookService;
 import com.nix.service.UserService;
 
 @RestController
@@ -37,6 +40,9 @@ public class AuthorDashboardController {
 
 	@Autowired
 	private AuthorService authorService;
+
+	@Autowired
+	private BookService bookService;
 
 	/**
 	 * Get author dashboard overview
@@ -184,6 +190,26 @@ public class AuthorDashboardController {
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 					.body("Error fetching payout settings: " + e.getMessage());
+		}
+	}
+
+	/**
+	 * Get detailed book performance metrics for the author
+	 */
+	@GetMapping("/books/performance")
+	public ResponseEntity<?> getAuthorBookPerformance(@RequestHeader("Authorization") String jwt) {
+		try {
+			User author = userService.findUserByJwt(jwt);
+			if (author == null) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+			}
+
+			List<BookPerformanceDTO> performance = bookService.getAuthorBookPerformance(author.getId());
+			return ResponseEntity.ok(performance);
+
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Error fetching book performance: " + e.getMessage());
 		}
 	}
 }
