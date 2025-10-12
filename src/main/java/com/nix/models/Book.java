@@ -81,4 +81,8 @@ public class Book implements Serializable {
 	@OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Rating> ratings = new ArrayList<>();
 
+	@JsonIgnore
+	@OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<BookViewHistory> viewHistory = new ArrayList<>();
+
 }

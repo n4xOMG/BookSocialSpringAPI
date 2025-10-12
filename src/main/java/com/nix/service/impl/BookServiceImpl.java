@@ -173,6 +173,9 @@ public class BookServiceImpl implements BookService {
 		Book existingBook = bookRepo.findById(bookId)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 
+		// Delete all book view history records for this book
+		bookViewHistoryRepository.deleteByBook(existingBook);
+
 		// Remove this book from tags
 		existingBook.getTags().clear();
 
