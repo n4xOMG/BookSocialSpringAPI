@@ -16,10 +16,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.nix.enums.NotificationEntityType;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
+import com.nix.models.BookFavourite;
 import com.nix.models.Chapter;
 import com.nix.models.ChapterUnlockRecord;
 import com.nix.models.Report;
 import com.nix.models.User;
+import com.nix.repository.BookFavouriteRepository;
 import com.nix.repository.BookRepository;
 import com.nix.repository.ChapterRepository;
 import com.nix.repository.ChapterUnlockRecordRepository;
@@ -29,6 +31,7 @@ import com.nix.repository.UserRepository;
 import com.nix.service.AuthorService;
 import com.nix.service.ChapterService;
 import com.nix.service.NotificationService;
+import com.nix.service.UserWalletService;
 
 import nl.siegmann.epublib.domain.Resource;
 import nl.siegmann.epublib.domain.TOCReference;
@@ -43,6 +46,9 @@ public class ChapterServiceImpl implements ChapterService {
 
 	@Autowired
 	BookRepository bookRepo;
+
+	@Autowired
+	BookFavouriteRepository bookFavouriteRepository;
 
 	@Autowired
 	NotificationService notificationService;
@@ -61,6 +67,9 @@ public class ChapterServiceImpl implements ChapterService {
 
 	@Autowired
 	private UserRepository userRepository;
+
+	@Autowired
+	private UserWalletService userWalletService;
 
 	@Override
 	public Chapter findChapterById(UUID chapterId) {
@@ -110,10 +119,10 @@ public class ChapterServiceImpl implements ChapterService {
 			chapter.setRoomId(UUID.randomUUID().toString());
 		}
 		chapter.setUploadDate(LocalDateTime.now());
-		List<User> followers = book.getFavoured();
+		List<BookFavourite> bookFavourites = bookFavouriteRepository.findByBookId(bookId);
 		String message = "New chapter added to " + book.getTitle() + ": " + chapter.getTitle();
-		for (User user : followers) {
-			notificationService.createNotification(user, message, NotificationEntityType.BOOK, bookId);
+		for (BookFavourite favourite : bookFavourites) {
+			notificationService.createNotification(favourite.getUser(), message, NotificationEntityType.BOOK, bookId);
 		}
 		return chapterRepo.save(chapter);
 	}
@@ -193,33 +202,31 @@ public class ChapterServiceImpl implements ChapterService {
 		int unlockCost = chapter.getPrice();
 		User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-		if (user.getCredits() >= unlockCost) {
-			// Deduct credits
-			user.setCredits(user.getCredits() - unlockCost);
-			userRepository.save(user);
-
-			// Create unlock record
-			ChapterUnlockRecord unlockRecord = new ChapterUnlockRecord();
-			unlockRecord.setUser(user);
-			unlockRecord.setChapter(chapter);
-			unlockRecord.setUnlockDate(LocalDateTime.now());
-			unlockRecord.setUnlockCost(unlockCost);
-
-			unlockRecord = unlockRecordRepository.save(unlockRecord);
-
-			// Record author earnings
-			try {
-				authorService.recordChapterUnlockEarning(unlockRecord);
-				String message = "User " + user.getUsername() + " unlocked chapter " + chapter.getTitle() + ": "
-						+ chapter.getChapterNum() + " in " + chapter.getBook().getTitle();
-				notificationService.createNotification(chapter.getBook().getAuthor(), message,
-						NotificationEntityType.CHAPTER, chapterId);
-			} catch (Exception e) {
-				// Log error but don't fail the unlock process
-				System.err.println("Error recording author earnings: " + e.getMessage());
-			}
-		} else {
+		try {
+			userWalletService.deductCredits(userId, unlockCost);
+		} catch (IllegalStateException e) {
 			throw new Exception("Insufficient credits");
+		}
+
+		// Create unlock record
+		ChapterUnlockRecord unlockRecord = new ChapterUnlockRecord();
+		unlockRecord.setUser(user);
+		unlockRecord.setChapter(chapter);
+		unlockRecord.setUnlockDate(LocalDateTime.now());
+		unlockRecord.setUnlockCost(unlockCost);
+
+		unlockRecord = unlockRecordRepository.save(unlockRecord);
+
+		// Record author earnings
+		try {
+			authorService.recordChapterUnlockEarning(unlockRecord);
+			String message = "User " + user.getUsername() + " unlocked chapter " + chapter.getTitle() + ": "
+					+ chapter.getChapterNum() + " in " + chapter.getBook().getTitle();
+			notificationService.createNotification(chapter.getBook().getAuthor(), message,
+				NotificationEntityType.CHAPTER, chapterId);
+		} catch (Exception e) {
+			// Log error but don't fail the unlock process
+			System.err.println("Error recording author earnings: " + e.getMessage());
 		}
 
 	}

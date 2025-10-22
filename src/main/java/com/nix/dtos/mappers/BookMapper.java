@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.nix.dtos.BookDTO;
@@ -11,6 +12,7 @@ import com.nix.models.Book;
 import com.nix.models.Chapter;
 import com.nix.models.Rating;
 import com.nix.models.Tag;
+import com.nix.repository.BookFavouriteRepository;
 
 @Component
 public class BookMapper implements Mapper<Book, BookDTO> {
@@ -19,6 +21,9 @@ public class BookMapper implements Mapper<Book, BookDTO> {
 	RatingMapper ratingMapper = new RatingMapper();
 
 	UserSummaryMapper userSummaryMapper = new UserSummaryMapper();
+
+	@Autowired
+	private BookFavouriteRepository bookFavouriteRepository;
 
 	@Override
 	public BookDTO mapToDTO(Book book) {
@@ -44,9 +49,8 @@ public class BookMapper implements Mapper<Book, BookDTO> {
 			bookDTO.setAvgRating(0.0);
 			bookDTO.setRatingCount(0);
 		}
-		if (book.getFavoured() != null && !book.getFavoured().isEmpty()) {
-			bookDTO.setFavCount(book.getFavoured().size());
-		}
+		long favCount = bookFavouriteRepository.countByBookId(book.getId());
+		bookDTO.setFavCount(Math.toIntExact(favCount));
 
 		bookDTO.setChapterCount(book.getChapters().size());
 		bookDTO.setLanguage(book.getLanguage());

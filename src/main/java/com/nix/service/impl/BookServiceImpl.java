@@ -4,16 +4,21 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import com.nix.dtos.BookDTO;
 import com.nix.dtos.BookPerformanceDTO;
@@ -23,9 +28,11 @@ import com.nix.dtos.mappers.CategoryMapper;
 import com.nix.enums.NotificationEntityType;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
+import com.nix.models.BookFavourite;
 import com.nix.models.BookViewHistory;
 import com.nix.models.Category;
 import com.nix.models.User;
+import com.nix.repository.BookFavouriteRepository;
 import com.nix.repository.BookRepository;
 import com.nix.repository.BookViewHistoryRepository;
 import com.nix.repository.CategoryRepository;
@@ -41,6 +48,9 @@ public class BookServiceImpl implements BookService {
 
 	@Autowired
 	BookRepository bookRepo;
+
+	@Autowired
+	BookFavouriteRepository bookFavouriteRepository;
 
 	@Autowired
 	CategoryRepository categoryRepository;
@@ -98,12 +108,32 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
+	public Page<BookDTO> searchBooksForAuthor(UUID authorId, String query, Pageable pageable) {
+		userRepository.findById(authorId)
+			.orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + authorId));
+
+		Page<Book> booksPage;
+		if (!StringUtils.hasText(query)) {
+			booksPage = bookRepo.findByAuthorId(authorId, pageable);
+		} else {
+			booksPage = bookRepo.findByAuthorIdAndTitleContainingIgnoreCase(authorId, query.trim(), pageable);
+		}
+
+		return booksPage.map(bookMapper::mapToDTO);
+	}
+
+	@Override
 	public Page<BookDTO> getFollowedBooksByUserId(UUID userId, Pageable pageable) {
 		userRepository.findById(userId)
-				.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+			.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
-		return bookRepo.findByUserFavoured(userId, pageable).map(book -> bookMapper.mapToDTO(book));
+		Page<BookFavourite> favouritesPage = bookFavouriteRepository.findByUserId(userId, pageable);
+		List<BookDTO> favouriteBooks = favouritesPage.getContent().stream()
+			.map(BookFavourite::getBook)
+			.map(bookMapper::mapToDTO)
+			.collect(Collectors.toList());
 
+		return new PageImpl<>(favouriteBooks, pageable, favouritesPage.getTotalElements());
 	}
 
 	@Override
@@ -113,14 +143,7 @@ public class BookServiceImpl implements BookService {
 
 	@Override
 	public BookDTO getBookById(UUID bookId) {
-		Book book = bookRepo.findById(bookId)
-				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
-		book.setViewCount(book.getViewCount() + 1);
-		bookRepo.save(book);
-		
-		// Track daily view count for trending analysis
-		trackDailyView(book);
-		
+		Book book = getBookOrThrow(bookId);
 		return bookMapper.mapToDTO(book);
 	}
 
@@ -151,8 +174,7 @@ public class BookServiceImpl implements BookService {
 	@Override
 	@Transactional
 	public BookDTO updateBook(UUID bookId, BookDTO bookDTO) {
-		Book existingBook = bookRepo.findById(bookId)
-				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
+		Book existingBook = getBookOrThrow(bookId);
 		existingBook.setTitle(bookDTO.getTitle());
 		existingBook.setBookCover(bookDTO.getBookCover());
 		existingBook.setAuthorName(bookDTO.getAuthorName());
@@ -170,8 +192,7 @@ public class BookServiceImpl implements BookService {
 	@Override
 	@Transactional
 	public void deleteBook(UUID bookId) {
-		Book existingBook = bookRepo.findById(bookId)
-				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
+		Book existingBook = getBookOrThrow(bookId);
 
 		// Delete all book view history records for this book
 		bookViewHistoryRepository.deleteByBook(existingBook);
@@ -184,7 +205,7 @@ public class BookServiceImpl implements BookService {
 
 	@Override
 	public List<BookDTO> getTop10LikedBooks() {
-		return bookMapper.mapToDTOs(bookRepo.findTopBooksByLikes());
+		return bookMapper.mapToDTOs(bookRepo.findTopBooksByLikes(PageRequest.of(0, 10)));
 	}
 
 	@Override
@@ -194,8 +215,7 @@ public class BookServiceImpl implements BookService {
 
 	@Override
 	public List<BookDTO> getRelatedBooks(UUID bookId, List<Integer> tagIds) {
-		Book currentBook = bookRepo.findById(bookId)
-				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
+		Book currentBook = getBookOrThrow(bookId);
 		return bookMapper.mapToDTOs(
 				bookRepo.findRelatedBooks(currentBook.getCategory().getId(), tagIds, bookId, PageRequest.of(0, 5)));
 	}
@@ -221,22 +241,41 @@ public class BookServiceImpl implements BookService {
 
 	@Override
 	@Transactional
-	public boolean markAsFavouriteBook(BookDTO bookDTO, User user) {
-		Book book = bookRepo.findById(bookDTO.getId())
-				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookDTO.getId()));
-		if (book.getFavoured().contains(user)) {
-			book.getFavoured().remove(user);
-			user.getFollowedBooks().remove(book);
-			return false;
-		} else {
-			book.getFavoured().add(user);
-			user.getFollowedBooks().add(book);
+	public boolean markAsFavouriteBook(UUID bookId, User user) {
+		Book book = getBookOrThrow(bookId);
+		Optional<BookFavourite> existingFavourite = bookFavouriteRepository.findByBookAndUser(book, user);
 
-			String message = "User" + user.getUsername() + " favoured your book!";
-			notificationService.createNotification(book.getAuthor(), message, NotificationEntityType.BOOK,
-					book.getId());
-			return true;
+		if (existingFavourite.isPresent()) {
+			bookFavouriteRepository.delete(existingFavourite.get());
+			return false;
 		}
+
+		BookFavourite favourite = new BookFavourite();
+		favourite.setBook(book);
+		favourite.setUser(user);
+		favourite.setFavoritedDate(LocalDateTime.now());
+		bookFavouriteRepository.save(favourite);
+
+		String message = "User " + user.getUsername() + " favoured your book!";
+		notificationService.createNotification(book.getAuthor(), message, NotificationEntityType.BOOK, book.getId());
+		return true;
+	}
+
+	@Override
+	@Transactional
+	public long recordBookView(UUID bookId, UUID viewerId, String viewerIp) {
+		Book book = getBookOrThrow(bookId);
+		book.setViewCount(book.getViewCount() + 1);
+		bookRepo.save(book);
+		updateDailyViewStats(book);
+		return book.getViewCount();
+	}
+
+	@Override
+	public Set<UUID> getFavouriteBookIdsForUser(UUID userId) {
+		userRepository.findById(userId)
+			.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+		return new HashSet<>(bookFavouriteRepository.findBookIdsByUserId(userId));
 	}
 
 	@Override
@@ -252,9 +291,10 @@ public class BookServiceImpl implements BookService {
 
 	@Override
 	public boolean isBookLikedByUser(UUID userId, UUID bookId) {
-		Optional<User> userOpt = userRepository.findById(userId);
-		Optional<Book> bookOpt = bookRepo.findById(bookId);
-		return userOpt.isPresent() && bookOpt.isPresent() && userOpt.get().getFollowedBooks().contains(bookOpt.get());
+		userRepository.findById(userId)
+			.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+		getBookOrThrow(bookId);
+		return bookFavouriteRepository.existsByBookIdAndUserId(bookId, userId);
 	}
 
 	@Override
@@ -302,7 +342,7 @@ public class BookServiceImpl implements BookService {
 
 			// Current metrics
 			performance.setCurrentViews(book.getViewCount());
-			performance.setCurrentFavourites(book.getFavoured().size());
+			performance.setCurrentFavourites(Math.toIntExact(bookFavouriteRepository.countByBookId(book.getId())));
 			performance.setCurrentComments(commentRepository.countCommentsByBookId(book.getId()));
 
 			// Calculate growth metrics using view history
@@ -333,7 +373,7 @@ public class BookServiceImpl implements BookService {
 		return performanceList;
 	}
 
-	private void trackDailyView(Book book) {
+	private void updateDailyViewStats(Book book) {
 		LocalDateTime today = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
 		
 		Optional<BookViewHistory> existingHistory = bookViewHistoryRepository.findByBookAndDate(book, today);
@@ -346,6 +386,11 @@ public class BookServiceImpl implements BookService {
 			BookViewHistory newHistory = new BookViewHistory(book, today, 1);
 			bookViewHistoryRepository.save(newHistory);
 		}
+	}
+
+	private Book getBookOrThrow(UUID bookId) {
+		return bookRepo.findById(bookId)
+			.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 	}
 
 }

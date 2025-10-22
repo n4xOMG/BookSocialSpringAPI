@@ -2,6 +2,7 @@ package com.nix.service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -32,7 +33,11 @@ public interface BookService {
 
 	Page<BookDTO> searchBooks(String title, Integer categoryId, List<Integer> tagIds, Pageable pageable);
 
-	Page<BookDTO> getFollowedBooksByUserId(UUID bookId, Pageable pageable);
+	Page<BookDTO> searchBooksForAuthor(UUID authorId, String query, Pageable pageable);
+
+	Page<BookDTO> getFollowedBooksByUserId(UUID userId, Pageable pageable);
+
+	Set<UUID> getFavouriteBookIdsForUser(UUID userId);
 
 	public List<BookDTO> getBooksBySuggestedStatus(Boolean isSuggested);
 
@@ -44,7 +49,9 @@ public interface BookService {
 
 	List<BookDTO> getFeaturedBooks();
 
-	public boolean markAsFavouriteBook(BookDTO book, User user);
+	public boolean markAsFavouriteBook(UUID bookId, User user);
+
+	long recordBookView(UUID bookId, UUID viewerId, String viewerIp);
 
 	public BookDTO setEditorChoice(UUID bookId, BookDTO bookDTO);
 

@@ -69,9 +69,8 @@ public class Book implements Serializable {
 	private List<Tag> tags = new ArrayList<>();
 
 	@JsonIgnore
-	@ManyToMany(cascade = CascadeType.ALL)
-	@JoinTable(name = "book_favourites", joinColumns = @JoinColumn(name = "book_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
-	private List<User> favoured = new ArrayList<>();
+	@OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<BookFavourite> favourites = new ArrayList<>();
 
 	@JsonIgnore
 	@OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -20,6 +20,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -60,7 +61,6 @@ public class User implements Serializable {
 	@Column(columnDefinition = "TEXT")
 	private String bio;
 
-	private int credits;
 	private boolean isBanned;
 	private String banReason;
 
@@ -79,8 +79,8 @@ public class User implements Serializable {
 	private Integer loginAttempts;
 
 	@JsonIgnore
-	@ManyToMany
-	private List<Book> followedBooks = new ArrayList<>();
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<BookFavourite> favourites = new ArrayList<>();
 
 	@JsonIgnore
 	@ManyToMany
@@ -146,4 +146,8 @@ public class User implements Serializable {
 	@JsonIgnore
 	@ManyToMany(mappedBy = "likedUsers")
 	private List<Post> likedPosts = new ArrayList<>();
+
+	@JsonIgnore
+	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	private UserWallet wallet;
 }

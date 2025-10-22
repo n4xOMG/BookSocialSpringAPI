@@ -26,12 +26,14 @@ import com.nix.models.AuthorEarning;
 import com.nix.models.AuthorPayout;
 import com.nix.models.AuthorPayoutSettings;
 import com.nix.models.Book;
+import com.nix.models.BookFavourite;
 import com.nix.models.Chapter;
 import com.nix.models.ChapterUnlockRecord;
 import com.nix.models.User;
 import com.nix.repository.AuthorEarningRepository;
 import com.nix.repository.AuthorPayoutRepository;
 import com.nix.repository.AuthorPayoutSettingsRepository;
+import com.nix.repository.BookFavouriteRepository;
 import com.nix.repository.BookRepository;
 import com.nix.service.AuthorService;
 import com.nix.service.BookService;
@@ -64,6 +66,9 @@ public class AuthorServiceImpl implements AuthorService {
 
 	@Autowired
 	private BookRepository bookRepository;
+
+	@Autowired
+	private BookFavouriteRepository bookFavouriteRepository;
 
 	@Autowired
 	private BookService bookService;
@@ -128,7 +133,9 @@ public class AuthorServiceImpl implements AuthorService {
 		
 		// Calculate total views, likes, and comments across all books
 		long totalViews = authorBooks.stream().mapToLong(Book::getViewCount).sum();
-		long totalFavourites = authorBooks.stream().mapToLong(book -> book.getFavoured().size()).sum();
+		long totalFavourites = authorBooks.stream().mapToLong(book -> 
+			bookFavouriteRepository.countByBookId(book.getId())
+		).sum();
 		long totalComments = authorBooks.stream().mapToLong(book -> book.getComments().size()).sum();
 		
 		dashboard.setTotalViews(totalViews);

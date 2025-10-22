@@ -2,8 +2,8 @@ package com.nix.controller;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -25,11 +25,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.nix.dtos.BookDTO;
 import com.nix.dtos.CategoryDTO;
 import com.nix.enums.NotificationEntityType;
-import com.nix.models.Book;
 import com.nix.models.User;
 import com.nix.service.BookService;
-import com.nix.service.NotificationService; // Add this import
+import com.nix.service.NotificationService;
 import com.nix.service.UserService;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 public class BookController {
@@ -50,17 +51,13 @@ public class BookController {
 		Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
 		Page<BookDTO> booksPage = bookService.getAllBooks(pageable);
 
-		boolean isAuthenticated = jwt != null;
+		boolean isAuthenticated = jwt != null && !jwt.isBlank();
 		if (isAuthenticated) {
 			User user = userService.findUserByJwt(jwt);
 			if (user != null) {
-				// Get the list of followed book IDs in a single query
-				List<UUID> followedBookIds = user.getFollowedBooks().stream().map(Book::getId)
-						.collect(Collectors.toList());
-
-				booksPage.getContent().forEach(bookDTO -> {
-					bookDTO.setFollowedByCurrentUser(followedBookIds.contains(bookDTO.getId()));
-				});
+				Set<UUID> favouriteBookIds = bookService.getFavouriteBookIdsForUser(user.getId());
+				booksPage.getContent().forEach(bookDTO -> bookDTO
+					.setFollowedByCurrentUser(favouriteBookIds.contains(bookDTO.getId())));
 			}
 		}
 
@@ -233,11 +230,26 @@ public class BookController {
 		return ResponseEntity.noContent().build();
 	}
 
+	@PostMapping("/books/{bookId}/views")
+	public ResponseEntity<Long> recordBookView(@PathVariable UUID bookId,
+			@RequestHeader(value = "Authorization", required = false) String jwt,
+			HttpServletRequest request) {
+		UUID viewerId = null;
+		if (jwt != null && !jwt.isBlank()) {
+			User viewer = userService.findUserByJwt(jwt);
+			if (viewer != null) {
+				viewerId = viewer.getId();
+			}
+		}
+		long updatedCount = bookService.recordBookView(bookId, viewerId, request.getRemoteAddr());
+		return ResponseEntity.status(HttpStatus.ACCEPTED).body(updatedCount);
+	}
+
 	@PutMapping("/api/books/follow/{bookId}")
 	public ResponseEntity<Boolean> markBookAsFavoured(@RequestHeader("Authorization") String jwt,
 			@PathVariable UUID bookId) {
 		User reqUser = userService.findUserByJwt(jwt);
-		boolean isFollowed = bookService.markAsFavouriteBook(bookService.getBookById(bookId), reqUser);
+		boolean isFollowed = bookService.markAsFavouriteBook(bookId, reqUser);
 		return ResponseEntity.ok(isFollowed);
 	}
 

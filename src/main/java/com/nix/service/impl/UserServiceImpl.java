@@ -28,6 +28,7 @@ import com.nix.dtos.UserDTO;
 import com.nix.dtos.mappers.BookMapper;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
+import com.nix.models.BookFavourite;
 import com.nix.models.Category;
 import com.nix.models.Comment;
 import com.nix.models.ReadingProgress;
@@ -35,6 +36,7 @@ import com.nix.models.Role;
 import com.nix.models.Tag;
 import com.nix.models.User;
 import com.nix.models.UserFollow;
+import com.nix.repository.BookFavouriteRepository;
 import com.nix.repository.BookRepository;
 import com.nix.repository.CommentRepository;
 import com.nix.repository.RatingRepository;
@@ -43,6 +45,7 @@ import com.nix.repository.RoleRepository;
 import com.nix.repository.UserFollowRepository;
 import com.nix.repository.UserRepository;
 import com.nix.service.UserService;
+import com.nix.service.UserWalletService;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -77,7 +80,13 @@ public class UserServiceImpl implements UserService {
 	BookRepository bookRepository;
 
 	@Autowired
+	BookFavouriteRepository bookFavouriteRepository;
+
+	@Autowired
 	BookMapper bookMapper;
+
+	@Autowired
+	UserWalletService userWalletService;
 
 	@Override
 	public Page<User> getAllUsers(int page, int size, String searchTerm) {
@@ -115,6 +124,7 @@ public class UserServiceImpl implements UserService {
 		newUser.setRole(roleRepo.findByName("USER"));
 
 		User savedUser = userRepo.save(newUser);
+		userWalletService.getOrCreateWallet(savedUser.getId());
 		sendMail(savedUser, "Welcome to our fandom!", "Dear [[username]],<br>"
 				+ "Your OTP code to complete signing up is: <b>[[OTP]]</b><br>" + "Thank you,<br>" + "nixOMG.");
 		;
@@ -205,9 +215,11 @@ public class UserServiceImpl implements UserService {
 				commentRepo.deleteAll(comments);
 
 				user.getRole().getUsers().remove(user);
-				user.getFollowedBooks().forEach(book -> book.getFavoured().remove(user));
+				List<BookFavourite> userFavourites = bookFavouriteRepository.findByUserId(userId);
+				bookFavouriteRepository.deleteAll(userFavourites);
 				user.getLikedComments().forEach(comment -> comment.getLikedUsers().remove(user));
 				user.getLikedPosts().forEach(post -> post.getLikedUsers().remove(user));
+				userWalletService.deleteWallet(userId);
 				userRepo.delete(user);
 
 			}

@@ -13,6 +13,7 @@ import com.nix.models.Role;
 import com.nix.models.User;
 import com.nix.repository.RoleRepository;
 import com.nix.repository.UserRepository;
+import com.nix.service.UserWalletService;
 
 @Component
 public class SetupDataLoader implements ApplicationListener<ContextRefreshedEvent> {
@@ -23,6 +24,8 @@ public class SetupDataLoader implements ApplicationListener<ContextRefreshedEven
 	@Autowired
 	private RoleRepository roleRepo;
 
+	@Autowired
+	private UserWalletService userWalletService;
 
 	@Autowired
 	private PasswordEncoder passEncoder;
@@ -44,7 +47,6 @@ public class SetupDataLoader implements ApplicationListener<ContextRefreshedEven
 	        user.setUsername("Admin");
 	        user.setAvatarUrl("https://res.cloudinary.com/ds2ykbawv/image/upload/v1729779030/Chapter_7_reaewqewq/blob_cvrgif.png");
 	        user.setBio("I am admin");
-	        user.setCredits(9999999);
 	        user.setFullname("Duy Tân");
 	        user.setGender("Male");
 	        user.setRole(adminRole);
@@ -52,7 +54,8 @@ public class SetupDataLoader implements ApplicationListener<ContextRefreshedEven
 	        user.setIsSuspended(false);
 	        user.setBanned(false);
 	        user.setBirthdate(LocalDate.now());
-	        userRepo.save(user);
+	        user = userRepo.save(user);
+	        userWalletService.addCredits(user.getId(), 9_999_999);
 	    }
 
 	}

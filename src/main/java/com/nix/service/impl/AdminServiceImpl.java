@@ -29,6 +29,7 @@ import com.nix.models.Chapter;
 import com.nix.models.User;
 import com.nix.repository.AuthorEarningRepository;
 import com.nix.repository.AuthorPayoutRepository;
+import com.nix.repository.BookFavouriteRepository;
 import com.nix.repository.BookRepository;
 import com.nix.repository.ChapterRepository;
 import com.nix.repository.PurchaseRepository;
@@ -47,6 +48,9 @@ public class AdminServiceImpl implements AdminService {
 
 	@Autowired
 	private BookRepository bookRepository;
+
+	@Autowired
+	private BookFavouriteRepository bookFavouriteRepository;
 
 	@Autowired
 	private ChapterRepository chapterRepository;
@@ -147,7 +151,7 @@ public class AdminServiceImpl implements AdminService {
 				.map(book -> new PopularBookDTO(book.getId(), book.getTitle(), book.getAuthorName(),
 						book.getViewCount(), 0L, // Unlock count - simplified
 						0.0, // Rating - simplified
-						(long) book.getFavoured().size()))
+						bookFavouriteRepository.countByBookId(book.getId())))
 				.collect(Collectors.toList());
 		contentAnalytics.setPopularBooks(popularBooks);
 

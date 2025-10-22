@@ -21,6 +21,7 @@ import com.nix.repository.PurchaseRepository;
 import com.nix.repository.UserRepository;
 import com.nix.service.NotificationService;
 import com.nix.service.PaymentService;
+import com.nix.service.UserWalletService;
 import com.paypal.sdk.PaypalServerSdkClient;
 import com.paypal.sdk.controllers.OrdersController;
 import com.paypal.sdk.exceptions.ApiException;
@@ -61,6 +62,9 @@ public class PaymentServiceImpl implements PaymentService {
 
 	@Autowired
 	private PaypalServerSdkClient client;
+
+	@Autowired
+	private UserWalletService userWalletService;
 
 	@PostConstruct
 	public void init() {
@@ -115,9 +119,8 @@ public class PaymentServiceImpl implements PaymentService {
 			throw new Exception("Payment verification failed for " + provider + " payment: " + paymentIntentId);
 		}
 
-		// Update user credits
-		user.setCredits(user.getCredits() + creditPackage.getCreditAmount());
-		userRepository.save(user);
+		// Update user wallet balance
+		userWalletService.addCredits(userId, creditPackage.getCreditAmount());
 
 		// Create Purchase record
 		Purchase purchase = new Purchase();

@@ -23,6 +23,7 @@ import com.nix.dtos.AuthorDashboardDTO;
 import com.nix.dtos.AuthorEarningDTO;
 import com.nix.dtos.AuthorPayoutDTO;
 import com.nix.dtos.AuthorPayoutSettingsDTO;
+import com.nix.dtos.BookDTO;
 import com.nix.dtos.BookPerformanceDTO;
 import com.nix.models.AuthorPayoutSettings;
 import com.nix.models.User;
@@ -210,6 +211,26 @@ public class AuthorDashboardController {
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 					.body("Error fetching book performance: " + e.getMessage());
+		}
+	}
+
+	@GetMapping("/books/search")
+	public ResponseEntity<?> searchAuthorBooks(@RequestHeader("Authorization") String jwt,
+			@RequestParam(required = false) String query, @RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "id") String sortBy) {
+		try {
+			User author = userService.findUserByJwt(jwt);
+			if (author == null) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+			}
+
+			Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+			Page<BookDTO> books = bookService.searchBooksForAuthor(author.getId(), query, pageable);
+			return ResponseEntity.ok(books);
+
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Error searching books: " + e.getMessage());
 		}
 	}
 }

@@ -24,7 +24,8 @@ public class UserMapper implements Mapper<User, UserDTO> {
 		userDTO.setEmail(user.getEmail());
 		userDTO.setBirthdate(user.getBirthdate());
 		userDTO.setRole(roleMapper.mapToDTO(user.getRole()));
-		userDTO.setCredits(user.getCredits());
+		int balance = user.getWallet() != null ? user.getWallet().getBalance() : 0;
+		userDTO.setCredits(balance);
 		userDTO.setAvatarUrl(user.getAvatarUrl());
 		userDTO.setFullname(user.getFullname());
 		userDTO.setBio(user.getBio());

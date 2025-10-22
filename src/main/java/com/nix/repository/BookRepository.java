@@ -24,24 +24,20 @@ public interface BookRepository extends JpaRepository<Book, UUID> {
 	@Query("select b from Book b where b.title LIKE %:title%")
 	public List<Book> findByTitle(String title);
 
-	@Query("select b from Book b join b.favoured u where u.id = :userId")
-	public List<Book> findByUserFavoured(@Param("userId") UUID userId);
-
-	@Query("SELECT b FROM Book b LEFT JOIN b.favoured u GROUP BY b.id ORDER BY COUNT(u) DESC LIMIT 10")
-	public List<Book> findTopBooksByLikes();
+	@Query("SELECT b FROM Book b LEFT JOIN b.favourites fav GROUP BY b.id ORDER BY COUNT(fav) DESC")
+	public List<Book> findTopBooksByLikes(Pageable pageable);
 
 	List<Book> findByTitleContainingIgnoreCase(String title);
 
 	Page<Book> findByAuthorId(UUID authorId, Pageable pageable);
+
+	Page<Book> findByAuthorIdAndTitleContainingIgnoreCase(UUID authorId, String title, Pageable pageable);
 
 	List<Book> findByIsSuggested(Boolean isSuggested);
 
 	List<Book> findByStatus(String status);
 
 	Page<Book> findByCategory(Category category, Pageable pageable);
-
-	@Query("select b from Book b join b.favoured u where u.id = :userId")
-	Page<Book> findByUserFavoured(@Param("userId") UUID userId, Pageable pageable);
 
 	List<Book> findByTagsIn(List<Integer> tagIds);
 	
@@ -62,7 +58,7 @@ public interface BookRepository extends JpaRepository<Book, UUID> {
 	@Query("SELECT b FROM Book b ORDER BY b.viewCount DESC")
 	List<Book> findMostViewedBooks(Pageable pageable);
 
-	@Query("SELECT b FROM Book b ORDER BY SIZE(b.favoured) DESC")
+	@Query("SELECT b FROM Book b LEFT JOIN b.favourites fav GROUP BY b ORDER BY COUNT(fav) DESC")
 	List<Book> findMostFavoriteBooks(Pageable pageable);
 
 	@Query("SELECT b FROM Book b LEFT JOIN ChapterUnlockRecord cur ON cur.chapter.book = b GROUP BY b ORDER BY COUNT(cur) DESC")
