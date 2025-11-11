@@ -15,9 +15,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nix.dtos.CategoryDTO;
 import com.nix.dtos.mappers.CategoryMapper;
 import com.nix.models.Category;
 import com.nix.models.User;
+import com.nix.response.ApiResponseWithData;
 import com.nix.service.CategoryService;
 import com.nix.service.UserService;
 
@@ -34,75 +36,98 @@ public class CategoryController {
 	CategoryMapper categoryMapper;
 
 	@GetMapping("/categories")
-	public ResponseEntity<?> getAllCategories() {
+	public ResponseEntity<ApiResponseWithData<List<CategoryDTO>>> getAllCategories() {
 		List<Category> categories = categoryService.findAllCategories();
-		return ResponseEntity.ok(categoryMapper.mapToDTOs(categories));
+		List<CategoryDTO> categoryDTOs = categoryMapper.mapToDTOs(categories);
+		ApiResponseWithData<List<CategoryDTO>> response = new ApiResponseWithData<>(
+				"Categories retrieved successfully.", true, categoryDTOs);
+		return ResponseEntity.ok(response);
 	}
 
 	@GetMapping("/categories/{categoryId}")
-	public ResponseEntity<?> getCategoryById(@PathVariable Integer categoryId) {
+	public ResponseEntity<ApiResponseWithData<CategoryDTO>> getCategoryById(@PathVariable Integer categoryId) {
 		try {
 			Category category = categoryService.findCategoryById(categoryId);
-			return ResponseEntity.ok(categoryMapper.mapToDTO(category));
+			ApiResponseWithData<CategoryDTO> response = new ApiResponseWithData<>(
+					"Category retrieved successfully.", true, categoryMapper.mapToDTO(category));
+			return ResponseEntity.ok(response);
 		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(new ApiResponseWithData<>(e.getMessage(), false));
 		}
 	}
 
 	@GetMapping("/books/{bookId}/categories")
-	public ResponseEntity<?> getCategoriesByBook(@PathVariable UUID bookId) throws Exception {
+	public ResponseEntity<ApiResponseWithData<List<CategoryDTO>>> getCategoriesByBook(@PathVariable UUID bookId)
+			throws Exception {
 		try {
 			List<Category> categories = categoryService.findALlCategoriesByBookId(bookId);
-
-			return ResponseEntity.ok(categoryMapper.mapToDTOs(categories));
+			List<CategoryDTO> categoryDTOs = categoryMapper.mapToDTOs(categories);
+			ApiResponseWithData<List<CategoryDTO>> response = new ApiResponseWithData<>(
+					"Categories retrieved successfully.", true, categoryDTOs);
+			return ResponseEntity.ok(response);
 		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(new ApiResponseWithData<>(e.getMessage(), false));
 		}
 	}
 
 	@PostMapping("/admin/categories")
-	public ResponseEntity<?> addNewCategory(@RequestHeader("Authorization") String jwt, @RequestBody Category category)
-			throws Exception {
+	public ResponseEntity<ApiResponseWithData<CategoryDTO>> addNewCategory(@RequestHeader("Authorization") String jwt,
+			@RequestBody Category category) throws Exception {
 		User user = userService.findUserByJwt(jwt);
 		if (!user.getRole().getName().equals("ADMIN") && !user.getRole().getName().equals("TRANSLATOR")) {
-			return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
+			return ResponseEntity.status(HttpStatus.FORBIDDEN)
+					.body(new ApiResponseWithData<>("You do not have permission to manage categories.", false));
 		}
 		try {
 			Category newCategory = categoryService.addNewCategory(category);
-
-			return ResponseEntity.ok(categoryMapper.mapToDTO(newCategory));
+			CategoryDTO newCategoryDTO = categoryMapper.mapToDTO(newCategory);
+			ApiResponseWithData<CategoryDTO> response = new ApiResponseWithData<>(
+					"Category created successfully.", true, newCategoryDTO);
+			return ResponseEntity.status(HttpStatus.CREATED).body(response);
 		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body(new ApiResponseWithData<>(e.getMessage(), false));
 		}
 	}
 
 	@PutMapping("/admin/categories/{categoryId}")
-	public ResponseEntity<?> editCategory(@RequestHeader("Authorization") String jwt, @PathVariable Integer categoryId,
-			@RequestBody Category category) throws Exception {
+	public ResponseEntity<ApiResponseWithData<CategoryDTO>> editCategory(@RequestHeader("Authorization") String jwt,
+			@PathVariable Integer categoryId, @RequestBody Category category) throws Exception {
 		User user = userService.findUserByJwt(jwt);
 		if (!user.getRole().getName().equals("ADMIN") && !user.getRole().getName().equals("TRANSLATOR")) {
-			return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
+			return ResponseEntity.status(HttpStatus.FORBIDDEN)
+					.body(new ApiResponseWithData<>("You do not have permission to manage categories.", false));
 		}
 		try {
 			Category editCategory = categoryService.editCategory(categoryId, category);
-
-			return ResponseEntity.ok(categoryMapper.mapToDTO(editCategory));
+			CategoryDTO editCategoryDTO = categoryMapper.mapToDTO(editCategory);
+			ApiResponseWithData<CategoryDTO> response = new ApiResponseWithData<>(
+					"Category updated successfully.", true, editCategoryDTO);
+			return ResponseEntity.ok(response);
 		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body(new ApiResponseWithData<>(e.getMessage(), false));
 		}
 	}
 
 	@DeleteMapping("/admin/categories/{categoryId}")
-	public ResponseEntity<?> deleteTag(@RequestHeader("Authorization") String jwt, @PathVariable Integer categoryId)
-			throws Exception {
+	public ResponseEntity<ApiResponseWithData<String>> deleteTag(@RequestHeader("Authorization") String jwt,
+			@PathVariable Integer categoryId) throws Exception {
 		User user = userService.findUserByJwt(jwt);
 		if (!user.getRole().getName().equals("ADMIN") && !user.getRole().getName().equals("TRANSLATOR")) {
-			return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
+			return ResponseEntity.status(HttpStatus.FORBIDDEN)
+					.body(new ApiResponseWithData<>("You do not have permission to manage categories.", false));
 		}
 		try {
-			return ResponseEntity.ok(categoryService.deleteCategory(categoryId));
+			String result = categoryService.deleteCategory(categoryId);
+			ApiResponseWithData<String> response = new ApiResponseWithData<>(
+					"Category deleted successfully.", true, result);
+			return ResponseEntity.ok(response);
 		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body(new ApiResponseWithData<>(e.getMessage(), false));
 		}
 	}
 }

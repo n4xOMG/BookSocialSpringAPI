@@ -3,6 +3,7 @@ package com.nix.config;
 import java.time.LocalDate;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +18,12 @@ import com.nix.service.UserWalletService;
 
 @Component
 public class SetupDataLoader implements ApplicationListener<ContextRefreshedEvent> {
+
+	@Value("${admin.email:}")
+	private String adminEmail;
+
+	@Value("${admin.pass:}")
+	private String adminPass;
 
 	@Autowired
 	private UserRepository userRepo;
@@ -40,23 +47,24 @@ public class SetupDataLoader implements ApplicationListener<ContextRefreshedEven
 		Role adminRole = roleRepo.findByName("ADMIN");
 		User user = userRepo.findByEmail("tanlmht859a@gmail.com");
 
-	    if (user == null) {
-	        user = new User();
-	        user.setPassword(passEncoder.encode("n/xOMG859"));
-	        user.setEmail("tanlmht859a@gmail.com");
-	        user.setUsername("Admin");
-	        user.setAvatarUrl("https://res.cloudinary.com/ds2ykbawv/image/upload/v1729779030/Chapter_7_reaewqewq/blob_cvrgif.png");
-	        user.setBio("I am admin");
-	        user.setFullname("Duy Tân");
-	        user.setGender("Male");
-	        user.setRole(adminRole);
-	        user.setIsVerified(true);
-	        user.setIsSuspended(false);
-	        user.setBanned(false);
-	        user.setBirthdate(LocalDate.now());
-	        user = userRepo.save(user);
-	        userWalletService.addCredits(user.getId(), 9_999_999);
-	    }
+		if (user == null) {
+			user = new User();
+			user.setPassword(passEncoder.encode(adminPass));
+			user.setEmail(adminEmail);
+			user.setUsername("Admin");
+			user.setAvatarUrl(
+					"https://res.cloudinary.com/ds2ykbawv/image/upload/v1729779030/Chapter_7_reaewqewq/blob_cvrgif.png");
+			user.setBio("I am admin");
+			user.setFullname("Duy Tân");
+			user.setGender("Male");
+			user.setRole(adminRole);
+			user.setIsVerified(true);
+			user.setIsSuspended(false);
+			user.setBanned(false);
+			user.setBirthdate(LocalDate.now());
+			user = userRepo.save(user);
+			userWalletService.addCredits(user.getId(), 9_999_999);
+		}
 
 	}
 

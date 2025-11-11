@@ -47,6 +47,6 @@ public class Notification implements Serializable {
 	private List<UserNotification> userNotifications = new ArrayList<>();
 
 	@Enumerated(EnumType.STRING)
-	private NotificationEntityType entityType; // e.g., BOOK, CHAPTER, COMMENT, PAYMENT, GLOBAL
+	private NotificationEntityType entityType;
 	private UUID entityId;
 }

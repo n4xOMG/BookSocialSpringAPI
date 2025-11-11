@@ -1,6 +1,7 @@
 package com.nix.service.impl;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
@@ -45,15 +46,21 @@ public class PayPalPayoutServiceImpl implements PayPalPayoutService {
 		if (clientId == null || clientId.isBlank() || clientSecret == null || clientSecret.isBlank()) {
 			throw new IllegalStateException("PayPal credentials not configured");
 		}
+		if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new IllegalArgumentException("Payout amount must be greater than zero");
+		}
 
 		String accessToken = obtainAccessToken();
+		BigDecimal normalizedAmount = amount.setScale(2, RoundingMode.HALF_UP);
+		String normalizedCurrency = currency == null ? "USD" : currency.toUpperCase();
 
 		// Build minimal Payouts request payload
 		String senderBatchId = UUID.randomUUID().toString();
 		String payload = "{\n" + "  \"sender_batch_header\": {\n" + "    \"sender_batch_id\": \"" + senderBatchId
 				+ "\",\n" + "    \"email_subject\": \"You have a payout\"\n" + "  },\n" + "  \"items\": [\n" + "    {\n"
 				+ "      \"recipient_type\": \"EMAIL\",\n" + "      \"amount\": {\n" + "        \"value\": \""
-				+ amount.toPlainString() + "\",\n" + "        \"currency\": \"" + currency + "\"\n" + "      },\n"
+				+ normalizedAmount.toPlainString() + "\",\n" + "        \"currency\": \"" + normalizedCurrency + "\"\n"
+				+ "      },\n"
 				+ "      \"receiver\": \"" + paypalEmail + "\",\n" + "      \"note\": \""
 				+ (note == null ? "" : note.replace("\"", "'")) + "\"\n" + "    }\n" + "  ]\n" + "}";
 
@@ -107,18 +114,18 @@ public class PayPalPayoutServiceImpl implements PayPalPayoutService {
 			}
 
 			switch (batchStatus.toUpperCase()) {
-			case "SUCCESS":
-				return PayPalPayoutStatus.SUCCESS;
-			case "PENDING":
-				return PayPalPayoutStatus.PENDING;
-			case "PROCESSING":
-				return PayPalPayoutStatus.PROCESSING;
-			case "DENIED":
-			case "FAILED":
-			case "CANCELED":
-				return PayPalPayoutStatus.FAILED;
-			default:
-				return PayPalPayoutStatus.UNKNOWN;
+				case "SUCCESS":
+					return PayPalPayoutStatus.SUCCESS;
+				case "PENDING":
+					return PayPalPayoutStatus.PENDING;
+				case "PROCESSING":
+					return PayPalPayoutStatus.PROCESSING;
+				case "DENIED":
+				case "FAILED":
+				case "CANCELED":
+					return PayPalPayoutStatus.FAILED;
+				default:
+					return PayPalPayoutStatus.UNKNOWN;
 			}
 		} catch (RestClientException ex) {
 			throw new Exception("PayPal payout status request failed: " + ex.getMessage(), ex);
@@ -176,10 +183,12 @@ public class PayPalPayoutServiceImpl implements PayPalPayoutService {
 	}
 
 	// Minimal mapping classes for JSON parsing
+	@SuppressWarnings("unused")
 	private static class PayPalAccessTokenResponse {
 		public String access_token;
 	}
 
+	@SuppressWarnings("unused")
 	private static class PayPalPayoutResponse {
 		public PayPalBatchHeader batch_header;
 
@@ -189,6 +198,7 @@ public class PayPalPayoutServiceImpl implements PayPalPayoutService {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private static class PayPalPayoutStatusResponse {
 		public PayPalBatchHeader batch_header;
 

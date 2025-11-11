@@ -1,8 +1,10 @@
 package com.nix.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.nix.dtos.PostDTO;
 import com.nix.dtos.mappers.PostMapper;
 import com.nix.enums.NotificationEntityType;
+import com.nix.exception.ForbiddenAccessException;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.Book;
 import com.nix.models.Chapter;
@@ -23,6 +26,7 @@ import com.nix.models.User;
 import com.nix.repository.BookRepository;
 import com.nix.repository.ChapterRepository;
 import com.nix.repository.PostRepository;
+import com.nix.repository.UserBlockRepository;
 import com.nix.repository.UserRepository;
 import com.nix.service.NotificationService;
 import com.nix.service.PostService;
@@ -35,6 +39,9 @@ public class PostServiceImpl implements PostService {
 
 	@Autowired
 	private UserRepository userRepository;
+
+	@Autowired
+	private UserBlockRepository userBlockRepository;
 
 	@Autowired
 	private ChapterRepository chapterRepository;
@@ -50,11 +57,44 @@ public class PostServiceImpl implements PostService {
 
 	@Override
 	public Page<PostDTO> getAllPosts(Pageable pageable, User currentUser) {
-		Page<Post> postsPage = postRepository.findAll(pageable);
+		Page<Post> postsPage;
 		if (currentUser != null) {
+			Set<UUID> excludedUserIds = resolveExcludedUserIds(currentUser.getId());
+			if (excludedUserIds.isEmpty()) {
+				postsPage = postRepository.findAll(pageable);
+			} else {
+				postsPage = postRepository.findByUser_IdNotIn(List.copyOf(excludedUserIds), pageable);
+			}
 			return postsPage.map(post -> postMapper.mapToDTO(post, currentUser));
-		} else {
-			return postsPage.map(postMapper::mapToDTO);
+		}
+		postsPage = postRepository.findAll(pageable);
+		return postsPage.map(postMapper::mapToDTO);
+	}
+
+	private Set<UUID> resolveExcludedUserIds(UUID currentUserId) {
+		if (currentUserId == null) {
+			return Set.of();
+		}
+		Set<UUID> excluded = new HashSet<>();
+		Set<UUID> blockerIds = userBlockRepository.findBlockerIdsByBlockedId(currentUserId);
+		if (blockerIds != null) {
+			excluded.addAll(blockerIds);
+		}
+		Set<UUID> blockedIds = userBlockRepository.findBlockedIdsByBlockerId(currentUserId);
+		if (blockedIds != null) {
+			excluded.addAll(blockedIds);
+		}
+		return excluded;
+	}
+
+	private void ensureNotBlocked(UUID viewerId, UUID ownerId) {
+		if (viewerId == null || ownerId == null) {
+			return;
+		}
+		if (userBlockRepository.existsByBlockerIdAndBlockedId(ownerId, viewerId)
+				|| userBlockRepository.existsByBlockerIdAndBlockedId(viewerId, ownerId)) {
+			throw new ForbiddenAccessException(
+					"You cannot interact with this content because one of the accounts has blocked the other.");
 		}
 	}
 
@@ -65,6 +105,9 @@ public class PostServiceImpl implements PostService {
 
 	@Override
 	public List<PostDTO> getPostsByUser(User user, User currentUser) {
+		if (currentUser != null) {
+			ensureNotBlocked(currentUser.getId(), user.getId());
+		}
 		List<Post> posts = postRepository.findByUser(user);
 		if (currentUser != null) {
 			return postMapper.mapToDTOs(posts, currentUser);
@@ -82,6 +125,10 @@ public class PostServiceImpl implements PostService {
 	public PostDTO getPostById(UUID postId, User currentUser) {
 		Post post = postRepository.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post not found with id " + postId));
+
+		if (currentUser != null) {
+			ensureNotBlocked(currentUser.getId(), post.getUser().getId());
+		}
 
 		if (currentUser != null) {
 			return postMapper.mapToDTO(post, currentUser);
@@ -155,6 +202,12 @@ public class PostServiceImpl implements PostService {
 	public PostDTO likePost(UUID postId, User user) {
 		Post post = postRepository.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post not found with id " + postId));
+
+		if (userBlockRepository.existsByBlockerIdAndBlockedId(post.getUser().getId(), user.getId())
+				|| userBlockRepository.existsByBlockerIdAndBlockedId(user.getId(), post.getUser().getId())) {
+			throw new ForbiddenAccessException(
+					"You cannot interact with this content because one of the accounts has blocked the other.");
+		}
 
 		boolean wasLiked = post.getLikedUsers().contains(user);
 

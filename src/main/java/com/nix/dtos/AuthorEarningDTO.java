@@ -24,6 +24,7 @@ public class AuthorEarningDTO {
 	private BigDecimal platformFee;
 	private BigDecimal netAmount;
 	private BigDecimal platformFeePercentage;
+	private String currency;
 	private LocalDateTime earnedDate;
 	private boolean isPaidOut;
 	private UUID payoutId;

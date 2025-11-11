@@ -2,6 +2,7 @@ package com.nix.models;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class AuthorPayout implements Serializable {
 	private static final long serialVersionUID = 1L;
+	private static final String DEFAULT_CURRENCY = "USD";
 
 	@Id
 	@UuidGenerator
@@ -48,6 +50,9 @@ public class AuthorPayout implements Serializable {
 
 	@Column(precision = 10, scale = 2, nullable = false)
 	private BigDecimal platformFeesDeducted; // Total platform fees from this payout
+
+	@Column(length = 3, nullable = false, columnDefinition = "varchar(3) default 'USD'")
+	private String currency = DEFAULT_CURRENCY;
 
 	private LocalDateTime requestedDate; // When payout was requested
 	private LocalDateTime processedDate; // When payout was processed
@@ -70,11 +75,27 @@ public class AuthorPayout implements Serializable {
 
 	// Constructor for creating new payout
 	public AuthorPayout(User author, BigDecimal totalAmount, BigDecimal platformFeesDeducted) {
+		this(author, totalAmount, platformFeesDeducted, DEFAULT_CURRENCY);
+	}
+
+	public AuthorPayout(User author, BigDecimal totalAmount, BigDecimal platformFeesDeducted, String currency) {
 		this.author = author;
-		this.totalAmount = totalAmount;
-		this.platformFeesDeducted = platformFeesDeducted;
+		this.totalAmount = scaleCurrency(totalAmount);
+		this.platformFeesDeducted = scaleCurrency(platformFeesDeducted);
+		setCurrency(currency);
 		this.requestedDate = LocalDateTime.now();
 		this.status = PayoutStatus.PENDING;
+	}
+
+	private BigDecimal scaleCurrency(BigDecimal value) {
+		if (value == null) {
+			return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+		}
+		return value.setScale(2, RoundingMode.HALF_UP);
+	}
+
+	public void setCurrency(String currency) {
+		this.currency = (currency == null || currency.isBlank()) ? DEFAULT_CURRENCY : currency.toUpperCase();
 	}
 
 	public enum PayoutStatus {

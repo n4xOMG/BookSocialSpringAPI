@@ -1,6 +1,8 @@
 package com.nix.service.impl;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -42,6 +44,7 @@ import com.stripe.model.PaymentIntent;
 import com.stripe.param.PaymentIntentCreateParams;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.transaction.Transactional;
 
 @Service
 public class PaymentServiceImpl implements PaymentService {
@@ -99,6 +102,7 @@ public class PaymentServiceImpl implements PaymentService {
 	}
 
 	@Override
+	@Transactional
 	public void confirmPayment(UUID userId, Long creditPackageId, String paymentIntentId, PaymentProvider provider)
 			throws Exception {
 		// Check if purchase already exists for idempotency
@@ -126,12 +130,13 @@ public class PaymentServiceImpl implements PaymentService {
 		Purchase purchase = new Purchase();
 		purchase.setUser(user);
 		purchase.setCreditPackage(creditPackage);
-		purchase.setAmount(creditPackage.getCreditAmount());
+		purchase.setAmount(BigDecimal.valueOf(creditPackage.getPrice()).setScale(2, RoundingMode.HALF_UP));
 		purchase.setPurchaseDate(LocalDateTime.now());
 		purchase.setPaymentIntentId(paymentIntentId);
 		purchase.setPaymentProvider(provider);
 		purchase.setStatus(PaymentStatus.COMPLETED);
 		purchase.setCurrency("USD");
+		purchase.setCreditsPurchased(creditPackage.getCreditAmount());
 
 		purchaseRepository.save(purchase);
 
@@ -142,13 +147,13 @@ public class PaymentServiceImpl implements PaymentService {
 
 	private boolean verifyPayment(String paymentIntentId, PaymentProvider provider) throws Exception {
 		switch (provider) {
-		case STRIPE:
-			return verifyStripePayment(paymentIntentId);
-		case PAYPAL:
-			// For PayPal, since react-paypal-js handles the flow client-side
-			return paymentIntentId != null && !paymentIntentId.isBlank();
-		default:
-			throw new IllegalArgumentException("Unsupported payment provider: " + provider);
+			case STRIPE:
+				return verifyStripePayment(paymentIntentId);
+			case PAYPAL:
+				// For PayPal, since react-paypal-js handles the flow client-side
+				return paymentIntentId != null && !paymentIntentId.isBlank();
+			default:
+				throw new IllegalArgumentException("Unsupported payment provider: " + provider);
 		}
 	}
 
@@ -173,7 +178,8 @@ public class PaymentServiceImpl implements PaymentService {
 		CreateOrderInput createOrderInput = new CreateOrderInput.Builder(null, new OrderRequest.Builder(
 				CheckoutPaymentIntent.fromString("CAPTURE"),
 				Arrays.asList(new PurchaseUnitRequest.Builder(new AmountWithBreakdown.Builder("USD", priceString)
-						.breakdown(new AmountBreakdown.Builder().itemTotal(new Money("USD", priceString)).build()).build())
+						.breakdown(new AmountBreakdown.Builder().itemTotal(new Money("USD", priceString)).build())
+						.build())
 						.items(
 								Arrays.asList(new Item.Builder(creditPackage.getName(),
 										new Money.Builder("USD", priceString).build(), "1")

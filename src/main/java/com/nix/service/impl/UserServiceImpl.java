@@ -1,7 +1,9 @@
 package com.nix.service.impl;
 
 import java.io.UnsupportedEncodingException;
+import java.sql.Date;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +13,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,6 +39,7 @@ import com.nix.models.ReadingProgress;
 import com.nix.models.Role;
 import com.nix.models.Tag;
 import com.nix.models.User;
+import com.nix.models.UserBlock;
 import com.nix.models.UserFollow;
 import com.nix.repository.BookFavouriteRepository;
 import com.nix.repository.BookRepository;
@@ -42,6 +47,7 @@ import com.nix.repository.CommentRepository;
 import com.nix.repository.RatingRepository;
 import com.nix.repository.ReadingProgressRepository;
 import com.nix.repository.RoleRepository;
+import com.nix.repository.UserBlockRepository;
 import com.nix.repository.UserFollowRepository;
 import com.nix.repository.UserRepository;
 import com.nix.service.UserService;
@@ -52,6 +58,8 @@ import jakarta.mail.internet.MimeMessage;
 
 @Service
 public class UserServiceImpl implements UserService {
+	private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+
 	@Autowired
 	private PasswordEncoder passEncoder;
 
@@ -87,6 +95,9 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	UserWalletService userWalletService;
+
+	@Autowired
+	UserBlockRepository userBlockRepository;
 
 	@Override
 	public Page<User> getAllUsers(int page, int size, String searchTerm) {
@@ -211,6 +222,16 @@ public class UserServiceImpl implements UserService {
 		try {
 			if (user != null) {
 
+				List<UserBlock> blockingRelations = userBlockRepository.findByBlocker(user);
+				if (!blockingRelations.isEmpty()) {
+					userBlockRepository.deleteAll(blockingRelations);
+				}
+
+				List<UserBlock> blockedByRelations = userBlockRepository.findByBlockedId(userId);
+				if (!blockedByRelations.isEmpty()) {
+					userBlockRepository.deleteAll(blockedByRelations);
+				}
+
 				List<Comment> comments = commentRepo.findByUserId(userId);
 				commentRepo.deleteAll(comments);
 
@@ -262,7 +283,7 @@ public class UserServiceImpl implements UserService {
 		content = content.replace("[[OTP]]", user.getVerificationCode());
 
 		helper.setText(content, true);
-		System.out.println("Mail sent to: " + user.getEmail());
+		logger.info("Mail sent to: {}", user.getEmail());
 		mailSender.send(message);
 	}
 
@@ -414,6 +435,99 @@ public class UserServiceImpl implements UserService {
 		unfollowedUser.getFollowers().remove(userFollow);
 
 		return userRepo.save(currentUser);
+	}
+
+	@Override
+	@Transactional
+	public User blockUser(UUID blockerId, UUID blockedUserId) {
+		if (blockerId == null || blockedUserId == null) {
+			throw new IllegalArgumentException("Invalid user identifiers supplied.");
+		}
+		if (blockerId.equals(blockedUserId)) {
+			throw new IllegalArgumentException("Users cannot block themselves.");
+		}
+
+		User blocker = userRepo.findById(blockerId)
+				.orElseThrow(() -> new ResourceNotFoundException("Current user not found."));
+		User blocked = userRepo.findById(blockedUserId)
+				.orElseThrow(() -> new ResourceNotFoundException("User to block not found."));
+
+		boolean targetIsAdmin = "ADMIN".equalsIgnoreCase(blocked.getRole().getName());
+		boolean blockerIsAdmin = "ADMIN".equalsIgnoreCase(blocker.getRole().getName());
+		if (targetIsAdmin && !blockerIsAdmin) {
+			throw new IllegalArgumentException("You cannot block an administrator account.");
+		}
+
+		if (userBlockRepository.existsByBlockerAndBlocked(blocker, blocked)) {
+			return blocker;
+		}
+
+		UserBlock block = new UserBlock();
+		block.setBlocker(blocker);
+		block.setBlocked(blocked);
+		block.setBlockDate(new Date(System.currentTimeMillis()));
+
+		userBlockRepository.save(block);
+		return blocker;
+	}
+
+	@Override
+	@Transactional
+	public void unblockUser(UUID blockerId, UUID blockedUserId) {
+		if (blockerId == null || blockedUserId == null) {
+			return;
+		}
+
+		userBlockRepository.findByBlockerIdAndBlockedId(blockerId, blockedUserId)
+				.ifPresent(userBlockRepository::delete);
+	}
+
+	@Override
+	public boolean isBlockedBy(UUID viewerId, UUID potentialBlockerId) {
+		if (viewerId == null || potentialBlockerId == null) {
+			return false;
+		}
+		return userBlockRepository.existsByBlockerIdAndBlockedId(potentialBlockerId, viewerId);
+	}
+
+	@Override
+	public boolean hasBlocked(UUID blockerId, UUID blockedUserId) {
+		if (blockerId == null || blockedUserId == null) {
+			return false;
+		}
+		return userBlockRepository.existsByBlockerIdAndBlockedId(blockerId, blockedUserId);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<User> getBlockedUsers(UUID blockerId) {
+		if (blockerId == null) {
+			return Collections.emptyList();
+		}
+		User blocker = userRepo.findById(blockerId)
+				.orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + blockerId));
+		return userBlockRepository.findByBlocker(blocker).stream().map(UserBlock::getBlocked)
+				.collect(Collectors.toList());
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Set<UUID> getUserIdsBlocking(UUID blockedUserId) {
+		if (blockedUserId == null) {
+			return Set.of();
+		}
+		Set<UUID> blockerIds = userBlockRepository.findBlockerIdsByBlockedId(blockedUserId);
+		return blockerIds == null ? Set.of() : blockerIds;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Set<UUID> getBlockedUserIds(UUID blockerId) {
+		if (blockerId == null) {
+			return Set.of();
+		}
+		Set<UUID> blockedIds = userBlockRepository.findBlockedIdsByBlockerId(blockerId);
+		return blockedIds == null ? Set.of() : blockedIds;
 	}
 
 	@Override

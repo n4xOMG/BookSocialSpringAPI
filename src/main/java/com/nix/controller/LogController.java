@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nix.response.ApiResponseWithData;
 import com.nix.service.LogReaderService;
 import com.nix.service.UserService;
 
@@ -24,24 +25,50 @@ public class LogController {
 	private UserService userService;
 
 	@GetMapping("/logs")
-	public ResponseEntity<?> getLogs(@RequestParam(defaultValue = "0") int page,
+	public ResponseEntity<ApiResponseWithData<Object>> getLogs(@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "20") int size) {
-		return ResponseEntity.ok(logReaderService.getRecentLogs(page, size));
+		try {
+			Object logs = logReaderService.getRecentLogs(page, size);
+			return buildSuccessResponse("Logs retrieved successfully.", logs);
+		} catch (Exception e) {
+			return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to retrieve logs: " + e.getMessage());
+		}
 	}
 
 	@GetMapping("/logs/user/{username}")
-	public ResponseEntity<?> getLogsByUser(@PathVariable String username, @RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "20") int size) {
-		return ResponseEntity.ok(logReaderService.getLogsByUsername(username, page, size));
+	public ResponseEntity<ApiResponseWithData<Object>> getLogsByUser(@PathVariable String username,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+		try {
+			Object logs = logReaderService.getLogsByUsername(username, page, size);
+			return buildSuccessResponse("Logs retrieved successfully.", logs);
+		} catch (Exception e) {
+			return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to retrieve logs for user: " + e.getMessage());
+		}
 	}
 
 	@GetMapping("/logs/current-user")
-	public ResponseEntity<?> getCurrentUserLogs(@RequestHeader("Authorization") String jwt,
+	public ResponseEntity<ApiResponseWithData<Object>> getCurrentUserLogs(@RequestHeader("Authorization") String jwt,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-		if (jwt != null) {
-			String username = userService.findUserByJwt(jwt).getEmail();
-			return ResponseEntity.ok(logReaderService.getLogsByUsername(username, page, size));
+		if (jwt == null || jwt.isBlank()) {
+			return buildErrorResponse(HttpStatus.UNAUTHORIZED, "User not authenticated");
 		}
-		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+		try {
+			String username = userService.findUserByJwt(jwt).getEmail();
+			Object logs = logReaderService.getLogsByUsername(username, page, size);
+			return buildSuccessResponse("Logs retrieved successfully.", logs);
+		} catch (Exception e) {
+			return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to retrieve current user logs: " + e.getMessage());
+		}
+	}
+
+	private <T> ResponseEntity<ApiResponseWithData<T>> buildSuccessResponse(String message, T data) {
+		return ResponseEntity.ok(new ApiResponseWithData<>(message, true, data));
+	}
+
+	private <T> ResponseEntity<ApiResponseWithData<T>> buildErrorResponse(HttpStatus status, String message) {
+		return ResponseEntity.status(status).body(new ApiResponseWithData<>(message, false));
 	}
 }

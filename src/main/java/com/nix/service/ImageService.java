@@ -14,6 +14,8 @@ import java.util.UUID;
 
 import javax.imageio.ImageIO;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,6 +25,8 @@ import net.coobird.thumbnailator.Thumbnails;
 
 @Service
 public class ImageService {
+
+	private static final Logger logger = LoggerFactory.getLogger(ImageService.class);
 
 	@Value("${file.upload-dir}")
 	private String uploadDir;
@@ -97,15 +101,14 @@ public class ImageService {
 	}
 
 	private byte[] processImage(MultipartFile file) throws IOException {
-		System.out.printf("Processing image: contentType={}, size={}", file.getContentType(), file.getSize());
-
+		logger.debug("Processing image: contentType={}, size={}", file.getContentType(), file.getSize());
 		// Read original image
 		BufferedImage originalImage = ImageIO.read(file.getInputStream());
 		if (originalImage == null) {
-			System.out.printf("Failed to read image file: contentType={}", file.getContentType());
+			logger.warn("Failed to read image file: contentType={}", file.getContentType());
 			throw new IOException("Failed to read image file");
 		}
-		System.out.printf("Original image dimensions: {}x{}", originalImage.getWidth(), originalImage.getHeight());
+		logger.debug("Original image dimensions: {}x{}", originalImage.getWidth(), originalImage.getHeight());
 
 		// Normalize to RGB to handle JPEG color model issues (e.g., CMYK)
 		BufferedImage rgbImage = new BufferedImage(originalImage.getWidth(), originalImage.getHeight(),
@@ -113,11 +116,11 @@ public class ImageService {
 		Graphics2D g = rgbImage.createGraphics();
 		g.drawImage(originalImage, 0, 0, null);
 		g.dispose();
-		System.out.printf("Converted image to RGB: {}x{}", rgbImage.getWidth(), rgbImage.getHeight());
+		logger.debug("Converted image to RGB: {}x{}", rgbImage.getWidth(), rgbImage.getHeight());
 
 		// Calculate optimal dimensions
 		int[] dimensions = calculateOptimalDimensions(rgbImage.getWidth(), rgbImage.getHeight());
-		System.out.printf("Calculated dimensions: {}x{}", dimensions[0], dimensions[1]);
+		logger.debug("Calculated dimensions: {}x{}", dimensions[0], dimensions[1]);
 
 		// Resize and convert to WebP using Thumbnails
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -125,10 +128,10 @@ public class ImageService {
 			Thumbnails.of(rgbImage).size(dimensions[0], dimensions[1]).outputFormat("webp")
 					.outputQuality(COMPRESSION_QUALITY).useExifOrientation(false).toOutputStream(outputStream);
 		} catch (Exception e) {
-			System.out.printf("Failed to process image with Thumbnails: contentType={}", file.getContentType(), e);
+			logger.error("Failed to process image with Thumbnails: contentType={}", file.getContentType(), e);
 			throw new IOException("Failed to process image: " + e.getMessage(), e);
 		}
-		System.out.printf("Image processed successfully, output size: {}", outputStream.size());
+		logger.debug("Image processed successfully, output size: {}", outputStream.size());
 
 		return outputStream.toByteArray();
 	}
@@ -149,7 +152,7 @@ public class ImageService {
 
 	private int[] calculateOptimalDimensions(int originalWidth, int originalHeight) {
 		if (originalWidth <= 0 || originalHeight <= 0) {
-			System.out.printf("Invalid image dimensions: {}x{}", originalWidth, originalHeight);
+			logger.debug("Invalid image dimensions: {}x{}", originalWidth, originalHeight);
 			throw new IllegalArgumentException("Invalid image dimensions: " + originalWidth + "x" + originalHeight);
 		}
 
@@ -174,7 +177,7 @@ public class ImageService {
 		// Ensure dimensions are at least 1
 		targetWidth = Math.max(1, targetWidth);
 		targetHeight = Math.max(1, targetHeight);
-		System.out.printf("Final dimensions: {}x{}", targetWidth, targetHeight);
+		logger.debug("Final dimensions: {}x{}", targetWidth, targetHeight);
 		return new int[] { targetWidth, targetHeight };
 	}
 

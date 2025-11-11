@@ -1,6 +1,8 @@
 package com.nix.models;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 import jakarta.persistence.Entity;
@@ -18,7 +20,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreditPackage implements Serializable{
+public class CreditPackage implements Serializable {
 	/**
 	 * 
 	 */
@@ -33,5 +35,12 @@ public class CreditPackage implements Serializable{
 
 	@OneToMany(mappedBy = "creditPackage")
 	private List<Purchase> purchases;
+
+	public BigDecimal calculatePricePerCredit() {
+		if (price <= 0 || creditAmount <= 0) {
+			return BigDecimal.ZERO;
+		}
+		return BigDecimal.valueOf(price).divide(BigDecimal.valueOf(creditAmount), 4, RoundingMode.HALF_UP);
+	}
 
 }

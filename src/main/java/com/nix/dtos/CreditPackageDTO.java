@@ -14,5 +14,7 @@ public class CreditPackageDTO {
 	private String name;
 	private int creditAmount;
 	private double price;
-	private boolean isActive; //return active
+	private boolean isActive; // return active
+	private double pricePerCredit;
+	private String currency;
 }

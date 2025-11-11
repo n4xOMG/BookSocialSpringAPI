@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.nix.dtos.PostDTO;
 import com.nix.exception.ResourceNotFoundException;
+import com.nix.exception.UnauthorizedException;
 import com.nix.models.User;
+import com.nix.response.ApiResponseWithData;
 import com.nix.service.PostService;
 import com.nix.service.UserService;
 
@@ -43,6 +46,21 @@ public class PostController {
 		return null;
 	}
 
+	private void ensureUserCanPublish(User user) {
+		if (user == null) {
+			throw new ResourceNotFoundException("Cannot find user");
+		}
+		if (user.isBanned()) {
+			throw new UnauthorizedException("Your account is banned. Contact support for assistance.");
+		}
+		if (Boolean.TRUE.equals(user.getIsSuspended())) {
+			throw new UnauthorizedException("Your account is suspended. Contact support for assistance.");
+		}
+		if (!Boolean.TRUE.equals(user.getIsVerified())) {
+			throw new UnauthorizedException("Please verify your account before creating posts.");
+		}
+	}
+
 	/**
 	 * Helper method to parse sort parameter
 	 */
@@ -55,27 +73,27 @@ public class PostController {
 	}
 
 	@GetMapping("/posts")
-	public ResponseEntity<Page<PostDTO>> getAllPosts(@RequestParam(defaultValue = "0") int page,
+	public ResponseEntity<ApiResponseWithData<Page<PostDTO>>> getAllPosts(@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "timestamp,desc") String sort,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 
 		User currentUser = getCurrentUser(jwt);
 		Pageable pageable = PageRequest.of(page, size, parseSort(sort));
 		Page<PostDTO> postsPage = postService.getAllPosts(pageable, currentUser);
-		return ResponseEntity.ok(postsPage);
+		return buildSuccessResponse("Posts retrieved successfully.", postsPage);
 	}
 
 	@GetMapping("/posts/{postId}")
-	public ResponseEntity<PostDTO> getPostById(@PathVariable UUID postId,
+	public ResponseEntity<ApiResponseWithData<PostDTO>> getPostById(@PathVariable UUID postId,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 
 		User currentUser = getCurrentUser(jwt);
 		PostDTO post = postService.getPostById(postId, currentUser);
-		return ResponseEntity.ok(post);
+		return buildSuccessResponse("Post retrieved successfully.", post);
 	}
 
 	@GetMapping("/posts/user/{userId}")
-	public ResponseEntity<List<PostDTO>> getPostsByUser(@PathVariable("userId") UUID userId,
+	public ResponseEntity<ApiResponseWithData<List<PostDTO>>> getPostsByUser(@PathVariable("userId") UUID userId,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 
 		User user = userService.findUserById(userId);
@@ -85,59 +103,77 @@ public class PostController {
 
 		User currentUser = getCurrentUser(jwt);
 		List<PostDTO> posts = postService.getPostsByUser(user, currentUser);
-		return ResponseEntity.ok(posts);
+		return buildSuccessResponse("Posts retrieved successfully.", posts);
 	}
 
 	@PostMapping("/api/posts")
-	public ResponseEntity<PostDTO> createPost(@RequestBody PostDTO postDTO,
+	public ResponseEntity<ApiResponseWithData<PostDTO>> createPost(@RequestBody PostDTO postDTO,
 			@RequestHeader("Authorization") String jwt) {
 		User currentUser = getCurrentUser(jwt);
+		ensureUserCanPublish(currentUser);
 		PostDTO createdPost = postService.createPost(currentUser, postDTO);
-		return ResponseEntity.ok(createdPost);
+		return buildSuccessResponse(HttpStatus.CREATED, "Post created successfully.", createdPost);
 	}
 
 	@PutMapping("/api/posts/{id}")
-	public ResponseEntity<PostDTO> updatePost(@PathVariable UUID id, @RequestBody PostDTO postDetails,
+	public ResponseEntity<ApiResponseWithData<PostDTO>> updatePost(@PathVariable UUID id,
+			@RequestBody PostDTO postDetails,
 			@RequestHeader("Authorization") String jwt) {
 		User currentUser = getCurrentUser(jwt);
+		ensureUserCanPublish(currentUser);
 		PostDTO updatedPost = postService.updatePost(currentUser, id, postDetails);
-		return ResponseEntity.ok(updatedPost);
+		return buildSuccessResponse("Post updated successfully.", updatedPost);
 	}
 
 	@DeleteMapping("/api/posts/{id}")
-	public ResponseEntity<Void> deletePost(@PathVariable UUID id, @RequestHeader("Authorization") String jwt) {
+	public ResponseEntity<ApiResponseWithData<Void>> deletePost(@PathVariable UUID id,
+			@RequestHeader("Authorization") String jwt) {
 		User currentUser = getCurrentUser(jwt);
 		postService.deletePost(currentUser, id);
-		return ResponseEntity.noContent().build();
+		return buildSuccessResponse("Post deleted successfully.", null);
 	}
 
 	@PostMapping("/api/posts/{postId}/like")
-	public ResponseEntity<PostDTO> likePost(@PathVariable UUID postId, @RequestHeader("Authorization") String jwt) {
+	public ResponseEntity<ApiResponseWithData<PostDTO>> likePost(@PathVariable UUID postId,
+			@RequestHeader("Authorization") String jwt) {
 		User currentUser = getCurrentUser(jwt);
 		if (currentUser == null) {
 			throw new ResourceNotFoundException("Cannot find user");
 		}
 		PostDTO likedPost = postService.likePost(postId, currentUser);
-		return ResponseEntity.ok(likedPost);
+		return buildSuccessResponse("Post like toggled successfully.", likedPost);
 	}
 
 	@PostMapping("/posts/share-chapter/{chapterId}")
-	public ResponseEntity<PostDTO> shareChapterAsPost(@PathVariable UUID chapterId, @RequestBody PostDTO postDTO,
+	public ResponseEntity<ApiResponseWithData<PostDTO>> shareChapterAsPost(@PathVariable UUID chapterId,
+			@RequestBody PostDTO postDTO,
 			@RequestHeader("Authorization") String jwt) {
 
 		User currentUser = getCurrentUser(jwt);
+		ensureUserCanPublish(currentUser);
 		PostDTO post = postService.createChapterSharePost(chapterId, currentUser, postDTO);
 
-		return ResponseEntity.ok(post);
+		return buildSuccessResponse("Chapter shared successfully.", post);
 	}
 
 	@PostMapping("/posts/share-book/{bookId}")
-	public ResponseEntity<PostDTO> shareBookAsPost(@PathVariable UUID bookId, @RequestBody PostDTO postDTO,
+	public ResponseEntity<ApiResponseWithData<PostDTO>> shareBookAsPost(@PathVariable UUID bookId,
+			@RequestBody PostDTO postDTO,
 			@RequestHeader("Authorization") String jwt) {
 
 		User currentUser = getCurrentUser(jwt);
+		ensureUserCanPublish(currentUser);
 		PostDTO post = postService.createBookSharePost(bookId, currentUser, postDTO);
 
-		return ResponseEntity.ok(post);
+		return buildSuccessResponse("Book shared successfully.", post);
 	}
+
+	private <T> ResponseEntity<ApiResponseWithData<T>> buildSuccessResponse(String message, T data) {
+		return ResponseEntity.ok(new ApiResponseWithData<>(message, true, data));
+	}
+
+	private <T> ResponseEntity<ApiResponseWithData<T>> buildSuccessResponse(HttpStatus status, String message, T data) {
+		return ResponseEntity.status(status).body(new ApiResponseWithData<>(message, true, data));
+	}
+
 }

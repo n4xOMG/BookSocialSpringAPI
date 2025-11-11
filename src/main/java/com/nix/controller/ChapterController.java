@@ -23,10 +23,12 @@ import com.nix.dtos.ChapterDTO;
 import com.nix.dtos.ChapterSummaryDTO;
 import com.nix.dtos.mappers.ChapterMapper;
 import com.nix.dtos.mappers.ChapterSummaryMapper;
+import com.nix.exception.ForbiddenAccessException;
 import com.nix.exception.ResourceNotFoundException;
+import com.nix.exception.UnauthorizedException;
 import com.nix.models.Chapter;
 import com.nix.models.User;
-import com.nix.response.ApiResponse;
+import com.nix.response.ApiResponseWithData;
 import com.nix.service.BookService;
 import com.nix.service.ChapterService;
 import com.nix.service.PaymentService;
@@ -55,182 +57,275 @@ public class ChapterController {
 
 	ChapterSummaryMapper chapterSummaryMapper = new ChapterSummaryMapper();
 
-	@GetMapping("/chapters")
-	public ResponseEntity<List<ChapterDTO>> getAllChapters() {
-		List<Chapter> chapters = chapterService.getAllChapters();
+	private User resolveCurrentUser(String jwt) {
+		if (jwt == null || jwt.isBlank()) {
+			return null;
+		}
+		return userService.findUserByJwt(jwt);
+	}
 
-		return ResponseEntity.ok(chapterMapper.mapToDTOs(chapters));
+	private void ensureUserCanPublish(User user) {
+		if (user == null) {
+			throw new ResourceNotFoundException("Cannot find user");
+		}
+		if (user.isBanned()) {
+			throw new UnauthorizedException("Your account is banned. Contact support for assistance.");
+		}
+		if (Boolean.TRUE.equals(user.getIsSuspended())) {
+			throw new UnauthorizedException("Your account is suspended. Contact support for assistance.");
+		}
+		if (!Boolean.TRUE.equals(user.getIsVerified())) {
+			throw new UnauthorizedException("Please verify your account before modifying chapters.");
+		}
+	}
+
+	private void ensureNotBlocked(User user, UUID ownerId) {
+		if (user == null || ownerId == null) {
+			return;
+		}
+		if (user.getRole() != null && "ADMIN".equalsIgnoreCase(user.getRole().getName())) {
+			return;
+		}
+		if (userService.isBlockedBy(user.getId(), ownerId) || userService.hasBlocked(user.getId(), ownerId)) {
+			throw new ForbiddenAccessException(
+					"You cannot access this resource because one of the accounts has blocked the other.");
+		}
+	}
+
+	@GetMapping("/chapters")
+	public ResponseEntity<ApiResponseWithData<List<ChapterDTO>>> getAllChapters() {
+		List<Chapter> chapters = chapterService.getAllChapters();
+		List<ChapterDTO> chapterDTOs = chapterMapper.mapToDTOs(chapters);
+
+		ApiResponseWithData<List<ChapterDTO>> response = new ApiResponseWithData<>(
+				"Chapters retrieved successfully.", true, chapterDTOs);
+
+		return ResponseEntity.ok(response);
 	}
 
 	@GetMapping("/books/{bookId}/chapters")
-	public ResponseEntity<List<ChapterSummaryDTO>> getAllChaptersByBookId(@PathVariable("bookId") UUID bookId,
+	public ResponseEntity<ApiResponseWithData<List<ChapterSummaryDTO>>> getAllChaptersByBookId(
+			@PathVariable("bookId") UUID bookId,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
+		User currentUser = resolveCurrentUser(jwt);
+		if (currentUser != null) {
+			BookDTO bookDTO = bookService.getBookById(bookId);
+			UUID ownerId = bookDTO.getAuthor() != null ? bookDTO.getAuthor().getId() : null;
+			ensureNotBlocked(currentUser, ownerId);
+		}
+
 		List<Chapter> chapters = chapterService.findNotDraftedChaptersByBookId(bookId);
 		List<ChapterSummaryDTO> chapterDTOs = chapterSummaryMapper.mapToDTOs(chapters);
 
-		// Initialize the unlock status to false
-		boolean isAuthenticated = jwt != null;
-		User user = null;
-		if (isAuthenticated) {
-			// Check if the user exists
-			user = userService.findUserByJwt(jwt);
-		}
+		boolean isAuthenticated = currentUser != null;
 
 		for (int i = 0; i < chapters.size(); i++) {
 			Chapter chapter = chapters.get(i);
 			ChapterSummaryDTO dto = chapterDTOs.get(i);
 
 			// If authenticated, check if the chapter is unlocked by the user
-			if (isAuthenticated && user != null) {
-				boolean isUnlocked = chapterService.isChapterUnlockedByUser(user.getId(), chapter.getId());
+			if (isAuthenticated) {
+				boolean isUnlocked = chapterService.isChapterUnlockedByUser(currentUser.getId(), chapter.getId());
 				dto.setUnlockedByUser(isUnlocked);
 			} else {
-				// Default to false if the user is not authenticated
 				dto.setUnlockedByUser(false);
 			}
 		}
 
-		return ResponseEntity.ok(chapterDTOs);
+		ApiResponseWithData<List<ChapterSummaryDTO>> response = new ApiResponseWithData<>(
+				"Chapters retrieved successfully.", true, chapterDTOs);
+
+		return ResponseEntity.ok(response);
 	}
 
 	@GetMapping("/api/books/{bookId}/chapters")
-	public ResponseEntity<List<ChapterDTO>> manageChaptersByBookId(@PathVariable("bookId") UUID bookId) {
+	public ResponseEntity<ApiResponseWithData<List<ChapterDTO>>> manageChaptersByBookId(
+			@PathVariable("bookId") UUID bookId) {
 		List<Chapter> chapters = chapterService.findChaptersByBookId(bookId);
+		List<ChapterDTO> chapterDTOs = chapterMapper.mapToDTOs(chapters);
+		ApiResponseWithData<List<ChapterDTO>> response = new ApiResponseWithData<>(
+				"Chapters retrieved successfully.", true, chapterDTOs);
 
-		return ResponseEntity.ok(chapterMapper.mapToDTOs(chapters));
+		return ResponseEntity.ok(response);
 	}
 
 	@GetMapping("/chapters/{chapterId}")
-	public ResponseEntity<?> getChapterById(@PathVariable("chapterId") UUID chapterId,
+	public ResponseEntity<ApiResponseWithData<?>> getChapterById(@PathVariable("chapterId") UUID chapterId,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		Chapter chapter = chapterService.findChapterById(chapterId);
 		ChapterDTO chapterDTO = chapterMapper.mapToDTO(chapter);
 		boolean isUnlocked = false;
 		boolean isLiked = false;
 
-		// Check JWT and retrieve user if available
-		if (jwt != null) {
-			User user = userService.findUserByJwt(jwt);
-			isUnlocked = chapterService.isChapterUnlockedByUser(user.getId(), chapterId);
-			isLiked = chapterService.isChapterLikedByUser(user.getId(), chapterId);
+		User currentUser = resolveCurrentUser(jwt);
+		if (currentUser != null) {
+			UUID ownerId = chapter.getBook() != null && chapter.getBook().getAuthor() != null
+					? chapter.getBook().getAuthor().getId()
+					: null;
+			ensureNotBlocked(currentUser, ownerId);
+			isUnlocked = chapterService.isChapterUnlockedByUser(currentUser.getId(), chapterId);
+			isLiked = chapterService.isChapterLikedByUser(currentUser.getId(), chapterId);
 			chapterDTO.setUnlockedByUser(isUnlocked);
 			chapterDTO.setLikedByCurrentUser(isLiked);
 		}
 
-		// For locked chapters with a price, return the summary if not unlocked
 		if (chapter.getPrice() > 0 && chapter.isLocked() && !isUnlocked) {
-			return ResponseEntity.ok(chapterSummaryMapper.mapToDTO(chapter));
+			ChapterSummaryDTO summary = chapterSummaryMapper.mapToDTO(chapter);
+			return ResponseEntity
+					.ok(new ApiResponseWithData<>("Chapter summary retrieved successfully.", true, summary));
 		}
 
-		// Return the full DTO for free or unlocked chapters
-		return ResponseEntity.ok(chapterDTO);
+		return ResponseEntity.ok(new ApiResponseWithData<>("Chapter retrieved successfully.", true, chapterDTO));
 	}
 
 	@GetMapping("/api/chapters/room/{roomId}")
-	public ResponseEntity<ChapterDTO> getChapterByRoomId(@PathVariable String roomId) {
+	public ResponseEntity<ApiResponseWithData<ChapterDTO>> getChapterByRoomId(@PathVariable String roomId) {
 		Chapter chapter = chapterService.getChapterByRoomId(roomId);
-		return ResponseEntity.ok(chapterMapper.mapToDTO(chapter));
+		ChapterDTO chapterDTO = chapterMapper.mapToDTO(chapter);
+		return ResponseEntity.ok(new ApiResponseWithData<>("Chapter retrieved successfully.", true, chapterDTO));
 	}
 
 	@PostMapping("/api/books/{bookId}/chapters/upload/epub")
-	public ResponseEntity<?> processChaptersFromEpub(@PathVariable("bookId") UUID bookId,
-			@RequestParam("file") MultipartFile file, @RequestParam Integer startChapterNum) throws Exception {
+	public ResponseEntity<ApiResponseWithData<String>> processChaptersFromEpub(@PathVariable("bookId") UUID bookId,
+			@RequestParam("file") MultipartFile file, @RequestParam Integer startChapterNum,
+			@RequestHeader("Authorization") String jwt) throws Exception {
+		User currentUser = userService.findUserByJwt(jwt);
+		ensureUserCanPublish(currentUser);
 		BookDTO book = bookService.getBookById(bookId);
 		if (book == null) {
-			return new ResponseEntity<>("Book ID not found!", HttpStatus.NOT_FOUND);
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(new ApiResponseWithData<>("Book ID not found!", false));
 		}
 
 		try {
 			chapterService.processChaptersByEpubFile(bookId, file.getInputStream(), startChapterNum);
-			return ResponseEntity.ok("EPUB processed successfully!");
+			return ResponseEntity.ok(new ApiResponseWithData<>("EPUB processed successfully!", true, "success"));
 		} catch (IOException e) {
-			// Handle exception
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing EPUB.");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponseWithData<>("Error processing EPUB: " + e.getMessage(), false));
 		}
-
 	}
 
 	@PostMapping("/api/books/{bookId}/chapters/draft")
-	public ResponseEntity<?> createDraftChapter(@PathVariable("bookId") UUID bookId, @RequestBody Chapter chapter)
-			throws Exception {
+	public ResponseEntity<ApiResponseWithData<Chapter>> createDraftChapter(@PathVariable("bookId") UUID bookId,
+			@RequestBody Chapter chapter,
+			@RequestHeader("Authorization") String jwt) throws Exception {
+		User currentUser = userService.findUserByJwt(jwt);
+		ensureUserCanPublish(currentUser);
 		BookDTO book = bookService.getBookById(bookId);
 		if (book == null) {
-			return new ResponseEntity<>("Book ID not found!", HttpStatus.NOT_FOUND);
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(new ApiResponseWithData<>("Book ID not found!", false));
 		}
+		UUID ownerId = book.getAuthor() != null ? book.getAuthor().getId() : null;
+		ensureNotBlocked(currentUser, ownerId);
 
 		try {
 			Chapter newChapter = chapterService.createDraftChapter(bookId, chapter);
-			return new ResponseEntity<Chapter>(newChapter, HttpStatus.CREATED);
+			return ResponseEntity.status(HttpStatus.CREATED)
+					.body(new ApiResponseWithData<>("Draft chapter created successfully.", true, newChapter));
 		} catch (Exception e) {
-			// Handle exception
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating draft chapter.");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponseWithData<>("Error creating draft chapter: " + e.getMessage(), false));
 		}
-
 	}
 
 	@PostMapping("/api/books/{bookId}/chapters")
-	public ResponseEntity<?> publishChapter(@PathVariable("bookId") UUID bookId, @RequestBody Chapter chapter)
-			throws Exception {
+	public ResponseEntity<ApiResponseWithData<Chapter>> publishChapter(@PathVariable("bookId") UUID bookId,
+			@RequestBody Chapter chapter,
+			@RequestHeader("Authorization") String jwt) throws Exception {
+		User currentUser = userService.findUserByJwt(jwt);
+		ensureUserCanPublish(currentUser);
 		BookDTO book = bookService.getBookById(bookId);
 		if (book == null) {
-			return new ResponseEntity<>("Book ID not found!", HttpStatus.NOT_FOUND);
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(new ApiResponseWithData<>("Book ID not found!", false));
 		}
+		UUID ownerId = book.getAuthor() != null ? book.getAuthor().getId() : null;
+		ensureNotBlocked(currentUser, ownerId);
 
 		try {
 			Chapter newChapter = chapterService.publishChapter(bookId, chapter);
-			return new ResponseEntity<Chapter>(newChapter, HttpStatus.CREATED);
+			return ResponseEntity.status(HttpStatus.CREATED)
+					.body(new ApiResponseWithData<>("Chapter published successfully.", true, newChapter));
 		} catch (Exception e) {
-			// Handle exception
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error publishing draft chapter.");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponseWithData<>("Error publishing chapter: " + e.getMessage(), false));
 		}
 	}
 
 	@PutMapping("/api/chapters/{chapterId}")
-	public ResponseEntity<ChapterDTO> editChapter(@PathVariable("chapterId") UUID chapterId,
-			@RequestBody Chapter chapter) throws Exception {
+	public ResponseEntity<ApiResponseWithData<ChapterDTO>> editChapter(@PathVariable("chapterId") UUID chapterId,
+			@RequestBody Chapter chapter, @RequestHeader("Authorization") String jwt) throws Exception {
+
+		User currentUser = userService.findUserByJwt(jwt);
+		ensureUserCanPublish(currentUser);
+		Chapter existingChapter = chapterService.findChapterById(chapterId);
+		UUID ownerId = existingChapter.getBook() != null && existingChapter.getBook().getAuthor() != null
+				? existingChapter.getBook().getAuthor().getId()
+				: null;
+		ensureNotBlocked(currentUser, ownerId);
 
 		Chapter editChapter = chapterService.editChapter(chapterId, chapter);
-		return ResponseEntity.ok(chapterMapper.mapToDTO(editChapter));
+		ChapterDTO chapterDTO = chapterMapper.mapToDTO(editChapter);
+		return ResponseEntity.ok(new ApiResponseWithData<>("Chapter updated successfully.", true, chapterDTO));
 	}
 
 	@DeleteMapping("/api/chapters/{chapterId}")
-	public ResponseEntity<ApiResponse> deleteChapter(@PathVariable("chapterId") UUID chapterId) throws Exception {
+	public ResponseEntity<ApiResponseWithData<Void>> deleteChapter(@PathVariable("chapterId") UUID chapterId)
+			throws Exception {
 
-		ApiResponse res = new ApiResponse(chapterService.deleteChapter(chapterId), true);
-		return new ResponseEntity<>(res, HttpStatus.OK);
+		String resultMessage = chapterService.deleteChapter(chapterId);
+		ApiResponseWithData<Void> response = new ApiResponseWithData<>(resultMessage, true);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	@PostMapping("/api/unlock/{chapterId}")
-	public ResponseEntity<?> unlockChapter(@PathVariable("chapterId") UUID chapterId,
+	public ResponseEntity<ApiResponseWithData<String>> unlockChapter(@PathVariable("chapterId") UUID chapterId,
 			@RequestHeader("Authorization") String jwt) {
 		try {
 			User user = userService.findUserByJwt(jwt);
+			Chapter chapter = chapterService.findChapterById(chapterId);
+			UUID ownerId = chapter.getBook() != null && chapter.getBook().getAuthor() != null
+					? chapter.getBook().getAuthor().getId()
+					: null;
+			ensureNotBlocked(user, ownerId);
 			chapterService.unlockChapter(user.getId(), chapterId);
-			return ResponseEntity.ok("Chapter unlocked successfully");
+			return ResponseEntity.ok(new ApiResponseWithData<>("Chapter unlocked successfully.", true, "unlocked"));
 		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body(new ApiResponseWithData<>(e.getMessage(), false));
 		}
 	}
 
 	@PutMapping("/api/chapters/{chapterId}/like")
-	public ResponseEntity<?> likeChapter(@RequestHeader("Authorization") String jwt, @PathVariable UUID chapterId) {
+	public ResponseEntity<ApiResponseWithData<ChapterDTO>> likeChapter(@RequestHeader("Authorization") String jwt,
+			@PathVariable UUID chapterId) {
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
-				return new ResponseEntity<>("User has not logged in!", HttpStatus.UNAUTHORIZED);
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+						.body(new ApiResponseWithData<>("User has not logged in!", false));
 			}
+			Chapter chapter = chapterService.findChapterById(chapterId);
+			UUID ownerId = chapter.getBook() != null && chapter.getBook().getAuthor() != null
+					? chapter.getBook().getAuthor().getId()
+					: null;
+			ensureNotBlocked(user, ownerId);
 
 			Boolean isLiked = chapterService.likeChapter(user.getId(), chapterId);
-			Chapter chapter = chapterService.findChapterById(chapterId);
 			ChapterDTO chapterDTO = chapterMapper.mapToDTO(chapter);
 			chapterDTO.setLikedByCurrentUser(isLiked);
 
-			return ResponseEntity.ok(chapterDTO);
+			String message = isLiked ? "Chapter liked successfully." : "Chapter unliked successfully.";
+			return ResponseEntity.ok(new ApiResponseWithData<>(message, true, chapterDTO));
 
 		} catch (ResourceNotFoundException ex) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(new ApiResponseWithData<>(ex.getMessage(), false));
 		} catch (Exception ex) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error liking chapter.");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponseWithData<>("Error liking chapter.", false));
 		}
 	}
 
@@ -238,14 +333,20 @@ public class ChapterController {
 	 * Endpoint to check if a chapter is liked by the user.
 	 */
 	@GetMapping("/api/chapters/{chapterId}/isLiked")
-	public ResponseEntity<Boolean> isChapterLiked(@RequestHeader("Authorization") String jwt,
+	public ResponseEntity<ApiResponseWithData<Boolean>> isChapterLiked(@RequestHeader("Authorization") String jwt,
 			@PathVariable UUID chapterId) {
 		try {
 			User user = userService.findUserByJwt(jwt);
+			Chapter chapter = chapterService.findChapterById(chapterId);
+			UUID ownerId = chapter.getBook() != null && chapter.getBook().getAuthor() != null
+					? chapter.getBook().getAuthor().getId()
+					: null;
+			ensureNotBlocked(user, ownerId);
 			boolean isLiked = chapterService.isChapterLikedByUser(user.getId(), chapterId);
-			return ResponseEntity.ok(isLiked);
+			return ResponseEntity.ok(new ApiResponseWithData<>("Like status retrieved successfully.", true, isLiked));
 		} catch (Exception ex) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponseWithData<>("Error retrieving like status.", false, false));
 		}
 	}
 

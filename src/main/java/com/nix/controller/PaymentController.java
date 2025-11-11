@@ -1,6 +1,7 @@
 package com.nix.controller;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -20,6 +21,7 @@ import com.nix.models.CreditPackage;
 import com.nix.models.User;
 import com.nix.request.ConfirmPaymentRequest;
 import com.nix.request.PurchaseRequest;
+import com.nix.response.ApiResponseWithData;
 import com.nix.service.PaymentService;
 import com.nix.service.UserService;
 import com.paypal.sdk.models.Order;
@@ -37,38 +39,46 @@ public class PaymentController {
 	 * Get available payment providers
 	 */
 	@GetMapping("/api/payments/providers")
-	public ResponseEntity<Map<String, Object>> getPaymentProviders() {
+	public ResponseEntity<ApiResponseWithData<Map<String, Object>>> getPaymentProviders() {
 		List<String> providers = Arrays.stream(PaymentProvider.values()).map(Enum::toString)
 				.collect(Collectors.toList());
 
-		return ResponseEntity.ok(Map.of("providers", providers, "default", PaymentProvider.STRIPE.toString()));
+		Map<String, Object> data = new HashMap<>();
+		data.put("providers", providers);
+		data.put("default", PaymentProvider.STRIPE.toString());
+
+		return buildSuccessResponse("Payment providers retrieved successfully.", data);
 	}
 
 	/**
 	 * Legacy endpoint for Stripe-only payments (maintains backward compatibility)
 	 */
 	@PostMapping("/api/payments/create-payment-intent")
-	public ResponseEntity<Map<String, String>> createPaymentIntent(@RequestBody PurchaseRequest paymentRequest,
+	public ResponseEntity<ApiResponseWithData<Map<String, String>>> createPaymentIntent(
+			@RequestBody PurchaseRequest paymentRequest,
 			@RequestHeader("Authorization") String jwt) {
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
-				return ResponseEntity.status(401).body(Map.of("error", "User not found."));
+				return this.<Map<String, String>>buildErrorResponse(HttpStatus.UNAUTHORIZED, "User not found.");
 			}
 
 			CreditPackage creditPackage = paymentService.getCreditPackageById(paymentRequest.getCreditPackageId());
 			if (creditPackage == null || !creditPackage.isActive()) {
-				return ResponseEntity.badRequest().body(Map.of("error", "Invalid credit package."));
+				return this.<Map<String, String>>buildErrorResponse(HttpStatus.BAD_REQUEST, "Invalid credit package.");
 			}
 
 			long amount = (long) (creditPackage.getPrice() * 100);
 			String clientSecret = paymentService.createStripePaymentIntent(amount, paymentRequest.getCurrency(),
 					user.getId(), creditPackage.getId());
 
-			return ResponseEntity.ok(Map.of("clientSecret", clientSecret));
+			Map<String, String> data = new HashMap<>();
+			data.put("clientSecret", clientSecret);
+
+			return buildSuccessResponse("Payment intent created successfully.", data);
 
 		} catch (Exception e) {
-			return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+			return this.<Map<String, String>>buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
 		}
 	}
 
@@ -77,17 +87,17 @@ public class PaymentController {
 	 * entirely client-side using react-paypal-js.
 	 */
 	@PostMapping("/api/payments/create-payment")
-	public ResponseEntity<?> createPayment(@RequestBody PurchaseRequest paymentRequest,
+	public ResponseEntity<ApiResponseWithData<Object>> createPayment(@RequestBody PurchaseRequest paymentRequest,
 			@RequestHeader("Authorization") String jwt) {
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
-				return ResponseEntity.status(401).body(Map.of("error", "User not found."));
+				return this.<Object>buildErrorResponse(HttpStatus.UNAUTHORIZED, "User not found.");
 			}
 
 			CreditPackage creditPackage = paymentService.getCreditPackageById(paymentRequest.getCreditPackageId());
 			if (creditPackage == null || !creditPackage.isActive()) {
-				return ResponseEntity.badRequest().body(Map.of("error", "Invalid credit package."));
+				return buildErrorResponse(HttpStatus.BAD_REQUEST, "Invalid credit package.");
 			}
 
 			// Default to Stripe if no provider specified
@@ -99,17 +109,25 @@ public class PaymentController {
 				String clientSecret = paymentService.createStripePaymentIntent(amount, paymentRequest.getCurrency(),
 						user.getId(), creditPackage.getId());
 
-				return ResponseEntity.ok(Map.of("clientSecret", clientSecret, "provider", "STRIPE", "packageId",
-						creditPackage.getId(), "amount", creditPackage.getPrice()));
+				Map<String, Object> data = new HashMap<>();
+				data.put("clientSecret", clientSecret);
+				data.put("provider", "STRIPE");
+				data.put("packageId", creditPackage.getId());
+				data.put("amount", creditPackage.getPrice());
+
+				return ResponseEntity
+						.ok(new ApiResponseWithData<>("Payment created successfully.", true, (Object) data));
 			} else if (provider == PaymentProvider.PAYPAL) {
 				Order order = paymentService.createPaypalOrder(user.getId(), creditPackage.getId());
-				return new ResponseEntity<>(order, HttpStatus.OK);
+				return ResponseEntity
+						.ok(new ApiResponseWithData<>("PayPal order created successfully.", true, (Object) order));
 			} else {
-				return ResponseEntity.badRequest().body(Map.of("error", "Unsupported payment provider: " + provider));
+				return this.<Object>buildErrorResponse(HttpStatus.BAD_REQUEST,
+						"Unsupported payment provider: " + provider);
 			}
 
 		} catch (Exception e) {
-			return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+			return this.<Object>buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
 		}
 	}
 
@@ -117,12 +135,13 @@ public class PaymentController {
 	 * Confirm payment and update user credits for both Stripe and PayPal
 	 */
 	@PostMapping("/api/payments/confirm-payment")
-	public ResponseEntity<Map<String, String>> confirmPayment(@RequestBody ConfirmPaymentRequest confirmPaymentRequest,
+	public ResponseEntity<ApiResponseWithData<Map<String, String>>> confirmPayment(
+			@RequestBody ConfirmPaymentRequest confirmPaymentRequest,
 			@RequestHeader("Authorization") String jwt) {
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
-				return ResponseEntity.status(401).body(Map.of("error", "User not found."));
+				return this.<Map<String, String>>buildErrorResponse(HttpStatus.UNAUTHORIZED, "User not found.");
 			}
 
 			PaymentProvider provider = confirmPaymentRequest.getPaymentProvider() != null
@@ -132,11 +151,14 @@ public class PaymentController {
 			paymentService.confirmPayment(user.getId(), confirmPaymentRequest.getCreditPackageId(),
 					confirmPaymentRequest.getPaymentIntentId(), provider);
 
-			return ResponseEntity
-					.ok(Map.of("message", "Payment confirmed and credits updated.", "provider", provider.toString()));
+			Map<String, String> data = new HashMap<>();
+			data.put("message", "Payment confirmed and credits updated.");
+			data.put("provider", provider.toString());
+
+			return buildSuccessResponse("Payment confirmed successfully.", data);
 
 		} catch (Exception e) {
-			return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+			return this.<Map<String, String>>buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
 		}
 	}
 
@@ -144,12 +166,21 @@ public class PaymentController {
 	 * Capture PayPal order after user approval
 	 */
 	@PostMapping("/api/orders/{orderID}/capture")
-	public ResponseEntity<Order> capturePaypalOrder(@PathVariable String orderID) {
+	public ResponseEntity<ApiResponseWithData<Order>> capturePaypalOrder(@PathVariable String orderID) {
 		try {
 			Order response = paymentService.capturePaypalOrders(orderID);
-			return new ResponseEntity<>(response, HttpStatus.OK);
+			return buildSuccessResponse("PayPal order captured successfully.", response);
 		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+			return this.<Order>buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
 		}
+	}
+
+	private <T> ResponseEntity<ApiResponseWithData<T>> buildSuccessResponse(String message, T data) {
+		return ResponseEntity.ok(new ApiResponseWithData<>(message, true, data));
+	}
+
+	private <T> ResponseEntity<ApiResponseWithData<T>> buildErrorResponse(HttpStatus status, String message) {
+		ApiResponseWithData<T> response = new ApiResponseWithData<>(message, false, (T) null);
+		return ResponseEntity.status(status).body(response);
 	}
 }

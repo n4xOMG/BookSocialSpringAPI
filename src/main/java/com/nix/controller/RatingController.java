@@ -2,6 +2,8 @@ package com.nix.controller;
 
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,12 +20,15 @@ import com.nix.dtos.mappers.BookMapper;
 import com.nix.dtos.mappers.RatingMapper;
 import com.nix.models.Rating;
 import com.nix.models.User;
+import com.nix.response.ApiResponseWithData;
 import com.nix.service.BookService;
 import com.nix.service.RatingService;
 import com.nix.service.UserService;
 
 @RestController
 public class RatingController {
+	private static final Logger logger = LoggerFactory.getLogger(RatingController.class);
+
 	@Autowired
 	BookService bookService;
 
@@ -38,60 +43,82 @@ public class RatingController {
 	RatingMapper ratingMapper = new RatingMapper();
 
 	@GetMapping("/books/rating/average/{bookId}")
-	public ResponseEntity<?> getAverageBookRating(@PathVariable("bookId") UUID bookId) throws Exception {
+	public ResponseEntity<ApiResponseWithData<Double>> getAverageBookRating(@PathVariable("bookId") UUID bookId) {
 		try {
 			BookDTO book = bookService.getBookById(bookId);
 
 			if (book == null) {
-				throw new Exception("Book not found");
+				return buildErrorResponse(HttpStatus.NOT_FOUND, "Book not found.");
 			}
 
-			return new ResponseEntity<>(ratingService.getAverageBookRating(bookId), HttpStatus.OK);
+			double averageRating = ratingService.getAverageBookRating(bookId);
+			return buildSuccessResponse("Average rating retrieved successfully.", averageRating);
 		} catch (Exception e) {
-			return new ResponseEntity<>(0, HttpStatus.NO_CONTENT);
+			logger.error("Failed to retrieve average rating for book {}", bookId, e);
+			return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to retrieve average rating.");
 		}
 	}
 
 	@GetMapping("/api/books/rating/{bookId}")
-	public ResponseEntity<?> getRatingByBookAndUser(@RequestHeader("Authorization") String jwt,
-			@PathVariable("bookId") UUID bookId) throws Exception {
+	public ResponseEntity<ApiResponseWithData<RatingDTO>> getRatingByBookAndUser(
+			@RequestHeader("Authorization") String jwt, @PathVariable("bookId") UUID bookId) {
 		try {
 			User reqUser = userService.findUserByJwt(jwt);
 			if (reqUser == null) {
-				throw new Exception("User not found");
+				return buildErrorResponse(HttpStatus.UNAUTHORIZED, "User not found.");
 			}
 
 			BookDTO book = bookService.getBookById(bookId);
 
 			if (book == null) {
-				throw new Exception("Book not found");
+				return buildErrorResponse(HttpStatus.NOT_FOUND, "Book not found.");
 			}
 			Rating rating = ratingService.findRatingByUserAndBook(reqUser.getId(), bookId);
-			return new ResponseEntity<>(ratingMapper.mapToDTO(rating), HttpStatus.OK);
+			if (rating == null) {
+				return buildErrorResponse(HttpStatus.NOT_FOUND, "Rating not found.");
+			}
+			return buildSuccessResponse("Rating retrieved successfully.", ratingMapper.mapToDTO(rating));
 		} catch (Exception e) {
-			System.out.println("Error getting rating by book and user: "+e);
-			return new ResponseEntity<>(0, HttpStatus.NO_CONTENT);
+			logger.error("Error getting rating by book and user", e);
+			return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to retrieve rating.");
 		}
 	}
 
 	@PatchMapping("/api/books/rating/{bookId}")
-	public ResponseEntity<RatingDTO> rateBook(@RequestHeader("Authorization") String jwt, @PathVariable UUID bookId,
-			@RequestBody Rating rating) throws Exception {
+	public ResponseEntity<ApiResponseWithData<RatingDTO>> rateBook(@RequestHeader("Authorization") String jwt,
+			@PathVariable UUID bookId, @RequestBody Rating rating) {
+		try {
+			BookDTO book = bookService.getBookById(bookId);
+			if (book == null) {
+				return buildErrorResponse(HttpStatus.NOT_FOUND, "Book not found.");
+			}
+			User reqUser = userService.findUserByJwt(jwt);
+			if (reqUser == null) {
+				return buildErrorResponse(HttpStatus.UNAUTHORIZED, "User not found.");
+			}
+			Rating existingRating = ratingService.findRatingByUserAndBook(reqUser.getId(), bookId);
+			if (existingRating == null) {
+				RatingDTO created = ratingMapper.mapToDTO(
+						ratingService.addNewRating(reqUser, bookId, rating.getRating()));
+				return buildSuccessResponse(HttpStatus.CREATED, "Rating created successfully.", created);
+			}
+			RatingDTO updated = ratingMapper.mapToDTO(ratingService.editRating(existingRating.getId(), rating));
+			return buildSuccessResponse("Rating updated successfully.", updated);
+		} catch (Exception e) {
+			logger.error("Error rating book {}", bookId, e);
+			return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to rate book.");
+		}
+	}
 
-		BookDTO book = bookService.getBookById(bookId);
-		if (book == null) {
-			throw new Exception("Book not found");
-		}
-		User reqUser = userService.findUserByJwt(jwt);
-		if (reqUser == null) {
-			throw new Exception("User not found");
-		}
-		Rating isRatedByUser = ratingService.findRatingByUserAndBook(reqUser.getId(), bookId);
-		if (isRatedByUser == null) {
-			return new ResponseEntity<>(ratingMapper.mapToDTO(ratingService.addNewRating(reqUser, bookId, rating.getRating())), HttpStatus.OK);
-		} else {
-			return new ResponseEntity<>(ratingMapper.mapToDTO(ratingService.editRating(isRatedByUser.getId(), rating)),
-					HttpStatus.OK);
-		}
+	private <T> ResponseEntity<ApiResponseWithData<T>> buildSuccessResponse(String message, T data) {
+		return ResponseEntity.ok(new ApiResponseWithData<>(message, true, data));
+	}
+
+	private <T> ResponseEntity<ApiResponseWithData<T>> buildSuccessResponse(HttpStatus status, String message, T data) {
+		return ResponseEntity.status(status).body(new ApiResponseWithData<>(message, true, data));
+	}
+
+	private <T> ResponseEntity<ApiResponseWithData<T>> buildErrorResponse(HttpStatus status, String message) {
+		return ResponseEntity.status(status).body(new ApiResponseWithData<>(message, false, null));
 	}
 }

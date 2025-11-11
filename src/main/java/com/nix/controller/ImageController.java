@@ -1,6 +1,7 @@
 package com.nix.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.nix.response.ApiResponseWithData;
 import com.nix.service.ImageService;
 
 @RestController
@@ -19,36 +21,51 @@ public class ImageController {
 	private ImageService imageService;
 
 	@PostMapping("/upload")
-	public ResponseEntity<String> uploadImage(@RequestParam("file") MultipartFile file,
+	public ResponseEntity<ApiResponseWithData<String>> uploadImage(@RequestParam("file") MultipartFile file,
 			@RequestParam("username") String username, @RequestParam("folderName") String folderName) {
 		try {
 			String imagePath = imageService.uploadImage(file, username, folderName);
-			return ResponseEntity.ok(imagePath);
+			return buildSuccessResponse(HttpStatus.CREATED, "Image uploaded successfully.", imagePath);
 		} catch (IllegalArgumentException e) {
-			return ResponseEntity.badRequest().body(e.getMessage());
+			return buildErrorResponse(HttpStatus.BAD_REQUEST, e.getMessage());
 		} catch (Exception e) {
-			return ResponseEntity.internalServerError().body("Failed to upload image: " + e.getMessage());
+			return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to upload image: " + e.getMessage());
 		}
 	}
 
 	@DeleteMapping("/delete")
-	public ResponseEntity<String> deleteImage(@RequestParam("imagePath") String imagePath) {
+	public ResponseEntity<ApiResponseWithData<Void>> deleteImage(@RequestParam("imagePath") String imagePath) {
 		try {
 			imageService.deleteImage(imagePath);
-			return ResponseEntity.ok("Image deleted successfully");
+			return buildSuccessResponse("Image deleted successfully.", null);
 		} catch (Exception e) {
-			return ResponseEntity.internalServerError().body("Failed to delete image: " + e.getMessage());
+			return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to delete image: " + e.getMessage());
 		}
 	}
 
 	@DeleteMapping("/delete-entity")
-	public ResponseEntity<String> deleteEntityImages(@RequestParam("username") String username,
+	public ResponseEntity<ApiResponseWithData<Void>> deleteEntityImages(@RequestParam("username") String username,
 			@RequestParam("folderName") String folderName, @RequestParam("entityId") String entityId) {
 		try {
 			imageService.deleteEntityImages(username, folderName, entityId);
-			return ResponseEntity.ok("Entity images deleted successfully");
+			return buildSuccessResponse("Entity images deleted successfully.", null);
 		} catch (Exception e) {
-			return ResponseEntity.internalServerError().body("Failed to delete entity images: " + e.getMessage());
+			return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to delete entity images: " + e.getMessage());
 		}
+	}
+
+	private <T> ResponseEntity<ApiResponseWithData<T>> buildSuccessResponse(String message, T data) {
+		return buildSuccessResponse(HttpStatus.OK, message, data);
+	}
+
+	private <T> ResponseEntity<ApiResponseWithData<T>> buildSuccessResponse(HttpStatus status, String message, T data) {
+		return ResponseEntity.status(status).body(new ApiResponseWithData<>(message, true, data));
+	}
+
+	private <T> ResponseEntity<ApiResponseWithData<T>> buildErrorResponse(HttpStatus status, String message) {
+		return ResponseEntity.status(status).body(new ApiResponseWithData<>(message, false));
 	}
 }

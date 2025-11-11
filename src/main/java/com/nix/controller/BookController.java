@@ -1,12 +1,16 @@
 package com.nix.controller;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -25,7 +29,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.nix.dtos.BookDTO;
 import com.nix.dtos.CategoryDTO;
 import com.nix.enums.NotificationEntityType;
+import com.nix.exception.ForbiddenAccessException;
 import com.nix.models.User;
+import com.nix.response.ApiResponseWithData;
 import com.nix.service.BookService;
 import com.nix.service.NotificationService;
 import com.nix.service.UserService;
@@ -44,37 +50,108 @@ public class BookController {
 	@Autowired
 	private NotificationService notificationService;
 
+	private User resolveCurrentUser(String jwt) {
+		if (jwt == null || jwt.isBlank()) {
+			return null;
+		}
+		return userService.findUserByJwt(jwt);
+	}
+
+	private Set<UUID> getHiddenAuthorIds(User currentUser) {
+		if (currentUser == null) {
+			return Set.of();
+		}
+		if (currentUser.getRole() != null && "ADMIN".equalsIgnoreCase(currentUser.getRole().getName())) {
+			return Set.of();
+		}
+		Set<UUID> hiddenAuthorIds = new HashSet<>(userService.getUserIdsBlocking(currentUser.getId()));
+		Set<UUID> blockedUserIds = userService.getBlockedUserIds(currentUser.getId());
+		hiddenAuthorIds.addAll(blockedUserIds);
+		return hiddenAuthorIds;
+	}
+
+	private Page<BookDTO> filterBooks(Page<BookDTO> booksPage, Pageable pageable, Set<UUID> hiddenAuthorIds) {
+		if (hiddenAuthorIds == null || hiddenAuthorIds.isEmpty()) {
+			return booksPage;
+		}
+		List<BookDTO> filtered = booksPage.getContent().stream()
+				.filter(book -> book.getAuthor() == null || !hiddenAuthorIds.contains(book.getAuthor().getId()))
+				.collect(Collectors.toList());
+		return new PageImpl<>(filtered, pageable, booksPage.getTotalElements());
+	}
+
+	private List<BookDTO> filterBooks(List<BookDTO> books, Set<UUID> hiddenAuthorIds) {
+		if (hiddenAuthorIds == null || hiddenAuthorIds.isEmpty()) {
+			return books;
+		}
+		if (books == null) {
+			return Collections.emptyList();
+		}
+		return books.stream()
+				.filter(book -> book.getAuthor() == null || !hiddenAuthorIds.contains(book.getAuthor().getId()))
+				.collect(Collectors.toList());
+	}
+
+	private boolean isInteractionBlocked(User currentUser, UUID ownerId) {
+		if (currentUser == null || ownerId == null) {
+			return false;
+		}
+		if (currentUser.getRole() != null && "ADMIN".equalsIgnoreCase(currentUser.getRole().getName())) {
+			return false;
+		}
+		return userService.isBlockedBy(currentUser.getId(), ownerId)
+				|| userService.hasBlocked(currentUser.getId(), ownerId);
+	}
+
+	private void ensureNotBlocked(User currentUser, UUID ownerId) {
+		if (isInteractionBlocked(currentUser, ownerId)) {
+			throw new ForbiddenAccessException(
+					"You cannot access this resource because one of the accounts has blocked the other.");
+		}
+	}
+
 	@GetMapping("/books")
 	public ResponseEntity<Page<BookDTO>> getAllBooks(@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "id") String sortBy,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+		User currentUser = resolveCurrentUser(jwt);
 		Page<BookDTO> booksPage = bookService.getAllBooks(pageable);
+		if (currentUser != null) {
+			booksPage = filterBooks(booksPage, pageable, getHiddenAuthorIds(currentUser));
+		}
 
-		boolean isAuthenticated = jwt != null && !jwt.isBlank();
-		if (isAuthenticated) {
-			User user = userService.findUserByJwt(jwt);
-			if (user != null) {
-				Set<UUID> favouriteBookIds = bookService.getFavouriteBookIdsForUser(user.getId());
-				booksPage.getContent().forEach(bookDTO -> bookDTO
+		if (currentUser != null) {
+			Set<UUID> favouriteBookIds = bookService.getFavouriteBookIdsForUser(currentUser.getId());
+			booksPage.getContent().forEach(bookDTO -> bookDTO
 					.setFollowedByCurrentUser(favouriteBookIds.contains(bookDTO.getId())));
-			}
 		}
 
 		return ResponseEntity.ok(booksPage);
 	}
 
 	@GetMapping("/books/books-upload-per-month")
-	public ResponseEntity<List<Long>> getBooksUploadedPerMonthCount() {
-		return ResponseEntity.ok(bookService.getBookUploadedPerMonthNumber());
+	public ResponseEntity<ApiResponseWithData<List<Long>>> getBooksUploadedPerMonthCount() {
+		List<Long> counts = bookService.getBookUploadedPerMonthNumber();
+		return ResponseEntity
+				.ok(new ApiResponseWithData<>("Monthly upload counts retrieved successfully.", true, counts));
 	}
 
 	@GetMapping("/books/author/{authorId}")
 	public ResponseEntity<Page<BookDTO>> getBooksByAuthor(@PathVariable UUID authorId,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
-			@RequestParam(defaultValue = "id") String sortBy) {
+			@RequestParam(defaultValue = "id") String sortBy,
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
-		return ResponseEntity.ok(bookService.getBooksByAuthor(authorId, pageable));
+		User currentUser = resolveCurrentUser(jwt);
+		if (currentUser != null) {
+			ensureNotBlocked(currentUser, authorId);
+		}
+		Page<BookDTO> booksPage = bookService.getBooksByAuthor(authorId, pageable);
+		if (currentUser != null) {
+			booksPage = filterBooks(booksPage, pageable, getHiddenAuthorIds(currentUser));
+		}
+		return ResponseEntity.ok(booksPage);
 	}
 
 	@GetMapping("/api/books/favoured")
@@ -83,102 +160,170 @@ public class BookController {
 			@RequestParam(defaultValue = "id") String sortBy) {
 		User user = userService.findUserByJwt(jwt);
 		Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
-		return ResponseEntity.ok(bookService.getFollowedBooksByUserId(user.getId(), pageable));
+		Page<BookDTO> favourites = bookService.getFollowedBooksByUserId(user.getId(), pageable);
+		favourites = filterBooks(favourites, pageable, getHiddenAuthorIds(user));
+		return ResponseEntity.ok(favourites);
 	}
 
 	@GetMapping("/categories/{categoryId}/books")
 	public ResponseEntity<Page<BookDTO>> getBooksByCategory(@PathVariable Integer categoryId,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
-			@RequestParam(defaultValue = "id") String sortBy) {
+			@RequestParam(defaultValue = "id") String sortBy,
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
-		return ResponseEntity.ok(bookService.getBooksByCategoryId(categoryId, pageable));
+		User currentUser = resolveCurrentUser(jwt);
+		Page<BookDTO> booksPage = bookService.getBooksByCategoryId(categoryId, pageable);
+		if (currentUser != null) {
+			booksPage = filterBooks(booksPage, pageable, getHiddenAuthorIds(currentUser));
+		}
+		return ResponseEntity.ok(booksPage);
 	}
 
 	@GetMapping("/books/search")
 	public ResponseEntity<Page<BookDTO>> searchBooks(@RequestParam(required = false) String title,
 			@RequestParam(required = false) Integer categoryId, @RequestParam(required = false) List<Integer> tagIds,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
-			@RequestParam(defaultValue = "id") String sortBy) {
+			@RequestParam(defaultValue = "id") String sortBy,
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
-		return ResponseEntity.ok(bookService.searchBooks(title, categoryId, tagIds, pageable));
+		Page<BookDTO> booksPage = bookService.searchBooks(title, categoryId, tagIds, pageable);
+		User currentUser = resolveCurrentUser(jwt);
+		if (currentUser != null) {
+			booksPage = filterBooks(booksPage, pageable, getHiddenAuthorIds(currentUser));
+		}
+		return ResponseEntity.ok(booksPage);
 	}
 
 	@GetMapping("/books/count")
-	public ResponseEntity<?> getBookCount() {
-		return ResponseEntity.ok(bookService.getBookCount());
+	public ResponseEntity<ApiResponseWithData<Long>> getBookCount() {
+		Long count = bookService.getBookCount();
+		return ResponseEntity.ok(new ApiResponseWithData<>("Book count retrieved successfully.", true, count));
 	}
 
 	@GetMapping("/books/{bookId}/comments-count")
-	public Long getBookCommentCountCount(@PathVariable UUID bookId) {
-		return bookService.getCommentCountForBook(bookId);
+	public ResponseEntity<ApiResponseWithData<Long>> getBookCommentCountCount(@PathVariable UUID bookId) {
+		Long count = bookService.getCommentCountForBook(bookId);
+		return ResponseEntity.ok(new ApiResponseWithData<>("Comment count retrieved successfully.", true, count));
 	}
 
 	@GetMapping("/books/{bookId}")
 	public ResponseEntity<BookDTO> getBookById(@PathVariable UUID bookId,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		BookDTO bookDTO = bookService.getBookById(bookId);
-		boolean isAuthenticated = jwt != null;
-		if (isAuthenticated) {
-			User user = userService.findUserByJwt(jwt);
-			if (user != null) {
-				bookDTO.setFollowedByCurrentUser(bookService.isBookLikedByUser(user.getId(), bookId));
-			}
+		User currentUser = resolveCurrentUser(jwt);
+		if (currentUser != null) {
+			UUID ownerId = bookDTO.getAuthor() != null ? bookDTO.getAuthor().getId() : null;
+			ensureNotBlocked(currentUser, ownerId);
+			bookDTO.setFollowedByCurrentUser(bookService.isBookLikedByUser(currentUser.getId(), bookId));
 		}
 
 		return ResponseEntity.ok(bookDTO);
 	}
 
 	@GetMapping("/books/top-likes")
-	public ResponseEntity<List<BookDTO>> getTop10BooksByLikes() {
-		return ResponseEntity.ok(bookService.getTop10LikedBooks());
+	public ResponseEntity<List<BookDTO>> getTop10BooksByLikes(
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
+		User currentUser = resolveCurrentUser(jwt);
+		List<BookDTO> books = bookService.getTop10LikedBooks();
+		if (currentUser != null) {
+			books = filterBooks(books, getHiddenAuthorIds(currentUser));
+		}
+		return ResponseEntity.ok(books);
 	}
 
 	@GetMapping("/books/featured")
-	public ResponseEntity<List<BookDTO>> getFeaturedBooks() {
-		return ResponseEntity.ok(bookService.getFeaturedBooks());
+	public ResponseEntity<List<BookDTO>> getFeaturedBooks(
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
+		User currentUser = resolveCurrentUser(jwt);
+		List<BookDTO> books = bookService.getFeaturedBooks();
+		if (currentUser != null) {
+			books = filterBooks(books, getHiddenAuthorIds(currentUser));
+		}
+		return ResponseEntity.ok(books);
 	}
 
 	@GetMapping("/books/{bookId}/related")
 	public ResponseEntity<List<BookDTO>> getRelatedBooks(@PathVariable("bookId") UUID bookId,
-			@RequestParam(value = "tagIds", required = false) List<Integer> tagIds) {
-		return ResponseEntity.ok(bookService.getRelatedBooks(bookId, tagIds));
+			@RequestParam(value = "tagIds", required = false) List<Integer> tagIds,
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
+		User currentUser = resolveCurrentUser(jwt);
+		if (currentUser != null) {
+			BookDTO baseBook = bookService.getBookById(bookId);
+			UUID ownerId = baseBook.getAuthor() != null ? baseBook.getAuthor().getId() : null;
+			ensureNotBlocked(currentUser, ownerId);
+		}
+		List<BookDTO> related = bookService.getRelatedBooks(bookId, tagIds);
+		if (currentUser != null) {
+			related = filterBooks(related, getHiddenAuthorIds(currentUser));
+		}
+		return ResponseEntity.ok(related);
 	}
 
 	@GetMapping("/top-categories")
-	public ResponseEntity<List<CategoryDTO>> getTopSixCategoriesWithBooks() {
-		return ResponseEntity.ok(bookService.getTopSixCategoriesWithBooks());
+	public ResponseEntity<List<CategoryDTO>> getTopSixCategoriesWithBooks(
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
+		User currentUser = resolveCurrentUser(jwt);
+		List<CategoryDTO> categories = bookService.getTopSixCategoriesWithBooks();
+		if (currentUser != null) {
+			Set<UUID> hiddenAuthorIds = getHiddenAuthorIds(currentUser);
+			if (!hiddenAuthorIds.isEmpty()) {
+				categories.forEach(category -> {
+					List<BookDTO> filteredBooks = filterBooks(category.getBooks(), hiddenAuthorIds);
+					category.setBooks(filteredBooks);
+				});
+			}
+		}
+		return ResponseEntity.ok(categories);
 	}
 
 	@GetMapping("/books/latest-update")
-	public ResponseEntity<List<BookDTO>> getLatestUpdateBooks(@RequestParam(defaultValue = "5") int limit) {
-		return ResponseEntity.ok(bookService.getTopRecentChapterBooks(limit));
+	public ResponseEntity<List<BookDTO>> getLatestUpdateBooks(@RequestParam(defaultValue = "5") int limit,
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
+		User currentUser = resolveCurrentUser(jwt);
+		List<BookDTO> books = bookService.getTopRecentChapterBooks(limit);
+		if (currentUser != null) {
+			books = filterBooks(books, getHiddenAuthorIds(currentUser));
+		}
+		return ResponseEntity.ok(books);
 	}
 
 	@GetMapping("/books/trending")
 	public ResponseEntity<List<BookDTO>> getTrendingBooks(
 			@RequestParam(defaultValue = "24") int hours,
 			@RequestParam(defaultValue = "10") long minViews,
-			@RequestParam(defaultValue = "10") int limit) {
-		return ResponseEntity.ok(bookService.getTrendingBooks(hours, minViews, limit));
+			@RequestParam(defaultValue = "10") int limit,
+			@RequestHeader(value = "Authorization", required = false) String jwt) {
+		User currentUser = resolveCurrentUser(jwt);
+		List<BookDTO> books = bookService.getTrendingBooks(hours, minViews, limit);
+		if (currentUser != null) {
+			books = filterBooks(books, getHiddenAuthorIds(currentUser));
+		}
+		return ResponseEntity.ok(books);
 	}
 
 	@GetMapping("/api/books/{bookId}/isLiked")
-	public ResponseEntity<Boolean> checkBookLikedByUser(@RequestHeader("Authorization") String jwt,
+	public ResponseEntity<ApiResponseWithData<Boolean>> checkBookLikedByUser(@RequestHeader("Authorization") String jwt,
 			@PathVariable UUID bookId) {
 		User user = userService.findUserByJwt(jwt);
-		return ResponseEntity.ok(bookService.isBookLikedByUser(user.getId(), bookId));
+		Boolean isLiked = bookService.isBookLikedByUser(user.getId(), bookId);
+		return ResponseEntity.ok(new ApiResponseWithData<>("Like status retrieved successfully.", true, isLiked));
 	}
 
 	@PostMapping("/api/books")
-	public ResponseEntity<?> createBook(@RequestBody BookDTO bookDTO, @RequestHeader("Authorization") String jwt)
-			throws IOException {
+	public ResponseEntity<ApiResponseWithData<BookDTO>> createBook(@RequestBody BookDTO bookDTO,
+			@RequestHeader("Authorization") String jwt) throws IOException {
 		User user = userService.findUserByJwt(jwt);
 		if (user.isBanned()) {
-			return new ResponseEntity<>("You are current banned from this website! Contact Admin for support",
-					HttpStatus.FORBIDDEN);
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseWithData<>(
+					"You are currently banned from this website. Contact support for assistance.", false));
 		}
 		if (user.getIsSuspended()) {
-			return new ResponseEntity<>("You are currently suspended! Contact Admin for support", HttpStatus.FORBIDDEN);
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseWithData<>(
+					"You are currently suspended. Contact support for assistance.", false));
+		}
+		if (!Boolean.TRUE.equals(user.getIsVerified())) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseWithData<>(
+					"Please verify your account before creating books.", false));
 		}
 		BookDTO createdBook = bookService.createBook(bookDTO);
 		UUID authorId = createdBook.getAuthor().getId();
@@ -186,20 +331,23 @@ public class BookController {
 			User author = userService.findUserById(authorId);
 			notificationService.createNotification(author,
 					"Your book '" + createdBook.getTitle() + "' has been created!", NotificationEntityType.BOOK,
-					bookDTO.getId());
+					createdBook.getId());
 		}
-		return ResponseEntity.ok(createdBook);
+		ApiResponseWithData<BookDTO> response = new ApiResponseWithData<>("Book created successfully.", true,
+				createdBook);
+		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
 	@PutMapping("/api/books/{bookId}")
-	public ResponseEntity<?> updateBook(@PathVariable("bookId") UUID bookId, @RequestBody BookDTO bookDTO,
-			@RequestHeader("Authorization") String jwt) {
+	public ResponseEntity<ApiResponseWithData<BookDTO>> updateBook(@PathVariable("bookId") UUID bookId,
+			@RequestBody BookDTO bookDTO, @RequestHeader("Authorization") String jwt) {
 		BookDTO book = bookService.getBookById(bookId);
 		User user = userService.findUserByJwt(jwt);
 		UUID authorId = book.getAuthor().getId();
 
 		if (user.getId() != authorId && user.getRole().getName().equals("ADMIN")) {
-			return new ResponseEntity<>("You dont have any permission to edit this book", HttpStatus.UNAUTHORIZED);
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseWithData<>(
+					"You do not have permission to edit this book.", false));
 		}
 		BookDTO updatedBook = bookService.updateBook(bookId, bookDTO);
 		if (authorId != null) {
@@ -208,18 +356,21 @@ public class BookController {
 					"Your book '" + updatedBook.getTitle() + "' has been updated!", NotificationEntityType.BOOK,
 					bookId);
 		}
-		return ResponseEntity.ok(updatedBook);
+		ApiResponseWithData<BookDTO> response = new ApiResponseWithData<>("Book updated successfully.", true,
+				updatedBook);
+		return ResponseEntity.ok(response);
 	}
 
 	@DeleteMapping("/api/books/{bookId}")
-	public ResponseEntity<?> deleteBook(@PathVariable("bookId") UUID bookId,
+	public ResponseEntity<ApiResponseWithData<Void>> deleteBook(@PathVariable("bookId") UUID bookId,
 			@RequestHeader("Authorization") String jwt) {
 		BookDTO book = bookService.getBookById(bookId);
 		User user = userService.findUserByJwt(jwt);
 
 		UUID authorId = book.getAuthor().getId();
 		if (user.getId() != authorId && user.getRole().getName().equals("ADMIN")) {
-			return new ResponseEntity<>("You dont have any permission to delete this book", HttpStatus.UNAUTHORIZED);
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseWithData<>(
+					"You do not have permission to delete this book.", false));
 		}
 		bookService.deleteBook(bookId);
 		if (authorId != null) {
@@ -227,34 +378,55 @@ public class BookController {
 			notificationService.createNotification(author, "Your book '" + book.getTitle() + "' has been deleted!",
 					NotificationEntityType.BOOK, null);
 		}
-		return ResponseEntity.noContent().build();
+		ApiResponseWithData<Void> response = new ApiResponseWithData<>("Book deleted successfully.", true);
+		return ResponseEntity.ok(response);
 	}
 
 	@PostMapping("/books/{bookId}/views")
-	public ResponseEntity<Long> recordBookView(@PathVariable UUID bookId,
+	public ResponseEntity<ApiResponseWithData<Long>> recordBookView(@PathVariable UUID bookId,
 			@RequestHeader(value = "Authorization", required = false) String jwt,
 			HttpServletRequest request) {
 		UUID viewerId = null;
 		if (jwt != null && !jwt.isBlank()) {
 			User viewer = userService.findUserByJwt(jwt);
 			if (viewer != null) {
+				BookDTO bookDTO = bookService.getBookById(bookId);
+				UUID ownerId = bookDTO.getAuthor() != null ? bookDTO.getAuthor().getId() : null;
+				if (isInteractionBlocked(viewer, ownerId)) {
+					ApiResponseWithData<Long> blockedResponse = new ApiResponseWithData<>(
+							"You cannot record a view for this book because access between the accounts is blocked.",
+							false);
+					return ResponseEntity.status(HttpStatus.FORBIDDEN).body(blockedResponse);
+				}
 				viewerId = viewer.getId();
 			}
 		}
 		long updatedCount = bookService.recordBookView(bookId, viewerId, request.getRemoteAddr());
-		return ResponseEntity.status(HttpStatus.ACCEPTED).body(updatedCount);
+		ApiResponseWithData<Long> successResponse = new ApiResponseWithData<>(
+				"Book view recorded successfully.", true, updatedCount);
+		return ResponseEntity.status(HttpStatus.ACCEPTED).body(successResponse);
 	}
 
 	@PutMapping("/api/books/follow/{bookId}")
-	public ResponseEntity<Boolean> markBookAsFavoured(@RequestHeader("Authorization") String jwt,
-			@PathVariable UUID bookId) {
+	public ResponseEntity<ApiResponseWithData<Boolean>> markBookAsFavoured(
+			@RequestHeader("Authorization") String jwt, @PathVariable UUID bookId) {
 		User reqUser = userService.findUserByJwt(jwt);
+		BookDTO bookDTO = bookService.getBookById(bookId);
+		UUID ownerId = bookDTO.getAuthor() != null ? bookDTO.getAuthor().getId() : null;
+		if (isInteractionBlocked(reqUser, ownerId)) {
+			ApiResponseWithData<Boolean> blockedResponse = new ApiResponseWithData<>(
+					"You cannot follow or unfollow this book because access between the accounts is blocked.", false);
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(blockedResponse);
+		}
 		boolean isFollowed = bookService.markAsFavouriteBook(bookId, reqUser);
-		return ResponseEntity.ok(isFollowed);
+		String message = isFollowed ? "Book added to favourites." : "Book removed from favourites.";
+		ApiResponseWithData<Boolean> successResponse = new ApiResponseWithData<>(message, true, isFollowed);
+		return ResponseEntity.ok(successResponse);
 	}
 
-	@PutMapping("/api/books/{bookId}/editor-choice")
-	public ResponseEntity<BookDTO> setEditorChoice(@PathVariable UUID bookId, @RequestBody BookDTO bookDTO) {
+	@PutMapping("/admin/books/{bookId}/editor-choice")
+	public ResponseEntity<ApiResponseWithData<BookDTO>> setEditorChoice(@PathVariable UUID bookId,
+			@RequestBody BookDTO bookDTO) {
 		BookDTO updatedBook = bookService.setEditorChoice(bookId, bookDTO);
 		UUID authorId = updatedBook.getAuthor().getId();
 		if (authorId != null) {
@@ -263,6 +435,7 @@ public class BookController {
 					"Your book '" + updatedBook.getTitle() + "' has been selected as Editor's Choice!",
 					NotificationEntityType.BOOK, bookId);
 		}
-		return ResponseEntity.ok(updatedBook);
+		return ResponseEntity
+				.ok(new ApiResponseWithData<>("Book set as editor's choice successfully.", true, updatedBook));
 	}
 }

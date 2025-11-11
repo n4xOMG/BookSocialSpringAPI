@@ -1,6 +1,8 @@
 package com.nix.service.impl;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -41,7 +43,9 @@ public class PurchaseServiceImpl implements PurchaseService {
 
 	@Override
 	public Double getTotalSalesAmount() {
-		return purchaseRepository.findAll().stream().mapToDouble(Purchase::getAmount).sum();
+		BigDecimal total = purchaseRepository.findAll().stream().map(Purchase::getAmount)
+				.filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+		return total.doubleValue();
 	}
 
 	@Override
@@ -52,8 +56,9 @@ public class PurchaseServiceImpl implements PurchaseService {
 	@Override
 	public List<SalesPerUserDTO> getSalesStatisticsPerUser() {
 		return purchaseRepository.findAll().stream().map(Purchase::getUser).distinct().map(user -> {
-			double totalSpent = purchaseRepository.findByUser(user).stream().mapToDouble(Purchase::getAmount).sum();
-			return new SalesPerUserDTO(user.getId(), user.getUsername(), totalSpent);
+			BigDecimal totalSpent = purchaseRepository.findByUser(user).stream().map(Purchase::getAmount)
+					.filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+			return new SalesPerUserDTO(user.getId(), user.getUsername(), totalSpent.doubleValue());
 		}).collect(Collectors.toList());
 	}
 }

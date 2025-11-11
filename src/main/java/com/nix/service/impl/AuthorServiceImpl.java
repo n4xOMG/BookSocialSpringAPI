@@ -37,6 +37,7 @@ import com.nix.repository.BookFavouriteRepository;
 import com.nix.repository.BookRepository;
 import com.nix.service.AuthorService;
 import com.nix.service.BookService;
+import com.nix.service.CreditPackageService;
 import com.nix.service.PayPalPayoutService;
 
 @Service
@@ -74,6 +75,9 @@ public class AuthorServiceImpl implements AuthorService {
 	private BookService bookService;
 
 	@Autowired
+	private CreditPackageService creditPackageService;
+
+	@Autowired
 	private AuthorEarningMapper authorEarningMapper;
 
 	@Autowired
@@ -89,7 +93,12 @@ public class AuthorServiceImpl implements AuthorService {
 		Chapter chapter = unlockRecord.getChapter();
 		User author = chapter.getBook().getAuthor();
 
-		BigDecimal grossAmount = BigDecimal.valueOf(unlockRecord.getUnlockCost());
+		BigDecimal usdPerCredit = creditPackageService.getCurrentUsdPricePerCredit();
+		BigDecimal grossAmount = usdPerCredit.multiply(BigDecimal.valueOf(unlockRecord.getUnlockCost()))
+				.setScale(2, RoundingMode.HALF_UP);
+		if (grossAmount.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new IllegalStateException("Calculated gross amount for unlock must be greater than zero");
+		}
 
 		AuthorEarning earning = new AuthorEarning(author, chapter, unlockRecord, grossAmount, platformFeePercentage);
 
@@ -130,14 +139,13 @@ public class AuthorServiceImpl implements AuthorService {
 		Page<Book> authorBooks = bookRepository.findByAuthorId(author.getId(), pageable);
 		dashboard.setTotalBooks(authorBooks.getTotalElements());
 		dashboard.setTotalChapters(authorBooks.stream().mapToInt(book -> book.getChapters().size()).sum());
-		
+
 		// Calculate total views, likes, and comments across all books
 		long totalViews = authorBooks.stream().mapToLong(Book::getViewCount).sum();
-		long totalFavourites = authorBooks.stream().mapToLong(book -> 
-			bookFavouriteRepository.countByBookId(book.getId())
-		).sum();
+		long totalFavourites = authorBooks.stream()
+				.mapToLong(book -> bookFavouriteRepository.countByBookId(book.getId())).sum();
 		long totalComments = authorBooks.stream().mapToLong(book -> book.getComments().size()).sum();
-		
+
 		dashboard.setTotalViews(totalViews);
 		dashboard.setTotalLikes(totalFavourites);
 		dashboard.setTotalComments(totalComments);
@@ -148,14 +156,14 @@ public class AuthorServiceImpl implements AuthorService {
 		List<AuthorPayout> recentPayouts = authorPayoutRepository
 				.findByAuthorOrderByRequestedDateDesc(author, Pageable.ofSize(5)).getContent();
 		dashboard.setRecentPayouts(authorPayoutMapper.mapToDTOs(recentPayouts));
-		
+
 		// Top performing books (limited to top 5)
 		List<BookPerformanceDTO> allBookPerformance = bookService.getAuthorBookPerformance(author.getId());
 		List<BookPerformanceDTO> topPerformingBooks = allBookPerformance.stream()
-			.sorted((a, b) -> Long.compare(b.getDailyViewsGrowth() + b.getWeeklyViewsGrowth(), 
-										  a.getDailyViewsGrowth() + a.getWeeklyViewsGrowth()))
-			.limit(5)
-			.toList();
+				.sorted((a, b) -> Long.compare(b.getDailyViewsGrowth() + b.getWeeklyViewsGrowth(),
+						a.getDailyViewsGrowth() + a.getWeeklyViewsGrowth()))
+				.limit(5)
+				.toList();
 		dashboard.setTopPerformingBooks(topPerformingBooks);
 
 		// Payout settings
@@ -211,7 +219,10 @@ public class AuthorServiceImpl implements AuthorService {
 		BigDecimal totalPlatformFees = unpaidEarnings.stream().map(AuthorEarning::getPlatformFee)
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 
-		AuthorPayout payout = new AuthorPayout(author, amount, totalPlatformFees);
+		BigDecimal roundedAmount = amount.setScale(2, RoundingMode.HALF_UP);
+		BigDecimal roundedFees = totalPlatformFees.setScale(2, RoundingMode.HALF_UP);
+
+		AuthorPayout payout = new AuthorPayout(author, roundedAmount, roundedFees);
 		AuthorPayout savedPayout = authorPayoutRepository.save(payout);
 
 		// Mark earnings as paid out
@@ -274,12 +285,34 @@ public class AuthorServiceImpl implements AuthorService {
 			throw new Exception("PayPal email not configured for author");
 		}
 
-		String providerPayoutId = payPalPayoutService.createPayout(settings.getPaypalEmail(), payout.getTotalAmount(),
-				"USD", "Payout for author " + payout.getAuthor().getFullname());
+		BigDecimal payoutAmount = payout.getTotalAmount().setScale(2, RoundingMode.HALF_UP);
+		String providerPayoutId = payPalPayoutService.createPayout(settings.getPaypalEmail(), payoutAmount,
+				payout.getCurrency(), "Payout for author " + payout.getAuthor().getFullname());
 
-		payout.setStatus(AuthorPayout.PayoutStatus.PROCESSING);
-		payout.setProcessedDate(LocalDateTime.now());
 		payout.setProviderPayoutId(providerPayoutId);
+		payout.setProcessedDate(LocalDateTime.now());
+
+		PayPalPayoutService.PayPalPayoutStatus providerStatus = payPalPayoutService
+				.getPayoutBatchStatus(providerPayoutId);
+		switch (providerStatus) {
+			case SUCCESS:
+				payout.setStatus(AuthorPayout.PayoutStatus.COMPLETED);
+				payout.setCompletedDate(LocalDateTime.now());
+				break;
+			case FAILED:
+				payout.setStatus(AuthorPayout.PayoutStatus.FAILED);
+				payout.setFailureReason("PayPal reported payout failure for batch " + providerPayoutId);
+				break;
+			case PROCESSING:
+			case PENDING:
+				payout.setStatus(AuthorPayout.PayoutStatus.PROCESSING);
+				break;
+			case UNKNOWN:
+			default:
+				payout.setStatus(AuthorPayout.PayoutStatus.PENDING);
+				break;
+		}
+
 		authorPayoutRepository.save(payout);
 	}
 

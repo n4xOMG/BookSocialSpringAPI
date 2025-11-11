@@ -46,7 +46,9 @@ public class NotificationServiceImpl implements NotificationService {
 		notificationRepository.save(notification);
 
 		messagingTemplate.convertAndSendToUser(user.getUsername(), "/notifications", new NotificationDTO(
-				notification.getId(), notification.getMessage(), false, notification.getCreatedDate()));
+				notification.getId(), notification.getMessage(), false, notification.getEntityType(),
+				notification.getEntityId(),
+				notification.getCreatedDate()));
 	}
 
 	@Override
@@ -55,6 +57,8 @@ public class NotificationServiceImpl implements NotificationService {
 		return notifications.map(notification -> {
 			boolean isRead = userNotificationRepository.existsByUserAndNotificationAndIsRead(user, notification, true);
 			return new NotificationDTO(notification.getId(), notification.getMessage(), isRead,
+					notification.getEntityType(),
+					notification.getEntityId(),
 					notification.getCreatedDate());
 		});
 	}
@@ -63,10 +67,9 @@ public class NotificationServiceImpl implements NotificationService {
 	public Page<NotificationDTO> getUnreadNotifications(User user, Pageable pageable) {
 		Page<Notification> notifications = notificationRepository.findUnreadByReceiver(user, pageable);
 		return notifications
-				.map(notification -> new NotificationDTO(notification.getId(), notification.getMessage(), false, // All
-																													// notifications
-																													// are
-																													// unread
+				.map(notification -> new NotificationDTO(notification.getId(), notification.getMessage(), false,
+						notification.getEntityType(),
+						notification.getEntityId(),
 						notification.getCreatedDate()));
 	}
 

@@ -2,6 +2,8 @@ package com.nix.service;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,7 @@ import com.nix.service.impl.AuthorServiceImpl;
 
 @Service
 public class PayoutSchedulerService {
+	private static final Logger logger = LoggerFactory.getLogger(PayoutSchedulerService.class);
 
 	@Autowired
 	private AuthorServiceImpl authorService;
@@ -37,11 +40,11 @@ public class PayoutSchedulerService {
 					payout.setStatus(AuthorPayout.PayoutStatus.FAILED);
 					payout.setFailureReason(e.getMessage());
 					authorPayoutRepository.save(payout);
-					System.err.println("Failed to process payout " + payout.getId() + ": " + e.getMessage());
+					logger.error("Failed to process payout {}", payout.getId(), e);
 				}
 			}
 		} catch (Exception e) {
-			System.err.println("Error processing pending payouts: " + e.getMessage());
+			logger.error("Error processing pending payouts", e);
 		}
 	}
 
@@ -62,25 +65,25 @@ public class PayoutSchedulerService {
 					PayPalPayoutService.PayPalPayoutStatus status = payPalPayoutService
 							.getPayoutBatchStatus(payoutBatchId);
 					switch (status) {
-					case SUCCESS:
-						payout.setStatus(AuthorPayout.PayoutStatus.COMPLETED);
-						payout.setCompletedDate(java.time.LocalDateTime.now());
-						authorPayoutRepository.save(payout);
-						break;
-					case FAILED:
-						payout.setStatus(AuthorPayout.PayoutStatus.FAILED);
-						payout.setFailureReason("Marked failed by provider polling");
-						authorPayoutRepository.save(payout);
-						break;
-					default:
-						// still processing or unknown; skip
+						case SUCCESS:
+							payout.setStatus(AuthorPayout.PayoutStatus.COMPLETED);
+							payout.setCompletedDate(java.time.LocalDateTime.now());
+							authorPayoutRepository.save(payout);
+							break;
+						case FAILED:
+							payout.setStatus(AuthorPayout.PayoutStatus.FAILED);
+							payout.setFailureReason("Marked failed by provider polling");
+							authorPayoutRepository.save(payout);
+							break;
+						default:
+							// still processing or unknown; skip
 					}
 				} catch (Exception ex) {
-					System.err.println("Error polling payout status for " + payout.getId() + ": " + ex.getMessage());
+					logger.error("Error polling payout status for {}", payout.getId(), ex);
 				}
 			}
 		} catch (Exception e) {
-			System.err.println("Error polling processing payouts: " + e.getMessage());
+			logger.error("Error polling processing payouts", e);
 		}
 	}
 }

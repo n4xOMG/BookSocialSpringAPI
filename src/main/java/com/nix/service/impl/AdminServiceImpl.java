@@ -77,10 +77,24 @@ public class AdminServiceImpl implements AdminService {
 		userAnalytics.setSuspendedUsers(userRepository.countSuspendedUsers());
 
 		// Get user growth history for last 30 days
+		long totalUsers = userAnalytics.getTotalUsers();
 		List<Object[]> growthData = userRepository.getUserGrowthData(thirtyDaysAgo);
-		List<UserGrowthDTO> userGrowthHistory = growthData.stream()
-				.map(data -> new UserGrowthDTO((LocalDate) data[0], (Long) data[1], userRepository.count()))
-				.collect(Collectors.toList());
+		List<UserGrowthDTO> userGrowthHistory = growthData.stream().map(data -> {
+			Object dateRaw = data[0];
+			LocalDate date;
+			if (dateRaw instanceof LocalDate) {
+				date = (LocalDate) dateRaw;
+			} else if (dateRaw instanceof java.sql.Date sqlDate) {
+				date = sqlDate.toLocalDate();
+			} else if (dateRaw instanceof LocalDateTime ldt) {
+				date = ldt.toLocalDate();
+			} else {
+				throw new IllegalStateException("Unsupported date type: " + dateRaw);
+			}
+
+			Long count = ((Number) data[1]).longValue();
+			return new UserGrowthDTO(date, count, totalUsers);
+		}).collect(Collectors.toList());
 		userAnalytics.setUserGrowthHistory(userGrowthHistory);
 
 		return userAnalytics;
@@ -95,25 +109,38 @@ public class AdminServiceImpl implements AdminService {
 		RevenueAnalyticsDTO revenueAnalytics = new RevenueAnalyticsDTO();
 
 		// Basic revenue metrics
-		Double totalRev = purchaseRepository.getTotalRevenue();
-		Double monthlyRev = purchaseRepository.getRevenueFromDate(monthAgo);
-		Double weeklyRev = purchaseRepository.getRevenueFromDate(weekAgo);
-		Double dailyRev = purchaseRepository.getRevenueFromDate(today);
-		Double avgOrderValue = purchaseRepository.getAverageOrderValue();
+		BigDecimal totalRev = purchaseRepository.getTotalRevenue();
+		BigDecimal monthlyRev = purchaseRepository.getRevenueFromDate(monthAgo);
+		BigDecimal weeklyRev = purchaseRepository.getRevenueFromDate(weekAgo);
+		BigDecimal dailyRev = purchaseRepository.getRevenueFromDate(today);
+		BigDecimal avgOrderValue = purchaseRepository.getAverageOrderValue();
 
-		revenueAnalytics.setTotalRevenue(totalRev != null ? BigDecimal.valueOf(totalRev) : BigDecimal.ZERO);
-		revenueAnalytics.setMonthlyRevenue(monthlyRev != null ? BigDecimal.valueOf(monthlyRev) : BigDecimal.ZERO);
-		revenueAnalytics.setWeeklyRevenue(weeklyRev != null ? BigDecimal.valueOf(weeklyRev) : BigDecimal.ZERO);
-		revenueAnalytics.setDailyRevenue(dailyRev != null ? BigDecimal.valueOf(dailyRev) : BigDecimal.ZERO);
-		revenueAnalytics
-				.setAverageOrderValue(avgOrderValue != null ? BigDecimal.valueOf(avgOrderValue) : BigDecimal.ZERO);
+		revenueAnalytics.setTotalRevenue(totalRev != null ? totalRev : BigDecimal.ZERO);
+		revenueAnalytics.setMonthlyRevenue(monthlyRev != null ? monthlyRev : BigDecimal.ZERO);
+		revenueAnalytics.setWeeklyRevenue(weeklyRev != null ? weeklyRev : BigDecimal.ZERO);
+		revenueAnalytics.setDailyRevenue(dailyRev != null ? dailyRev : BigDecimal.ZERO);
+		revenueAnalytics.setAverageOrderValue(avgOrderValue != null ? avgOrderValue : BigDecimal.ZERO);
 		revenueAnalytics.setTotalTransactions(purchaseRepository.getTotalCompletedPurchases());
 
 		// Daily revenue history for last 30 days
 		List<Object[]> dailyRevenueData = purchaseRepository.getDailyRevenue(monthAgo);
-		List<DailyRevenueDTO> dailyRevenueHistory = dailyRevenueData.stream()
-				.map(data -> new DailyRevenueDTO((LocalDate) data[0], BigDecimal.valueOf((Double) data[1]), 0L))
-				.collect(Collectors.toList());
+		List<DailyRevenueDTO> dailyRevenueHistory = dailyRevenueData.stream().map(data -> {
+			Object dateRaw = data[0];
+			LocalDate date;
+			if (dateRaw instanceof LocalDate) {
+				date = (LocalDate) dateRaw;
+			} else if (dateRaw instanceof java.sql.Date sqlDate) {
+				date = sqlDate.toLocalDate();
+			} else if (dateRaw instanceof LocalDateTime ldt) {
+				date = ldt.toLocalDate();
+			} else {
+				throw new IllegalStateException("Unsupported date type: " + dateRaw);
+			}
+
+			BigDecimal revenue = data[1] instanceof BigDecimal ? (BigDecimal) data[1]
+					: BigDecimal.valueOf(((Number) data[1]).doubleValue());
+			return new DailyRevenueDTO(date, revenue, 0L);
+		}).collect(Collectors.toList());
 		revenueAnalytics.setDailyRevenueHistory(dailyRevenueHistory);
 
 		// Payment provider statistics

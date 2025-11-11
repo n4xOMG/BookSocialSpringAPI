@@ -26,6 +26,7 @@ public class PurchaseMapper implements Mapper<Purchase, PurchaseDTO> {
 			purchaseDTO.setPaymentProvider(p.getPaymentProvider());
 			purchaseDTO.setStatus(p.getStatus());
 			purchaseDTO.setCurrency(p.getCurrency());
+			purchaseDTO.setCreditsPurchased(p.getCreditsPurchased());
 			return purchaseDTO;
 		}
 		return null;

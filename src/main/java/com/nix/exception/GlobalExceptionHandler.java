@@ -17,8 +17,7 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
                 ex.getMessage(),
-                LocalDateTime.now()
-        );
+                LocalDateTime.now());
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
@@ -27,8 +26,7 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 ex.getMessage(),
-                LocalDateTime.now()
-        );
+                LocalDateTime.now());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
@@ -37,28 +35,35 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.NOT_ACCEPTABLE.value(),
                 ex.getMessage(),
-                LocalDateTime.now()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+                LocalDateTime.now());
+        return new ResponseEntity<>(error, HttpStatus.NOT_ACCEPTABLE);
     }
+
     @ExceptionHandler(InvalidUserException.class)
     public ResponseEntity<ErrorResponse> handleInvalidUserException(InvalidUserException ex) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.NOT_ACCEPTABLE.value(),
                 ex.getMessage(),
-                LocalDateTime.now()
-        );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+                LocalDateTime.now());
+        return new ResponseEntity<>(error, HttpStatus.NOT_ACCEPTABLE);
     }
-    
+
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ErrorResponse> handleInvalidUserException(UnauthorizedException ex) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.UNAUTHORIZED.value(),
                 ex.getMessage(),
-                LocalDateTime.now()
-        );
+                LocalDateTime.now());
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(ForbiddenAccessException.class)
+    public ResponseEntity<ErrorResponse> handleForbiddenAccessException(ForbiddenAccessException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.FORBIDDEN.value(),
+                ex.getMessage(),
+                LocalDateTime.now());
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
     }
 
 }

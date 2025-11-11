@@ -3,6 +3,8 @@ package com.nix.controller;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,14 +17,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nix.dtos.TagDTO;
 import com.nix.dtos.mappers.TagMapper;
 import com.nix.models.Tag;
 import com.nix.models.User;
+import com.nix.response.ApiResponseWithData;
 import com.nix.service.TagService;
 import com.nix.service.UserService;
 
 @RestController
 public class TagController {
+
+	private static final Logger logger = LoggerFactory.getLogger(TagController.class);
 
 	@Autowired
 	TagService tagService;
@@ -34,75 +40,112 @@ public class TagController {
 	TagMapper tagMapper;
 
 	@GetMapping("/books/tags")
-	public ResponseEntity<?> getAllTags() {
-		List<Tag> tags = tagService.findAllTags();
-		return ResponseEntity.ok(tagMapper.mapToDTOs(tags));
+	public ResponseEntity<ApiResponseWithData<List<TagDTO>>> getAllTags() {
+		try {
+			List<Tag> tags = tagService.findAllTags();
+			return buildSuccessResponse("Tags retrieved successfully.", tagMapper.mapToDTOs(tags));
+		} catch (Exception e) {
+			logger.error("Failed to retrieve tags", e);
+			return this.<List<TagDTO>>buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to retrieve tags.");
+		}
 	}
 
 	@GetMapping("/books/tags/{tagId}")
-	public ResponseEntity<?> getTagById(@PathVariable Integer tagId) {
+	public ResponseEntity<ApiResponseWithData<TagDTO>> getTagById(@PathVariable Integer tagId) {
 		try {
 			Tag tag = tagService.findTagById(tagId);
-			return ResponseEntity.ok(tagMapper.mapToDTO(tag));
+			if (tag == null) {
+				return this.<TagDTO>buildErrorResponse(HttpStatus.NOT_FOUND, "Tag not found.");
+			}
+			return buildSuccessResponse("Tag retrieved successfully.", tagMapper.mapToDTO(tag));
 		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+			logger.error("Failed to retrieve tag {}", tagId, e);
+			return this.<TagDTO>buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to retrieve tag.");
 		}
 	}
 
 	@GetMapping("/books/{bookId}/tags")
-	public ResponseEntity<?> getTagsByBook(@PathVariable UUID bookId) throws Exception {
+	public ResponseEntity<ApiResponseWithData<List<TagDTO>>> getTagsByBook(@PathVariable UUID bookId) {
 		try {
 			List<Tag> tags = tagService.findALlTagsByBookId(bookId);
-
-			return ResponseEntity.ok(tagMapper.mapToDTOs(tags));
+			return buildSuccessResponse("Book tags retrieved successfully.", tagMapper.mapToDTOs(tags));
 		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+			logger.error("Failed to retrieve tags for book {}", bookId, e);
+			return this.<List<TagDTO>>buildErrorResponse(HttpStatus.NOT_FOUND,
+					"Failed to retrieve tags for the specified book.");
 		}
 	}
 
 	@PostMapping("/admin/books/tags")
-	public ResponseEntity<?> addNewTag(@RequestHeader("Authorization") String jwt, @RequestBody Tag tag)
-			throws Exception {
-		User user = userService.findUserByJwt(jwt);
-		if (!user.getRole().getName().equals("ADMIN") && !user.getRole().getName().equals("TRANSLATOR")) {
-			return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
-		}
+	public ResponseEntity<ApiResponseWithData<TagDTO>> addNewTag(@RequestHeader("Authorization") String jwt,
+			@RequestBody Tag tag) {
 		try {
+			User user = userService.findUserByJwt(jwt);
+			if (user == null) {
+				return this.<TagDTO>buildErrorResponse(HttpStatus.UNAUTHORIZED, "User not found.");
+			}
+			if (!user.getRole().getName().equals("ADMIN") && !user.getRole().getName().equals("TRANSLATOR")) {
+				return this.<TagDTO>buildErrorResponse(HttpStatus.FORBIDDEN,
+						"You do not have permission to manage tags.");
+			}
 			Tag newTag = tagService.addNewTag(tag);
-
-			return ResponseEntity.ok(tagMapper.mapToDTO(newTag));
+			return buildSuccessResponse(HttpStatus.CREATED, "Tag created successfully.", tagMapper.mapToDTO(newTag));
 		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+			logger.error("Failed to create tag", e);
+			return this.<TagDTO>buildErrorResponse(HttpStatus.BAD_REQUEST, e.getMessage());
 		}
 	}
 
 	@PutMapping("/admin/books/tags/{tagId}")
-	public ResponseEntity<?> editTag(@RequestHeader("Authorization") String jwt, @PathVariable Integer tagId,
-			@RequestBody Tag tag) throws Exception {
-		User user = userService.findUserByJwt(jwt);
-		if (!user.getRole().getName().equals("ADMIN") && !user.getRole().getName().equals("TRANSLATOR")) {
-			return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
-		}
+	public ResponseEntity<ApiResponseWithData<TagDTO>> editTag(@RequestHeader("Authorization") String jwt,
+			@PathVariable Integer tagId, @RequestBody Tag tag) {
 		try {
+			User user = userService.findUserByJwt(jwt);
+			if (user == null) {
+				return this.<TagDTO>buildErrorResponse(HttpStatus.UNAUTHORIZED, "User not found.");
+			}
+			if (!user.getRole().getName().equals("ADMIN") && !user.getRole().getName().equals("TRANSLATOR")) {
+				return this.<TagDTO>buildErrorResponse(HttpStatus.FORBIDDEN,
+						"You do not have permission to manage tags.");
+			}
 			Tag editTag = tagService.editTag(tagId, tag);
 
-			return ResponseEntity.ok(tagMapper.mapToDTO(editTag));
+			return buildSuccessResponse("Tag updated successfully.", tagMapper.mapToDTO(editTag));
 		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+			logger.error("Failed to update tag {}", tagId, e);
+			return this.<TagDTO>buildErrorResponse(HttpStatus.BAD_REQUEST, e.getMessage());
 		}
 	}
 
 	@DeleteMapping("/admin/books/tags/{tagId}")
-	public ResponseEntity<?> deleteTag(@RequestHeader("Authorization") String jwt, @PathVariable Integer tagId)
-			throws Exception {
-		User user = userService.findUserByJwt(jwt);
-		if (!user.getRole().getName().equals("ADMIN") && !user.getRole().getName().equals("TRANSLATOR")) {
-			return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
-		}
+	public ResponseEntity<ApiResponseWithData<String>> deleteTag(@RequestHeader("Authorization") String jwt,
+			@PathVariable Integer tagId) {
 		try {
-			return ResponseEntity.ok(tagService.deleteTag(tagId));
+			User user = userService.findUserByJwt(jwt);
+			if (user == null) {
+				return this.<String>buildErrorResponse(HttpStatus.UNAUTHORIZED, "User not found.");
+			}
+			if (!user.getRole().getName().equals("ADMIN") && !user.getRole().getName().equals("TRANSLATOR")) {
+				return this.<String>buildErrorResponse(HttpStatus.FORBIDDEN,
+						"You do not have permission to manage tags.");
+			}
+			String result = tagService.deleteTag(tagId);
+			return buildSuccessResponse("Tag deleted successfully.", result);
 		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+			logger.error("Failed to delete tag {}", tagId, e);
+			return this.<String>buildErrorResponse(HttpStatus.BAD_REQUEST, e.getMessage());
 		}
+	}
+
+	private <T> ResponseEntity<ApiResponseWithData<T>> buildSuccessResponse(String message, T data) {
+		return ResponseEntity.ok(new ApiResponseWithData<>(message, true, data));
+	}
+
+	private <T> ResponseEntity<ApiResponseWithData<T>> buildSuccessResponse(HttpStatus status, String message, T data) {
+		return ResponseEntity.status(status).body(new ApiResponseWithData<>(message, true, data));
+	}
+
+	private <T> ResponseEntity<ApiResponseWithData<T>> buildErrorResponse(HttpStatus status, String message) {
+		return ResponseEntity.status(status).body(new ApiResponseWithData<>(message, false, null));
 	}
 }

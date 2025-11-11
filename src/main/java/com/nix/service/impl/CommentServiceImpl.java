@@ -10,6 +10,8 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -42,6 +44,7 @@ import jakarta.persistence.PersistenceContext;
 @Service
 public class CommentServiceImpl implements CommentService {
 
+	private static final Logger logger = LoggerFactory.getLogger(CommentService.class);
 	@Autowired
 	CommentRepository commentRepo;
 
@@ -93,7 +96,7 @@ public class CommentServiceImpl implements CommentService {
 	@Override
 	public Page<Comment> getPagerPostComments(int page, int size, UUID postId) {
 		Pageable pageable = PageRequest.of(page, size);
-		
+
 		return commentRepo.findParentCommentsByPostId(postId, pageable);
 
 	}
@@ -271,7 +274,7 @@ public class CommentServiceImpl implements CommentService {
 
 			return "Comment deleted successfully!";
 		} catch (Exception e) {
-			System.err.println("Error deleting comment: " + e.getMessage());
+			logger.error("Error deleting comment {}", e);
 			throw new Exception("Error deleting comment: " + e.getMessage(), e);
 		}
 	}
@@ -311,7 +314,7 @@ public class CommentServiceImpl implements CommentService {
 
 	@Override
 	public Comment editComment(UUID userId, UUID commentId, Comment comment) throws Exception {
-		Comment editComment = findCommentById(commentId); 
+		Comment editComment = findCommentById(commentId);
 
 		if (editComment.getUser().getId() != userId) {
 			throw new Exception("Cannot edit comment, invaid user!");
@@ -384,8 +387,7 @@ public class CommentServiceImpl implements CommentService {
 		Optional<Comment> commentOpt = commentRepo.findById(commentId);
 		if (commentOpt.isPresent()) {
 			return user.getLikedComments().contains(commentOpt.get());
-		}
-		else{
+		} else {
 			return false;
 		}
 	}

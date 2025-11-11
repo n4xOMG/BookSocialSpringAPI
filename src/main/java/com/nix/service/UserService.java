@@ -2,6 +2,7 @@ package com.nix.service;
 
 import java.io.UnsupportedEncodingException;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -67,6 +68,20 @@ public interface UserService {
 	public List<User> getUserFollowers(UUID userId);
 
 	public List<User> getUserFollowing(UUID userId);
+
+	public User blockUser(UUID blockerId, UUID blockedUserId);
+
+	public void unblockUser(UUID blockerId, UUID blockedUserId);
+
+	public boolean isBlockedBy(UUID viewerId, UUID potentialBlockerId);
+
+	public boolean hasBlocked(UUID blockerId, UUID blockedUserId);
+
+	public List<User> getBlockedUsers(UUID blockerId);
+
+	public Set<UUID> getUserIdsBlocking(UUID blockedUserId);
+
+	public Set<UUID> getBlockedUserIds(UUID blockerId);
 
 	public Long getTotalUsers();
 

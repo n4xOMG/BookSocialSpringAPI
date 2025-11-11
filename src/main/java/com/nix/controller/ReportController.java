@@ -3,6 +3,8 @@ package com.nix.controller;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.http.HttpStatus;
@@ -20,105 +22,127 @@ import org.springframework.web.bind.annotation.RestController;
 import com.nix.dtos.ReportDTO;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.exception.UnauthorizedException;
+import com.nix.response.ApiResponseWithData;
 import com.nix.service.ReportService;
 
 @RestController
 @RequestMapping("/api/reports")
 public class ReportController {
 
+    private static final Logger logger = LoggerFactory.getLogger(ReportController.class);
+
     @Autowired
     private ReportService reportService;
 
-
     // Create a new report
     @PostMapping
-    public ResponseEntity<?> createReport(@RequestHeader("Authorization") String jwt,
-                                         @RequestBody ReportDTO reportDTO) {
+    public ResponseEntity<ApiResponseWithData<ReportDTO>> createReport(@RequestHeader("Authorization") String jwt,
+            @RequestBody ReportDTO reportDTO) {
         try {
             ReportDTO createdReport = reportService.createReport(jwt, reportDTO);
-            return new ResponseEntity<>(createdReport, HttpStatus.CREATED);
+            return buildSuccessResponse(HttpStatus.CREATED, "Report created successfully.", createdReport);
         } catch (UnauthorizedException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
+            return buildErrorResponse(HttpStatus.UNAUTHORIZED, e.getMessage());
         } catch (ResourceNotFoundException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            return buildErrorResponse(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Failed to create report", e);
+            return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create report.");
         }
     }
 
     // Get all reports (Admin Only)
     @GetMapping
-    public ResponseEntity<?> getAllReports() {
+    public ResponseEntity<ApiResponseWithData<List<ReportDTO>>> getAllReports() {
         try {
             List<ReportDTO> reports = reportService.getAllReports();
-            return new ResponseEntity<>(reports, HttpStatus.OK);
+            return buildSuccessResponse("Reports retrieved successfully.", reports);
         } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Failed to retrieve reports", e);
+            return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to retrieve reports.");
         }
     }
 
     // Get report count
     @GetMapping("/count")
-    public ResponseEntity<?> getReportCount() {
+    public ResponseEntity<ApiResponseWithData<Long>> getReportCount() {
         try {
             Long count = reportService.getReportsCount();
-            return new ResponseEntity<>(count, HttpStatus.OK);
+            return buildSuccessResponse("Report count retrieved successfully.", count);
         } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Failed to retrieve report count", e);
+            return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to retrieve report count.");
         }
     }
 
     // Get report by ID (Admin Only)
     @GetMapping("/{id}")
-    public ResponseEntity<?> getReportById(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponseWithData<ReportDTO>> getReportById(@PathVariable UUID id) {
         try {
             ReportDTO report = reportService.getReportById(id);
-            return new ResponseEntity<>(report, HttpStatus.OK);
+            return buildSuccessResponse("Report retrieved successfully.", report);
         } catch (ResourceNotFoundException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            return buildErrorResponse(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Failed to retrieve report {}", id, e);
+            return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to retrieve report.");
         }
     }
 
     // Resolve a report (Admin Only)
     @PutMapping("/{id}/resolve")
-    public ResponseEntity<?> resolveReport(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponseWithData<Void>> resolveReport(@PathVariable UUID id) {
         try {
             reportService.resolveReport(id);
-            return new ResponseEntity<>("Report resolved successfully.", HttpStatus.OK);
+            return this.<Void>buildSuccessResponse("Report resolved successfully.", null);
         } catch (ResourceNotFoundException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            return buildErrorResponse(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Failed to resolve report {}", id, e);
+            return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to resolve report.");
         }
     }
 
     // Delete a report (Admin Only)
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteReport(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponseWithData<Void>> deleteReport(@PathVariable UUID id) {
         try {
             reportService.deleteReport(id);
-            return new ResponseEntity<>("Report deleted successfully.", HttpStatus.NO_CONTENT);
+            return this.<Void>buildSuccessResponse("Report deleted successfully.", null);
         } catch (ResourceNotFoundException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            return buildErrorResponse(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Failed to delete report {}", id, e);
+            return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete report.");
         }
     }
 
     // Delete reported object (Admin Only)
     @DeleteMapping("/{id}/delete-object")
-    public ResponseEntity<?> deleteReportedObject(@PathVariable UUID id, @RequestHeader("Authorization") String jwt) {
+    public ResponseEntity<ApiResponseWithData<Void>> deleteReportedObject(@PathVariable UUID id,
+            @RequestHeader("Authorization") String jwt) {
         try {
             reportService.deleteReportedObject(id, jwt);
-            return new ResponseEntity<>("Reported object deleted successfully.", HttpStatus.NO_CONTENT);
+            return this.<Void>buildSuccessResponse("Reported object deleted successfully.", null);
         } catch (UnauthorizedException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
+            return buildErrorResponse(HttpStatus.UNAUTHORIZED, e.getMessage());
         } catch (NotFoundException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            return buildErrorResponse(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Failed to delete reported object for report {}", id, e);
+            return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete reported object.");
         }
+    }
+
+    private <T> ResponseEntity<ApiResponseWithData<T>> buildSuccessResponse(String message, T data) {
+        return ResponseEntity.ok(new ApiResponseWithData<>(message, true, data));
+    }
+
+    private <T> ResponseEntity<ApiResponseWithData<T>> buildSuccessResponse(HttpStatus status, String message, T data) {
+        return ResponseEntity.status(status).body(new ApiResponseWithData<>(message, true, data));
+    }
+
+    private <T> ResponseEntity<ApiResponseWithData<T>> buildErrorResponse(HttpStatus status, String message) {
+        return ResponseEntity.status(status).body(new ApiResponseWithData<>(message, false, null));
     }
 }

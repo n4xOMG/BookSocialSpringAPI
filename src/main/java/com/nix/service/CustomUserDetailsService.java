@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.nix.models.Role;
 import com.nix.models.User;
-import com.nix.repository.RoleRepository;
 import com.nix.repository.UserRepository;
 
 @Service("userDetailsService")
@@ -25,16 +24,12 @@ public class CustomUserDetailsService implements UserDetailsService {
 	@Autowired
 	private UserRepository userRepository;
 
-	@Autowired
-	private RoleRepository roleRepository;
-
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
 		User user = userRepository.findByEmail(email);
 		if (user == null) {
-			return new org.springframework.security.core.userdetails.User(" ", " ", true, true, true, true,
-					getAuthorities(roleRepository.findByName("USER")));
+			throw new UsernameNotFoundException("User not found: " + email);
 		}
 
 		return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(),
@@ -42,9 +37,9 @@ public class CustomUserDetailsService implements UserDetailsService {
 	}
 
 	private Collection<? extends GrantedAuthority> getAuthorities(Role role) {
-	    List<GrantedAuthority> authorities = new ArrayList<>();
-	    authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName()));
-	    return authorities;
+		List<GrantedAuthority> authorities = new ArrayList<>();
+		authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName()));
+		return authorities;
 	}
 
 }

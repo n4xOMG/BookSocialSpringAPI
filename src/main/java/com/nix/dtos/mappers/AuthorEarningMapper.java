@@ -28,6 +28,7 @@ public class AuthorEarningMapper implements Mapper<AuthorEarning, AuthorEarningD
 		dto.setPlatformFee(earning.getPlatformFee());
 		dto.setNetAmount(earning.getNetAmount());
 		dto.setPlatformFeePercentage(earning.getPlatformFeePercentage());
+		dto.setCurrency(earning.getCurrency());
 		dto.setEarnedDate(earning.getEarnedDate());
 		dto.setPaidOut(earning.isPaidOut());
 		dto.setPayoutId(earning.getPayout() != null ? earning.getPayout().getId() : null);

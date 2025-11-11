@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +43,7 @@ import nl.siegmann.epublib.epub.EpubReader;
 @Service
 public class ChapterServiceImpl implements ChapterService {
 
+	private static final Logger logger = LoggerFactory.getLogger(ChapterService.class);
 	@Autowired
 	ChapterRepository chapterRepo;
 
@@ -153,33 +156,28 @@ public class ChapterServiceImpl implements ChapterService {
 		}
 
 		try {
-			// Step 1: Disassociate chapter from its book
+
 			deleteChapter.setBook(null);
 
-			// Step 2: Remove all progress related to this chapter
 			progressRepo.deleteByChapterId(chapterId);
 
-			// Step 3: Disassociate chapter from all users who liked it
 			List<User> users = deleteChapter.getLikedUsers();
 			for (User user : users) {
 				user.getLikedChapters().remove(deleteChapter);
 			}
-			deleteChapter.getLikedUsers().clear(); // Clear the list to prevent memory leaks
+			deleteChapter.getLikedUsers().clear();
 
-			// Step 4: Handle Reports referencing this chapter, if applicable
 			List<Report> reports = reportRepository.findByChapterId(chapterId);
 			for (Report report : reports) {
 				report.setChapter(null);
 				reportRepository.save(report);
 			}
 
-			// Step 5: Proceed to delete the chapter
 			chapterRepo.delete(deleteChapter);
 
 			return "Chapter deleted successfully!";
 		} catch (Exception e) {
-			// Log the error for debugging purposes
-			System.err.println("Error deleting chapter: " + e.getMessage());
+			logger.error("Error deleting chapter: {}", e);
 			throw new Exception("Error deleting chapter: " + e.getMessage(), e);
 		}
 	}
@@ -192,7 +190,6 @@ public class ChapterServiceImpl implements ChapterService {
 			throw new Exception("Chapter is not locked");
 		}
 
-		// Check if already unlocked
 		Optional<ChapterUnlockRecord> existingUnlock = unlockRecordRepository.findByUserIdAndChapterId(userId,
 				chapterId);
 		if (existingUnlock.isPresent()) {
@@ -208,7 +205,6 @@ public class ChapterServiceImpl implements ChapterService {
 			throw new Exception("Insufficient credits");
 		}
 
-		// Create unlock record
 		ChapterUnlockRecord unlockRecord = new ChapterUnlockRecord();
 		unlockRecord.setUser(user);
 		unlockRecord.setChapter(chapter);
@@ -217,16 +213,14 @@ public class ChapterServiceImpl implements ChapterService {
 
 		unlockRecord = unlockRecordRepository.save(unlockRecord);
 
-		// Record author earnings
 		try {
 			authorService.recordChapterUnlockEarning(unlockRecord);
 			String message = "User " + user.getUsername() + " unlocked chapter " + chapter.getTitle() + ": "
 					+ chapter.getChapterNum() + " in " + chapter.getBook().getTitle();
 			notificationService.createNotification(chapter.getBook().getAuthor(), message,
-				NotificationEntityType.CHAPTER, chapterId);
+					NotificationEntityType.CHAPTER, chapterId);
 		} catch (Exception e) {
-			// Log error but don't fail the unlock process
-			System.err.println("Error recording author earnings: " + e.getMessage());
+			logger.error("Error recording author earnings: {}", e);
 		}
 
 	}

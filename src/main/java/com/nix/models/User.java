@@ -101,43 +101,43 @@ public class User implements Serializable {
 
 	@JsonIgnore
 	@OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<UserFollow> following;
+	private List<UserFollow> following = new ArrayList<>();
 
 	@JsonIgnore
 	@OneToMany(mappedBy = "followed", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<UserFollow> followers;
+	private List<UserFollow> followers = new ArrayList<>();
 
 	@JsonIgnore
 	@OneToMany(mappedBy = "blocker", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<UserBlock> blocking;
+	private List<UserBlock> blocking = new ArrayList<>();
 
 	@JsonIgnore
 	@OneToMany(mappedBy = "blocked", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<UserBlock> blockedBy;
+	private List<UserBlock> blockedBy = new ArrayList<>();
 
 	@JsonIgnore
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Purchase> purchases;
+	private List<Purchase> purchases = new ArrayList<>();
 
 	@JsonIgnore
 	@OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Book> books;
+	private List<Book> books = new ArrayList<>();
 
 	@JsonIgnore
 	@OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Notification> notifications;
+	private List<Notification> notifications = new ArrayList<>();
 
 	@JsonIgnore
 	@OneToMany(mappedBy = "reporter", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Report> reports;
+	private List<Report> reports = new ArrayList<>();
 
 	@JsonIgnore
 	@OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Message> sentMessages;
+	private List<Message> sentMessages = new ArrayList<>();
 
 	@JsonIgnore
 	@OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Message> receivedMessages;
+	private List<Message> receivedMessages = new ArrayList<>();
 
 	@JsonIgnore
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

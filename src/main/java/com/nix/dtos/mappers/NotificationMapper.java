@@ -16,6 +16,8 @@ public class NotificationMapper implements Mapper<Notification, NotificationDTO>
 			if (n.getId() != null) {
 				notificationDTO.setId(n.getId());
 			}
+			notificationDTO.setNotificationEntityType(n.getEntityType());
+			notificationDTO.setEntityId(n.getEntityId());
 			notificationDTO.setMessage(n.getMessage());
 			notificationDTO.setCreatedDate(n.getCreatedDate());
 			return notificationDTO;

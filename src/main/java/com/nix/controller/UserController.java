@@ -3,6 +3,8 @@ package com.nix.controller;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,7 @@ import com.nix.dtos.mappers.UserMapper;
 import com.nix.dtos.mappers.UserSummaryMapper;
 import com.nix.exception.ResourceNotFoundException;
 import com.nix.models.User;
+import com.nix.response.ApiResponseWithData;
 import com.nix.service.UserService;
 
 import io.jsonwebtoken.JwtException;
@@ -28,6 +31,8 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 public class UserController {
+	private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+
 	@Autowired
 	UserService userService;
 
@@ -38,7 +43,7 @@ public class UserController {
 	UserSummaryMapper userSummaryDTO = new UserSummaryMapper();
 
 	@GetMapping("/user/profile/{userId}")
-	public ResponseEntity<?> getUserProfile(@PathVariable("userId") UUID userId,
+	public ResponseEntity<ApiResponseWithData<UserSummaryDTO>> getUserProfile(@PathVariable("userId") UUID userId,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		try {
 			User otherUser = userService.findUserById(userId);
@@ -46,30 +51,39 @@ public class UserController {
 
 			if (jwt != null && !jwt.isEmpty()) {
 				User currentUser = userService.findUserByJwt(jwt);
+				if (userService.isBlockedBy(currentUser.getId(), otherUser.getId())) {
+					return ResponseEntity.status(HttpStatus.FORBIDDEN)
+							.body(new ApiResponseWithData<>("You are not allowed to view this profile.", false));
+				}
 
 				boolean isFollowing = userService.isFollowedByCurrentUser(currentUser, otherUser);
 				userSummaryDTO.setFollowedByCurrentUser(isFollowing);
 			}
 
-			return new ResponseEntity<>(userSummaryDTO, HttpStatus.OK);
+			return ResponseEntity
+					.ok(new ApiResponseWithData<>("User profile retrieved successfully.", true, userSummaryDTO));
 		} catch (ResourceNotFoundException e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(new ApiResponseWithData<>(e.getMessage(), false));
 		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponseWithData<>(e.getMessage(), false));
 		}
 	}
 
 	@GetMapping("/api/user/profile")
-	public ResponseEntity<?> getUserFromToken(@RequestHeader("Authorization") String jwt) {
-		System.out.println("Jwt: " + jwt);
+	public ResponseEntity<ApiResponseWithData<UserDTO>> getUserFromToken(@RequestHeader("Authorization") String jwt) {
+		logger.debug("Getting user profile from JWT token");
 		try {
 			User user = userService.findUserByJwt(jwt);
-
-			return new ResponseEntity<>(userMapper.mapToDTO(user), HttpStatus.OK);
+			UserDTO userDTO = userMapper.mapToDTO(user);
+			return ResponseEntity.ok(new ApiResponseWithData<>("User profile retrieved successfully.", true, userDTO));
 		} catch (JwtException e) {
-			return new ResponseEntity<>("Invalid or expired JWT token", HttpStatus.UNAUTHORIZED);
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body(new ApiResponseWithData<>("Invalid or expired JWT token", false));
 		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponseWithData<>(e.getMessage(), false));
 		}
 	}
 
@@ -79,34 +93,37 @@ public class UserController {
 	}
 
 	@PutMapping("/api/user/profile")
-	public ResponseEntity<?> updateProfile(@RequestHeader("Authorization") String jwt, @RequestBody User user,
+	public ResponseEntity<ApiResponseWithData<UserDTO>> updateProfile(@RequestHeader("Authorization") String jwt,
+			@RequestBody User user,
 			HttpServletRequest httpRequest) throws Exception {
 
 		try {
-
 			UserDTO updateUser = userMapper
 					.mapToDTO(userService.updateCurrentSessionUser(jwt, user, getSiteURL(httpRequest)));
-			System.out.println("Update profile from user: " + updateUser.getEmail());
-			return new ResponseEntity<>(updateUser, HttpStatus.OK);
+			logger.info("Updated profile for user: {}", updateUser.getEmail());
+			return ResponseEntity.ok(new ApiResponseWithData<>("Profile updated successfully.", true, updateUser));
 		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponseWithData<>(e.getMessage(), false));
 		}
 	}
 
 	@GetMapping("/api/user/search")
-	public ResponseEntity<?> searchUser(@RequestParam("query") String query) throws Exception {
+	public ResponseEntity<ApiResponseWithData<List<UserDTO>>> searchUser(@RequestParam("query") String query)
+			throws Exception {
 
 		try {
 			List<UserDTO> foundUsers = userMapper.mapToDTOs(userService.findUserByUsername(query));
-
-			return new ResponseEntity<>(foundUsers, HttpStatus.OK);
+			return ResponseEntity.ok(new ApiResponseWithData<>("Users found successfully.", true, foundUsers));
 		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponseWithData<>(e.getMessage(), false));
 		}
 	}
 
 	@PostMapping("/user/follow/{userIdToFollow}")
-	public ResponseEntity<?> followUser(@RequestHeader("Authorization") String jwt, @PathVariable UUID userIdToFollow) {
+	public ResponseEntity<ApiResponseWithData<UserSummaryDTO>> followUser(@RequestHeader("Authorization") String jwt,
+			@PathVariable UUID userIdToFollow) {
 		try {
 			UserSummaryDTO userSummaryDTO = new UserSummaryDTO();
 			User currentUser = userService.findUserByJwt(jwt);
@@ -117,14 +134,16 @@ public class UserController {
 			} else {
 				userSummaryDTO.setFollowedByCurrentUser(false);
 			}
-			return ResponseEntity.ok(userSummaryDTO);
+			String message = updatedUser != null ? "User followed successfully." : "Failed to follow user.";
+			return ResponseEntity.ok(new ApiResponseWithData<>(message, true, userSummaryDTO));
 		} catch (IllegalArgumentException | IllegalStateException ex) {
-			return ResponseEntity.badRequest().body(ex.getMessage());
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body(new ApiResponseWithData<>(ex.getMessage(), false));
 		}
 	}
 
 	@PostMapping("/unfollow/{userIdToUnfollow}")
-	public ResponseEntity<?> unFollowUser(@RequestHeader("Authorization") String jwt,
+	public ResponseEntity<ApiResponseWithData<UserSummaryDTO>> unFollowUser(@RequestHeader("Authorization") String jwt,
 			@PathVariable UUID userIdToUnfollow) {
 		try {
 			UserSummaryDTO userSummaryDTO = new UserSummaryDTO();
@@ -136,61 +155,124 @@ public class UserController {
 			} else {
 				userSummaryDTO.setFollowedByCurrentUser(true);
 			}
-			return ResponseEntity.ok(userSummaryDTO);
+			String message = updatedUser != null ? "User unfollowed successfully." : "Failed to unfollow user.";
+			return ResponseEntity.ok(new ApiResponseWithData<>(message, true, userSummaryDTO));
 		} catch (IllegalArgumentException | IllegalStateException | ResourceNotFoundException ex) {
-			return ResponseEntity.badRequest().body(ex.getMessage());
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body(new ApiResponseWithData<>(ex.getMessage(), false));
+		}
+	}
+
+	@PostMapping("/user/block/{userIdToBlock}")
+	public ResponseEntity<ApiResponseWithData<UserSummaryDTO>> blockUser(@RequestHeader("Authorization") String jwt,
+			@PathVariable UUID userIdToBlock) {
+		User currentUser = userService.findUserByJwt(jwt);
+		userService.blockUser(currentUser.getId(), userIdToBlock);
+		User blockedUser = userService.findUserById(userIdToBlock);
+		UserSummaryDTO dto = userSummaryMapper.mapToDTO(blockedUser);
+		return ResponseEntity.ok(new ApiResponseWithData<>("User blocked successfully.", true, dto));
+	}
+
+	@PostMapping("/user/unblock/{userIdToUnblock}")
+	public ResponseEntity<ApiResponseWithData<Void>> unblockUser(@RequestHeader("Authorization") String jwt,
+			@PathVariable UUID userIdToUnblock) {
+		User currentUser = userService.findUserByJwt(jwt);
+		userService.unblockUser(currentUser.getId(), userIdToUnblock);
+		return ResponseEntity.ok(new ApiResponseWithData<>("User unblocked successfully.", true));
+	}
+
+	@GetMapping("/api/user/blocked")
+	public ResponseEntity<ApiResponseWithData<List<UserSummaryDTO>>> getBlockedUsers(
+			@RequestHeader("Authorization") String jwt) {
+		try {
+			User currentUser = userService.findUserByJwt(jwt);
+			if (currentUser == null) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+						.body(new ApiResponseWithData<>("User not found.", false));
+			}
+			List<User> blockedUsers = userService.getBlockedUsers(currentUser.getId());
+			List<UserSummaryDTO> blockedDTOs = userSummaryMapper.mapToDTOs(blockedUsers);
+			return ResponseEntity.ok(new ApiResponseWithData<>("Blocked users retrieved successfully.", true,
+					blockedDTOs));
+		} catch (Exception ex) {
+			logger.error("Error fetching blocked users", ex);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponseWithData<>("Error fetching blocked users.", false));
 		}
 	}
 
 	@GetMapping("/user/preferences")
-	public ResponseEntity<UserDTO> getUserPreferences(@RequestHeader("Authorization") String jwt) {
-		if (jwt != null) {
-			User user = userService.findUserByJwt(jwt);
-			UserDTO userPreferences = userService.getUserPreferences(user.getId());
-			return ResponseEntity.ok(userPreferences);
+	public ResponseEntity<ApiResponseWithData<UserDTO>> getUserPreferences(@RequestHeader("Authorization") String jwt) {
+		if (jwt == null || jwt.isBlank()) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body(new ApiResponseWithData<>("Authorization token is required.", false));
 		}
-		return null;
-
+		try {
+			User user = userService.findUserByJwt(jwt);
+			if (user == null) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+						.body(new ApiResponseWithData<>("User not found.", false));
+			}
+			UserDTO userPreferences = userService.getUserPreferences(user.getId());
+			return ResponseEntity.ok(new ApiResponseWithData<>("User preferences retrieved successfully.", true,
+					userPreferences));
+		} catch (Exception ex) {
+			logger.error("Error fetching user preferences", ex);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponseWithData<>("Error fetching user preferences.", false));
+		}
 	}
 
 	@GetMapping("/api/user/{userId}/followers")
-	public ResponseEntity<?> getFollowers(@PathVariable UUID userId) {
+	public ResponseEntity<ApiResponseWithData<List<UserSummaryDTO>>> getFollowers(@PathVariable UUID userId) {
 		try {
-
 			List<User> followers = userService.getUserFollowers(userId);
-			return ResponseEntity.ok(userSummaryMapper.mapToDTOs(followers));
+			List<UserSummaryDTO> followerDTOs = userSummaryMapper.mapToDTOs(followers);
+			return ResponseEntity
+					.ok(new ApiResponseWithData<>("Followers retrieved successfully.", true, followerDTOs));
 		} catch (ResourceNotFoundException ex) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(new ApiResponseWithData<>(ex.getMessage(), false));
 		} catch (Exception ex) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching followers.");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponseWithData<>("Error fetching followers.", false));
 		}
 	}
 
 	@GetMapping("/api/user/{userId}/following")
-	public ResponseEntity<?> getFollowing(@RequestHeader("Authorization") String jwt, @PathVariable UUID userId) {
+	public ResponseEntity<ApiResponseWithData<List<UserSummaryDTO>>> getFollowing(
+			@RequestHeader("Authorization") String jwt, @PathVariable UUID userId) {
 		try {
 			User currentUser = userService.findUserByJwt(jwt);
 			if (!currentUser.getId().equals(userId)) {
-				return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied.");
+				return ResponseEntity.status(HttpStatus.FORBIDDEN)
+						.body(new ApiResponseWithData<>("Access Denied.", false));
 			}
 
 			List<User> following = userService.getUserFollowing(userId);
-			return ResponseEntity.ok(userSummaryMapper.mapToDTOs(following));
+			List<UserSummaryDTO> followingDTOs = userSummaryMapper.mapToDTOs(following);
+			return ResponseEntity
+					.ok(new ApiResponseWithData<>("Following retrieved successfully.", true, followingDTOs));
 		} catch (ResourceNotFoundException ex) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(new ApiResponseWithData<>(ex.getMessage(), false));
 		} catch (Exception ex) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching following.");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponseWithData<>("Error fetching following.", false));
 		}
 	}
 
 	@GetMapping("/users/count")
-	public ResponseEntity<?> getUserCount() {
+	public ResponseEntity<ApiResponseWithData<Long>> getUserCount() {
 		try {
-			return ResponseEntity.ok(userService.getUserCount());
+			Long count = userService.getUserCount();
+			return ResponseEntity.ok(new ApiResponseWithData<>("User count retrieved successfully.", true, count));
 		} catch (ResourceNotFoundException ex) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(new ApiResponseWithData<>(ex.getMessage(), false));
 		} catch (Exception ex) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching following.");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponseWithData<>("Error fetching user count.", false));
 		}
 	}
 

@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -24,12 +25,11 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity(prePostEnabled = true)
 public class AppConfig {
 
 	@Autowired
 	JwtValidator jwtValidator;
-
 
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -39,27 +39,28 @@ public class AppConfig {
 						.requestMatchers("/admin/**").hasRole("ADMIN").requestMatchers("/moderator/**")
 						.hasAnyRole("ADMIN", "MODERATOR").anyRequest().permitAll())
 				.addFilterBefore(jwtValidator, UsernamePasswordAuthenticationFilter.class).csrf(csrf -> csrf.disable())
-				
+
 				.cors(cors -> cors.configurationSource(configurationSource()));
 
 		return http.build();
 	}
 
 	private CorsConfigurationSource configurationSource() {
-	    return new CorsConfigurationSource() {
-	        @Override
-	        public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
-	            CorsConfiguration cfg = new CorsConfiguration();
-	            // Use allowedOriginPatterns for wildcard support
-	            cfg.setAllowedOriginPatterns(Arrays.asList("http://127.0.0.1:8081", "http://*:3000", "http://localhost:3000","https://*.ngrok-free.app"));
-	            cfg.setAllowedMethods(Collections.singletonList("*"));
-	            cfg.setAllowCredentials(true);
-	            cfg.setAllowedHeaders(Collections.singletonList("*"));
-	            cfg.setExposedHeaders(Arrays.asList("Authorization"));
-	            cfg.setMaxAge(3600L);
-	            return cfg;
-	        }
-	    };
+		return new CorsConfigurationSource() {
+			@Override
+			public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
+				CorsConfiguration cfg = new CorsConfiguration();
+				// Use allowedOriginPatterns for wildcard support
+				cfg.setAllowedOriginPatterns(Arrays.asList("http://127.0.0.1:8081", "http://*:3000",
+						"http://localhost:3000", "https://*.ngrok-free.app"));
+				cfg.setAllowedMethods(Collections.singletonList("*"));
+				cfg.setAllowCredentials(true);
+				cfg.setAllowedHeaders(Collections.singletonList("*"));
+				cfg.setExposedHeaders(Arrays.asList("Authorization"));
+				cfg.setMaxAge(3600L);
+				return cfg;
+			}
+		};
 	}
 
 	@Bean

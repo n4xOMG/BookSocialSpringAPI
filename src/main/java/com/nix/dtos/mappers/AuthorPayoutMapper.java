@@ -21,6 +21,7 @@ public class AuthorPayoutMapper implements Mapper<AuthorPayout, AuthorPayoutDTO>
 		}
 		dto.setTotalAmount(payout.getTotalAmount());
 		dto.setPlatformFeesDeducted(payout.getPlatformFeesDeducted());
+		dto.setCurrency(payout.getCurrency());
 		dto.setRequestedDate(payout.getRequestedDate());
 		dto.setProcessedDate(payout.getProcessedDate());
 		dto.setCompletedDate(payout.getCompletedDate());

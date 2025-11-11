@@ -52,8 +52,7 @@ public class ChatController {
 			@RequestHeader("Authorization") String jwt) {
 		User currentUser = userService.findUserByJwt(jwt);
 		User otherUser = userService.findUserById(otherUserId);
-		System.out
-				.println("Chat create or get for user " + currentUser.getUsername() + "and " + otherUser.getUsername());
+		logger.info("Creating or getting chat for user {} and {}", currentUser.getUsername(), otherUser.getUsername());
 		Chat chat = chatService.createOrGetChat(currentUser, otherUser);
 		return chatMapper.mapToDTO(chat);
 	}
@@ -70,7 +69,7 @@ public class ChatController {
 	@GetMapping
 	public List<ChatDTO> getUserChats(@RequestHeader("Authorization") String jwt) {
 		User currentUser = userService.findUserByJwt(jwt);
-		System.out.println("Get chats for user " + currentUser.getUsername());
+		logger.debug("Getting chats for user: {}", currentUser.getUsername());
 		List<Chat> chats = chatService.getChatsForUser(currentUser);
 		return chatMapper.mapToDTOs(chats);
 	}
@@ -80,7 +79,7 @@ public class ChatController {
 			throws AccessDeniedException {
 		User currentUser = userService.findUserByJwt(jwt);
 		Chat chat = chatService.findById(chatId).orElseThrow(() -> new IllegalArgumentException("Chat not found"));
-		System.out.println("Get chat messages for user " + currentUser.getUsername());
+		logger.debug("Getting chat messages for user: {}", currentUser.getUsername());
 		// Verify that the current user is a participant of the chat
 		if (!chat.getUserOne().equals(currentUser) && !chat.getUserTwo().equals(currentUser)) {
 			throw new AccessDeniedException("You are not a participant of this chat");
@@ -91,21 +90,21 @@ public class ChatController {
 
 	@MessageMapping("/chat/{groupId}")
 	public MessageDTO sendToUser(@Payload MessageDTO message, @DestinationVariable String groupId) {
-	    logger.info("Received groupId: {}", groupId);
-	    logger.info("Received MessageDTO: {}", message.toString());
+		logger.info("Received groupId: {}", groupId);
+		logger.info("Received MessageDTO: {}", message.toString());
 
-	    try {
-	        String destination = "/group/" + groupId + "/private";
-	        logger.debug("Sending message to destination: {}", destination);
+		try {
+			String destination = "/group/" + groupId + "/private";
+			logger.debug("Sending message to destination: {}", destination);
 
-	        messagingTemplate.convertAndSend(destination, message);
+			messagingTemplate.convertAndSend(destination, message);
 
-	        logger.debug("Message successfully sent to {}", destination);
-	    } catch (Exception e) {
-	        logger.error("Error sending message: {}", e.getMessage(), e);
-	    }
+			logger.debug("Message successfully sent to {}", destination);
+		} catch (Exception e) {
+			logger.error("Error sending message: {}", e.getMessage(), e);
+		}
 
-	    return message;
+		return message;
 	}
 
 }

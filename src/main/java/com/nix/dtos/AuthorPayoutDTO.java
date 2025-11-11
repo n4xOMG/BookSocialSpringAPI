@@ -21,6 +21,7 @@ public class AuthorPayoutDTO {
 	private String authorName;
 	private BigDecimal totalAmount;
 	private BigDecimal platformFeesDeducted;
+	private String currency;
 	private LocalDateTime requestedDate;
 	private LocalDateTime processedDate;
 	private LocalDateTime completedDate;
