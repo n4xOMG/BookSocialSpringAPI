@@ -6,6 +6,9 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +41,9 @@ import com.paypal.sdk.models.ItemCategory;
 import com.paypal.sdk.models.Money;
 import com.paypal.sdk.models.Order;
 import com.paypal.sdk.models.OrderRequest;
+import com.paypal.sdk.models.OrderStatus;
+import com.paypal.sdk.models.OrdersCapture;
+import com.paypal.sdk.models.PurchaseUnit;
 import com.paypal.sdk.models.PurchaseUnitRequest;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
@@ -83,8 +89,15 @@ public class PaymentServiceImpl implements PaymentService {
 			throw new IllegalStateException("Stripe API key not configured");
 		}
 
-		PaymentIntentCreateParams params = PaymentIntentCreateParams.builder().setAmount(amount).setCurrency(currency)
-				.putMetadata("userId", userId.toString()).putMetadata("creditPackageId", creditPackageId.toString())
+		String normalizedCurrency = (currency == null || currency.isBlank()) ? "usd"
+				: currency.toLowerCase(Locale.ROOT);
+
+		PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
+				.setAmount(amount)
+				.setCurrency(normalizedCurrency)
+				.putMetadata("userId", userId.toString())
+				.putMetadata("creditPackageId", String.valueOf(creditPackageId))
+				.putMetadata("currency", normalizedCurrency)
 				.build();
 
 		PaymentIntent paymentIntent = PaymentIntent.create(params);
@@ -105,22 +118,27 @@ public class PaymentServiceImpl implements PaymentService {
 	@Transactional
 	public void confirmPayment(UUID userId, Long creditPackageId, String paymentIntentId, PaymentProvider provider)
 			throws Exception {
-		// Check if purchase already exists for idempotency
+		if (creditPackageId == null) {
+			throw new IllegalArgumentException("Credit package identifier is required.");
+		}
+		if (paymentIntentId == null || paymentIntentId.isBlank()) {
+			throw new IllegalArgumentException("Payment identifier is required.");
+		}
+
 		if (purchaseRepository.existsByPaymentIntentId(paymentIntentId)) {
 			throw new Exception("Purchase already processed for Payment ID: " + paymentIntentId);
 		}
 
-		// Retrieve user and credit package
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new Exception("User not found with ID: " + userId));
 
 		CreditPackage creditPackage = creditPackageRepository.findById(creditPackageId)
 				.orElseThrow(() -> new Exception("Credit Package not found with ID: " + creditPackageId));
 
-		// Verify payment based on provider
-		boolean paymentVerified = verifyPayment(paymentIntentId, provider);
-		if (!paymentVerified) {
-			throw new Exception("Payment verification failed for " + provider + " payment: " + paymentIntentId);
+		switch (provider) {
+			case STRIPE -> validateStripePayment(paymentIntentId, user, creditPackage);
+			case PAYPAL -> validatePaypalPayment(paymentIntentId, user, creditPackage);
+			default -> throw new IllegalArgumentException("Unsupported payment provider: " + provider);
 		}
 
 		// Update user wallet balance
@@ -145,25 +163,141 @@ public class PaymentServiceImpl implements PaymentService {
 		notificationService.createNotification(user, message, NotificationEntityType.PAYMENT, purchase.getId());
 	}
 
-	private boolean verifyPayment(String paymentIntentId, PaymentProvider provider) throws Exception {
-		switch (provider) {
-			case STRIPE:
-				return verifyStripePayment(paymentIntentId);
-			case PAYPAL:
-				// For PayPal, since react-paypal-js handles the flow client-side
-				return paymentIntentId != null && !paymentIntentId.isBlank();
-			default:
-				throw new IllegalArgumentException("Unsupported payment provider: " + provider);
+	private void validateStripePayment(String paymentIntentId, User user, CreditPackage creditPackage)
+			throws Exception {
+		PaymentIntent paymentIntent;
+		try {
+			paymentIntent = PaymentIntent.retrieve(paymentIntentId);
+		} catch (StripeException e) {
+			throw new Exception("Failed to retrieve Stripe payment intent: " + e.getMessage(), e);
+		}
+
+		if (!"succeeded".equalsIgnoreCase(paymentIntent.getStatus())) {
+			throw new Exception("Stripe payment intent is not completed.");
+		}
+
+		Map<String, String> metadata = paymentIntent.getMetadata();
+		if (metadata == null || metadata.isEmpty()) {
+			throw new Exception("Stripe payment is missing verification metadata.");
+		}
+
+		String metadataUserId = metadata.get("userId");
+		if (metadataUserId == null || !metadataUserId.equals(user.getId().toString())) {
+			throw new Exception("Stripe payment does not belong to the requesting user.");
+		}
+
+		String metadataPackageId = metadata.get("creditPackageId");
+		if (metadataPackageId == null
+				|| !Objects.equals(metadataPackageId, String.valueOf(creditPackage.getId()))) {
+			throw new Exception("Stripe payment does not match the requested credit package.");
+		}
+
+		BigDecimal expectedAmount = BigDecimal.valueOf(creditPackage.getPrice())
+				.setScale(2, RoundingMode.HALF_UP);
+		long expectedCents = expectedAmount.multiply(BigDecimal.valueOf(100)).longValueExact();
+
+		Long amountReceived = paymentIntent.getAmountReceived();
+		Long declaredAmount = paymentIntent.getAmount();
+		long actualCents = (amountReceived != null && amountReceived > 0) ? amountReceived
+				: (declaredAmount != null ? declaredAmount : -1);
+		if (actualCents != expectedCents) {
+			throw new Exception("Stripe payment amount mismatch.");
+		}
+
+		String currency = paymentIntent.getCurrency();
+		String metadataCurrency = metadata.get("currency");
+		if (currency == null || currency.isBlank()) {
+			throw new Exception("Stripe payment currency is missing.");
+		}
+		if (metadataCurrency != null && !currency.equalsIgnoreCase(metadataCurrency)) {
+			throw new Exception("Stripe payment currency mismatch.");
+		}
+		if (!"usd".equalsIgnoreCase(currency)) {
+			throw new Exception("Unsupported Stripe currency: " + currency);
 		}
 	}
 
-	private boolean verifyStripePayment(String paymentIntentId) throws Exception {
+	private void validatePaypalPayment(String orderId, User user, CreditPackage creditPackage) throws Exception {
+		Order order;
 		try {
-			PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
-			return "succeeded".equals(paymentIntent.getStatus());
-		} catch (StripeException e) {
-			throw new Exception("Failed to verify Stripe payment: " + e.getMessage(), e);
+			order = capturePaypalOrders(orderId);
+		} catch (ApiException | IOException e) {
+			throw new Exception("Failed to capture PayPal order: " + e.getMessage(), e);
 		}
+
+		if (order == null) {
+			throw new Exception("PayPal order could not be retrieved.");
+		}
+		if (order.getStatus() != OrderStatus.COMPLETED) {
+			throw new Exception("PayPal order is not completed.");
+		}
+		if (order.getPurchaseUnits() == null || order.getPurchaseUnits().isEmpty()) {
+			throw new Exception("PayPal order does not contain purchase units.");
+		}
+
+		PurchaseUnit purchaseUnit = order.getPurchaseUnits().get(0);
+		PaypalAmountDetails amountDetails = resolvePaypalAmountDetails(purchaseUnit);
+		BigDecimal orderTotal = amountDetails.amount();
+		BigDecimal expectedTotal = BigDecimal.valueOf(creditPackage.getPrice()).setScale(2, RoundingMode.HALF_UP);
+		if (!orderTotal.equals(expectedTotal)) {
+			throw new Exception("PayPal order amount mismatch.");
+		}
+
+		String currencyCode = amountDetails.currencyCode();
+		if (currencyCode == null || currencyCode.isBlank()) {
+			throw new Exception("PayPal order currency is missing.");
+		}
+		if (!"USD".equalsIgnoreCase(currencyCode)) {
+			throw new Exception("Unsupported PayPal currency: " + currencyCode);
+		}
+
+		String customId = purchaseUnit.getCustomId();
+		if (customId != null && !customId.isBlank() && !customId.equals(user.getId().toString())) {
+			throw new Exception("PayPal order does not belong to the requesting user.");
+		}
+
+		if (purchaseUnit.getItems() != null && !purchaseUnit.getItems().isEmpty()) {
+			Item item = purchaseUnit.getItems().get(0);
+			String expectedSku = "CREDIT_PKG_" + creditPackage.getId();
+			if (item.getSku() != null && !expectedSku.equals(item.getSku())) {
+				throw new Exception("PayPal order SKU mismatch.");
+			}
+		}
+	}
+
+	private PaypalAmountDetails resolvePaypalAmountDetails(PurchaseUnit purchaseUnit) throws Exception {
+		AmountWithBreakdown amountWithBreakdown = purchaseUnit.getAmount();
+		if (amountWithBreakdown != null && amountWithBreakdown.getValue() != null) {
+			return new PaypalAmountDetails(parsePaypalAmount(amountWithBreakdown.getValue()),
+					sanitizeCurrency(amountWithBreakdown.getCurrencyCode()));
+		}
+
+		if (purchaseUnit.getPayments() != null && purchaseUnit.getPayments().getCaptures() != null) {
+			for (OrdersCapture capture : purchaseUnit.getPayments().getCaptures()) {
+				if (capture == null || capture.getAmount() == null || capture.getAmount().getValue() == null) {
+					continue;
+				}
+				return new PaypalAmountDetails(parsePaypalAmount(capture.getAmount().getValue()),
+						sanitizeCurrency(capture.getAmount().getCurrencyCode()));
+			}
+		}
+
+		throw new Exception("PayPal order amount is missing.");
+	}
+
+	private BigDecimal parsePaypalAmount(String rawAmount) throws Exception {
+		try {
+			return new BigDecimal(rawAmount).setScale(2, RoundingMode.HALF_UP);
+		} catch (NumberFormatException ex) {
+			throw new Exception("Invalid PayPal order amount format.", ex);
+		}
+	}
+
+	private String sanitizeCurrency(String currencyCode) {
+		return currencyCode == null ? null : currencyCode.trim();
+	}
+
+	private record PaypalAmountDetails(BigDecimal amount, String currencyCode) {
 	}
 
 	@Override
@@ -180,6 +314,7 @@ public class PaymentServiceImpl implements PaymentService {
 				Arrays.asList(new PurchaseUnitRequest.Builder(new AmountWithBreakdown.Builder("USD", priceString)
 						.breakdown(new AmountBreakdown.Builder().itemTotal(new Money("USD", priceString)).build())
 						.build())
+						.customId(userId.toString())
 						.items(
 								Arrays.asList(new Item.Builder(creditPackage.getName(),
 										new Money.Builder("USD", priceString).build(), "1")

@@ -57,6 +57,10 @@ public class ChapterController {
 
 	ChapterSummaryMapper chapterSummaryMapper = new ChapterSummaryMapper();
 
+	private boolean isAdmin(User user) {
+		return user != null && user.getRole() != null && "ADMIN".equalsIgnoreCase(user.getRole().getName());
+	}
+
 	private User resolveCurrentUser(String jwt) {
 		if (jwt == null || jwt.isBlank()) {
 			return null;
@@ -79,11 +83,23 @@ public class ChapterController {
 		}
 	}
 
+	private void ensureAuthorOrAdmin(User user, UUID ownerId) {
+		if (user == null) {
+			throw new UnauthorizedException("User has not logged in!");
+		}
+		if (isAdmin(user)) {
+			return;
+		}
+		if (ownerId == null || !ownerId.equals(user.getId())) {
+			throw new ForbiddenAccessException("Only the book author can modify this resource.");
+		}
+	}
+
 	private void ensureNotBlocked(User user, UUID ownerId) {
 		if (user == null || ownerId == null) {
 			return;
 		}
-		if (user.getRole() != null && "ADMIN".equalsIgnoreCase(user.getRole().getName())) {
+		if (isAdmin(user)) {
 			return;
 		}
 		if (userService.isBlockedBy(user.getId(), ownerId) || userService.hasBlocked(user.getId(), ownerId)) {
@@ -196,6 +212,9 @@ public class ChapterController {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND)
 					.body(new ApiResponseWithData<>("Book ID not found!", false));
 		}
+		UUID ownerId = book.getAuthor() != null ? book.getAuthor().getId() : null;
+		ensureNotBlocked(currentUser, ownerId);
+		ensureAuthorOrAdmin(currentUser, ownerId);
 
 		try {
 			chapterService.processChaptersByEpubFile(bookId, file.getInputStream(), startChapterNum);
@@ -219,6 +238,7 @@ public class ChapterController {
 		}
 		UUID ownerId = book.getAuthor() != null ? book.getAuthor().getId() : null;
 		ensureNotBlocked(currentUser, ownerId);
+		ensureAuthorOrAdmin(currentUser, ownerId);
 
 		try {
 			Chapter newChapter = chapterService.createDraftChapter(bookId, chapter);
@@ -243,6 +263,7 @@ public class ChapterController {
 		}
 		UUID ownerId = book.getAuthor() != null ? book.getAuthor().getId() : null;
 		ensureNotBlocked(currentUser, ownerId);
+		ensureAuthorOrAdmin(currentUser, ownerId);
 
 		try {
 			Chapter newChapter = chapterService.publishChapter(bookId, chapter);
@@ -265,6 +286,7 @@ public class ChapterController {
 				? existingChapter.getBook().getAuthor().getId()
 				: null;
 		ensureNotBlocked(currentUser, ownerId);
+		ensureAuthorOrAdmin(currentUser, ownerId);
 
 		Chapter editChapter = chapterService.editChapter(chapterId, chapter);
 		ChapterDTO chapterDTO = chapterMapper.mapToDTO(editChapter);
@@ -272,8 +294,24 @@ public class ChapterController {
 	}
 
 	@DeleteMapping("/api/chapters/{chapterId}")
-	public ResponseEntity<ApiResponseWithData<Void>> deleteChapter(@PathVariable("chapterId") UUID chapterId)
-			throws Exception {
+	public ResponseEntity<ApiResponseWithData<Void>> deleteChapter(@PathVariable("chapterId") UUID chapterId,
+			@RequestHeader("Authorization") String jwt) throws Exception {
+
+		User currentUser = userService.findUserByJwt(jwt);
+		if (currentUser == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body(new ApiResponseWithData<>("User has not logged in!", false));
+		}
+
+		Chapter chapter = chapterService.findChapterById(chapterId);
+		UUID ownerId = chapter.getBook() != null && chapter.getBook().getAuthor() != null
+				? chapter.getBook().getAuthor().getId()
+				: null;
+		boolean isAdmin = isAdmin(currentUser);
+		if (!isAdmin && (ownerId == null || !currentUser.getId().equals(ownerId))) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseWithData<>(
+					"You do not have permission to delete this chapter.", false));
+		}
 
 		String resultMessage = chapterService.deleteChapter(chapterId);
 		ApiResponseWithData<Void> response = new ApiResponseWithData<>(resultMessage, true);

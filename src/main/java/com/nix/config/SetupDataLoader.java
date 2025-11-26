@@ -45,7 +45,7 @@ public class SetupDataLoader implements ApplicationListener<ContextRefreshedEven
 		createRoleIfNotFound("USER");
 
 		Role adminRole = roleRepo.findByName("ADMIN");
-		User user = userRepo.findByEmail("tanlmht859a@gmail.com");
+		User user = userRepo.findByEmail(adminEmail);
 
 		if (user == null) {
 			user = new User();

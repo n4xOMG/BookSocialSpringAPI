@@ -26,4 +26,25 @@ public class RateLimitConfig {
 		Bandwidth limit = Bandwidth.classic(500, Refill.greedy(500, Duration.ofMinutes(1)));
 		return Bucket.builder().addLimit(limit).build();
 	}
+
+	/**
+	 * Creates a bucket with stricter limits for authentication endpoints
+	 * to prevent brute force attacks and email bombing.
+	 * 
+	 * Limits:
+	 * - 5 requests per minute (prevents rapid brute force)
+	 * - 20 requests per hour (prevents sustained attacks)
+	 */
+	public Bucket createAuthBucket() {
+		// Short-term limit: 5 requests per minute
+		Bandwidth shortTermLimit = Bandwidth.classic(5, Refill.greedy(5, Duration.ofMinutes(1)));
+
+		// Long-term limit: 20 requests per hour
+		Bandwidth longTermLimit = Bandwidth.classic(20, Refill.greedy(20, Duration.ofHours(1)));
+
+		return Bucket.builder()
+				.addLimit(shortTermLimit)
+				.addLimit(longTermLimit)
+				.build();
+	}
 }

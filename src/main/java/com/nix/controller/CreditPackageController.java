@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,6 +30,7 @@ public class CreditPackageController {
 	CreditPackageMapper cpkMapper;
 
 	@GetMapping("/admin/credit-packages")
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	public ResponseEntity<ApiResponseWithData<List<CreditPackageDTO>>> getAllCreditPackages() {
 		try {
 			List<CreditPackage> packages = creditPackageService.getAllCreditPackages();
@@ -66,6 +68,7 @@ public class CreditPackageController {
 
 	// Create a new credit package
 	@PostMapping("/admin/credit-packages")
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	public ResponseEntity<ApiResponseWithData<CreditPackageDTO>> createCreditPackage(
 			@RequestBody CreditPackage creditPackage) {
 		try {
@@ -80,6 +83,7 @@ public class CreditPackageController {
 
 	// Update an existing credit package
 	@PutMapping("/admin/credit-packages/{id}")
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	public ResponseEntity<ApiResponseWithData<CreditPackageDTO>> updateCreditPackage(@PathVariable Long id,
 			@RequestBody CreditPackage creditPackage) {
 		try {
@@ -93,6 +97,7 @@ public class CreditPackageController {
 
 	// Delete a credit package
 	@DeleteMapping("/admin/credit-packages/{id}")
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	public ResponseEntity<ApiResponseWithData<Void>> deleteCreditPackage(@PathVariable Long id) {
 		try {
 			creditPackageService.deleteCreditPackage(id);
@@ -143,6 +148,7 @@ public class CreditPackageController {
 
 	// Activate a credit package
 	@PutMapping("/admin/credit-packages/{id}/activate")
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	public ResponseEntity<ApiResponseWithData<CreditPackageDTO>> activateCreditPackage(@PathVariable Long id) {
 		try {
 			CreditPackage activated = creditPackageService.activateCreditPackage(id);
@@ -155,6 +161,7 @@ public class CreditPackageController {
 
 	// Deactivate a credit package
 	@PutMapping("/admin/credit-packages/{id}/deactivate")
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	public ResponseEntity<ApiResponseWithData<CreditPackageDTO>> deactivateCreditPackage(@PathVariable Long id) {
 		try {
 			CreditPackage deactivated = creditPackageService.deactivateCreditPackage(id);

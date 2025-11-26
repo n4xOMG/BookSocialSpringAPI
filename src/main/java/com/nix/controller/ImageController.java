@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.nix.response.ApiResponseWithData;
+import com.nix.response.ImageUploadResponse;
+import com.nix.enums.NsfwLevel;
 import com.nix.service.ImageService;
 
 @RestController
@@ -21,17 +23,31 @@ public class ImageController {
 	private ImageService imageService;
 
 	@PostMapping("/upload")
-	public ResponseEntity<ApiResponseWithData<String>> uploadImage(@RequestParam("file") MultipartFile file,
-			@RequestParam("username") String username, @RequestParam("folderName") String folderName) {
+	public ResponseEntity<ApiResponseWithData<ImageUploadResponse>> uploadImage(
+			@RequestParam("file") MultipartFile file,
+			@RequestParam("username") String username,
+			@RequestParam("folderName") String folderName) {
 		try {
-			String imagePath = imageService.uploadImage(file, username, folderName);
-			return buildSuccessResponse(HttpStatus.CREATED, "Image uploaded successfully.", imagePath);
+			ImageUploadResponse uploadResponse = imageService.uploadImage(file, username, folderName);
+			String message = buildUploadMessage(uploadResponse);
+			return buildSuccessResponse(HttpStatus.CREATED, message, uploadResponse);
 		} catch (IllegalArgumentException e) {
 			return buildErrorResponse(HttpStatus.BAD_REQUEST, e.getMessage());
 		} catch (Exception e) {
 			return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
 					"Failed to upload image: " + e.getMessage());
 		}
+	}
+
+	private String buildUploadMessage(ImageUploadResponse uploadResponse) {
+		if (uploadResponse == null || uploadResponse.getSafety() == null || uploadResponse.getSafety().getLevel() == null) {
+			return "Image uploaded successfully.";
+		}
+		NsfwLevel level = uploadResponse.getSafety().getLevel();
+		if (level == NsfwLevel.MILD) {
+			return "Image uploaded. Mild content detected—blur recommended.";
+		}
+		return "Image uploaded successfully.";
 	}
 
 	@DeleteMapping("/delete")

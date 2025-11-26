@@ -1,6 +1,7 @@
 package com.nix.repository;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -40,7 +41,7 @@ public interface BookRepository extends JpaRepository<Book, UUID> {
 	Page<Book> findByCategory(Category category, Pageable pageable);
 
 	List<Book> findByTagsIn(List<Integer> tagIds);
-	
+
 	@Query("SELECT b FROM Book b JOIN b.chapters c GROUP BY b ORDER BY MAX(c.uploadDate) DESC")
 	List<Book> findTopBooksWithLatestChapters(Pageable pageable);
 
@@ -66,5 +67,33 @@ public interface BookRepository extends JpaRepository<Book, UUID> {
 
 	@Query("SELECT c.name, COUNT(b) FROM Book b JOIN b.category c GROUP BY c.name ORDER BY COUNT(b) DESC")
 	List<Object[]> getCategoryStats();
+
+	// Filter books excluding blocked/blocking authors
+	@Query("SELECT b FROM Book b WHERE b.author.id NOT IN :excludedAuthorIds")
+	Page<Book> findAllExcludingAuthors(@Param("excludedAuthorIds") Set<UUID> excludedAuthorIds, Pageable pageable);
+
+	@Query("SELECT b FROM Book b WHERE b.author.id = :authorId AND b.author.id NOT IN :excludedAuthorIds")
+	Page<Book> findByAuthorIdExcludingAuthors(@Param("authorId") UUID authorId,
+			@Param("excludedAuthorIds") Set<UUID> excludedAuthorIds, Pageable pageable);
+
+	@Query("SELECT b FROM Book b WHERE b.category.id = :categoryId AND b.author.id NOT IN :excludedAuthorIds")
+	Page<Book> findByCategoryIdExcludingAuthors(@Param("categoryId") Integer categoryId,
+			@Param("excludedAuthorIds") Set<UUID> excludedAuthorIds, Pageable pageable);
+
+	@Query("SELECT DISTINCT b FROM Book b JOIN b.tags t " +
+			"WHERE (:title IS NULL OR LOWER(b.title) LIKE LOWER(CONCAT('%', :title, '%'))) " +
+			"AND (:categoryId IS NULL OR b.category.id = :categoryId) " +
+			"AND (:tagIds IS NULL OR t.id IN :tagIds) " +
+			"AND b.author.id NOT IN :excludedAuthorIds")
+	Page<Book> searchBooksExcludingAuthors(@Param("title") String title,
+			@Param("categoryId") Integer categoryId,
+			@Param("tagIds") List<Integer> tagIds,
+			@Param("excludedAuthorIds") Set<UUID> excludedAuthorIds,
+			Pageable pageable);
+
+	@Query("SELECT b FROM Book b JOIN b.favourites fav " +
+			"WHERE fav.user.id = :userId AND b.author.id NOT IN :excludedAuthorIds")
+	Page<Book> findFollowedBooksByUserIdExcludingAuthors(@Param("userId") UUID userId,
+			@Param("excludedAuthorIds") Set<UUID> excludedAuthorIds, Pageable pageable);
 
 }

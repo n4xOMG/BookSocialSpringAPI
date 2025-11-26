@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -39,24 +40,28 @@ public class PurchaseController {
 	}
 
 	@GetMapping("/admin/purchases/history/users/{userId}")
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	public ResponseEntity<ApiResponseWithData<List<PurchaseDTO>>> getPurchaseHistoryByUser(@PathVariable UUID userId) {
 		List<PurchaseDTO> purchaseHistory = purchaseService.getPurchaseHistoryForUser(userId);
 		return buildSuccessResponse("Purchase history retrieved successfully.", purchaseHistory);
 	}
 
 	@GetMapping("/admin/purchases/total-sales")
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	public ResponseEntity<ApiResponseWithData<Double>> getTotalSalesAmount() {
 		Double totalSales = purchaseService.getTotalSalesAmount();
 		return buildSuccessResponse("Total sales retrieved successfully.", totalSales);
 	}
 
 	@GetMapping("/admin/purchases/purchases-count")
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	public ResponseEntity<ApiResponseWithData<Long>> getTotalNumberOfPurchases() {
 		Long totalPurchases = purchaseService.getTotalNumberOfPurchases();
 		return buildSuccessResponse("Total purchases retrieved successfully.", totalPurchases);
 	}
 
 	@GetMapping("/admin/sales-per-user")
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	public ResponseEntity<ApiResponseWithData<List<SalesPerUserDTO>>> getSalesStatisticsPerUser() {
 		List<SalesPerUserDTO> salesPerUser = purchaseService.getSalesStatisticsPerUser();
 		return buildSuccessResponse("Sales statistics retrieved successfully.", salesPerUser);

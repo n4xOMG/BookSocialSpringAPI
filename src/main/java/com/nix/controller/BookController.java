@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -70,16 +69,6 @@ public class BookController {
 		return hiddenAuthorIds;
 	}
 
-	private Page<BookDTO> filterBooks(Page<BookDTO> booksPage, Pageable pageable, Set<UUID> hiddenAuthorIds) {
-		if (hiddenAuthorIds == null || hiddenAuthorIds.isEmpty()) {
-			return booksPage;
-		}
-		List<BookDTO> filtered = booksPage.getContent().stream()
-				.filter(book -> book.getAuthor() == null || !hiddenAuthorIds.contains(book.getAuthor().getId()))
-				.collect(Collectors.toList());
-		return new PageImpl<>(filtered, pageable, booksPage.getTotalElements());
-	}
-
 	private List<BookDTO> filterBooks(List<BookDTO> books, Set<UUID> hiddenAuthorIds) {
 		if (hiddenAuthorIds == null || hiddenAuthorIds.isEmpty()) {
 			return books;
@@ -116,9 +105,14 @@ public class BookController {
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
 		User currentUser = resolveCurrentUser(jwt);
-		Page<BookDTO> booksPage = bookService.getAllBooks(pageable);
+
+		// Use database-level filtering for better performance
+		Page<BookDTO> booksPage;
 		if (currentUser != null) {
-			booksPage = filterBooks(booksPage, pageable, getHiddenAuthorIds(currentUser));
+			Set<UUID> hiddenAuthorIds = getHiddenAuthorIds(currentUser);
+			booksPage = bookService.getAllBooks(pageable, hiddenAuthorIds);
+		} else {
+			booksPage = bookService.getAllBooks(pageable);
 		}
 
 		if (currentUser != null) {
@@ -147,9 +141,14 @@ public class BookController {
 		if (currentUser != null) {
 			ensureNotBlocked(currentUser, authorId);
 		}
-		Page<BookDTO> booksPage = bookService.getBooksByAuthor(authorId, pageable);
+
+		// Use database-level filtering
+		Page<BookDTO> booksPage;
 		if (currentUser != null) {
-			booksPage = filterBooks(booksPage, pageable, getHiddenAuthorIds(currentUser));
+			Set<UUID> hiddenAuthorIds = getHiddenAuthorIds(currentUser);
+			booksPage = bookService.getBooksByAuthor(authorId, pageable, hiddenAuthorIds);
+		} else {
+			booksPage = bookService.getBooksByAuthor(authorId, pageable);
 		}
 		return ResponseEntity.ok(booksPage);
 	}
@@ -160,8 +159,8 @@ public class BookController {
 			@RequestParam(defaultValue = "id") String sortBy) {
 		User user = userService.findUserByJwt(jwt);
 		Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
-		Page<BookDTO> favourites = bookService.getFollowedBooksByUserId(user.getId(), pageable);
-		favourites = filterBooks(favourites, pageable, getHiddenAuthorIds(user));
+		Set<UUID> hiddenAuthorIds = getHiddenAuthorIds(user);
+		Page<BookDTO> favourites = bookService.getFollowedBooksByUserId(user.getId(), pageable, hiddenAuthorIds);
 		return ResponseEntity.ok(favourites);
 	}
 
@@ -172,9 +171,14 @@ public class BookController {
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
 		User currentUser = resolveCurrentUser(jwt);
-		Page<BookDTO> booksPage = bookService.getBooksByCategoryId(categoryId, pageable);
+
+		// Use database-level filtering
+		Page<BookDTO> booksPage;
 		if (currentUser != null) {
-			booksPage = filterBooks(booksPage, pageable, getHiddenAuthorIds(currentUser));
+			Set<UUID> hiddenAuthorIds = getHiddenAuthorIds(currentUser);
+			booksPage = bookService.getBooksByCategoryId(categoryId, pageable, hiddenAuthorIds);
+		} else {
+			booksPage = bookService.getBooksByCategoryId(categoryId, pageable);
 		}
 		return ResponseEntity.ok(booksPage);
 	}
@@ -186,10 +190,15 @@ public class BookController {
 			@RequestParam(defaultValue = "id") String sortBy,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
-		Page<BookDTO> booksPage = bookService.searchBooks(title, categoryId, tagIds, pageable);
 		User currentUser = resolveCurrentUser(jwt);
+
+		// Use database-level filtering
+		Page<BookDTO> booksPage;
 		if (currentUser != null) {
-			booksPage = filterBooks(booksPage, pageable, getHiddenAuthorIds(currentUser));
+			Set<UUID> hiddenAuthorIds = getHiddenAuthorIds(currentUser);
+			booksPage = bookService.searchBooks(title, categoryId, tagIds, pageable, hiddenAuthorIds);
+		} else {
+			booksPage = bookService.searchBooks(title, categoryId, tagIds, pageable);
 		}
 		return ResponseEntity.ok(booksPage);
 	}
@@ -325,7 +334,7 @@ public class BookController {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseWithData<>(
 					"Please verify your account before creating books.", false));
 		}
-		BookDTO createdBook = bookService.createBook(bookDTO);
+		BookDTO createdBook = bookService.createBook(bookDTO, user.getId());
 		UUID authorId = createdBook.getAuthor().getId();
 		if (authorId != null) {
 			User author = userService.findUserById(authorId);
@@ -343,9 +352,10 @@ public class BookController {
 			@RequestBody BookDTO bookDTO, @RequestHeader("Authorization") String jwt) {
 		BookDTO book = bookService.getBookById(bookId);
 		User user = userService.findUserByJwt(jwt);
-		UUID authorId = book.getAuthor().getId();
+		UUID authorId = book.getAuthor() != null ? book.getAuthor().getId() : null;
+		boolean isAdmin = user.getRole() != null && "ADMIN".equalsIgnoreCase(user.getRole().getName());
 
-		if (user.getId() != authorId && user.getRole().getName().equals("ADMIN")) {
+		if (!isAdmin && (authorId == null || !user.getId().equals(authorId))) {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseWithData<>(
 					"You do not have permission to edit this book.", false));
 		}
@@ -367,8 +377,9 @@ public class BookController {
 		BookDTO book = bookService.getBookById(bookId);
 		User user = userService.findUserByJwt(jwt);
 
-		UUID authorId = book.getAuthor().getId();
-		if (user.getId() != authorId && user.getRole().getName().equals("ADMIN")) {
+		UUID authorId = book.getAuthor() != null ? book.getAuthor().getId() : null;
+		boolean isAdmin = user.getRole() != null && "ADMIN".equalsIgnoreCase(user.getRole().getName());
+		if (!isAdmin && (authorId == null || !user.getId().equals(authorId))) {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseWithData<>(
 					"You do not have permission to delete this book.", false));
 		}

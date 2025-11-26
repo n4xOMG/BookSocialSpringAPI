@@ -23,6 +23,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import net.coobird.thumbnailator.Thumbnails;
 
+import com.nix.response.ImageSafetyAssessment;
+import com.nix.response.ImageUploadResponse;
+
 @Service
 public class ImageService {
 
@@ -34,14 +37,25 @@ public class ImageService {
 	@Value("${file.max-size}")
 	private long maxFileSize;
 
+	private final NsfwDetectionService nsfwDetectionService;
+
 	private static final float COMPRESSION_QUALITY = 0.65f;
 	private static final int MAX_WIDTH = 1920;
 	private static final int MAX_HEIGHT = 1080;
 	private static final String[] ALLOWED_TYPES = { "image/jpeg", "image/jpg", "image/png", "image/webp" };
 
-	public String uploadImage(MultipartFile file, String username, String folderName) throws IOException {
+	public ImageService(NsfwDetectionService nsfwDetectionService) {
+		this.nsfwDetectionService = nsfwDetectionService;
+	}
+
+	public ImageUploadResponse uploadImage(MultipartFile file, String username, String folderName) throws IOException {
 		validateFile(file);
 		validateFolderName(folderName);
+
+		ImageSafetyAssessment safety = nsfwDetectionService.analyse(file);
+		if (safety.getLevel() != null && safety.getLevel().isRejected()) {
+			throw new IllegalArgumentException("Image rejected because it contains explicit content");
+		}
 
 		// Save to temporary directory: uploads/username/folderName
 		String uniqueFileName = UUID.randomUUID() + ".webp";
@@ -52,8 +66,10 @@ public class ImageService {
 		byte[] processedImage = processImage(file);
 		Files.write(filePath, processedImage);
 
-		String relativePath = filePath.toString().replace("\\", "/");
-		return ServletUriComponentsBuilder.fromCurrentContextPath().path(relativePath).build().toUriString();
+		String relativePath = toRelativePath(filePath);
+		String fileUrl = ServletUriComponentsBuilder.fromCurrentContextPath().path(relativePath).build().toUriString();
+
+		return new ImageUploadResponse(fileUrl, relativePath, safety);
 	}
 
 	public void deleteTempImages(String username, String folderName) throws IOException {
@@ -202,5 +218,13 @@ public class ImageService {
 
 	public String getUploadDir() {
 		return uploadDir;
+	}
+
+	private String toRelativePath(Path filePath) {
+		String normalized = filePath.toString().replace("\\", "/");
+		if (!normalized.startsWith("/")) {
+			normalized = "/" + normalized;
+		}
+		return normalized;
 	}
 }

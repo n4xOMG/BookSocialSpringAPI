@@ -86,6 +86,15 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
+	public Page<BookDTO> getAllBooks(Pageable pageable, Set<UUID> excludedAuthorIds) {
+		if (excludedAuthorIds == null || excludedAuthorIds.isEmpty()) {
+			return getAllBooks(pageable);
+		}
+		Page<Book> booksPage = bookRepo.findAllExcludingAuthors(excludedAuthorIds, pageable);
+		return booksPage.map(book -> bookMapper.mapToDTO(book));
+	}
+
+	@Override
 	public Page<BookDTO> getBooksByCategoryId(Integer categoryId, Pageable pageable) {
 		Optional<Category> categoryOpt = categoryRepository.findById(categoryId);
 		if (!categoryOpt.isPresent()) {
@@ -96,8 +105,28 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
+	public Page<BookDTO> getBooksByCategoryId(Integer categoryId, Pageable pageable, Set<UUID> excludedAuthorIds) {
+		if (excludedAuthorIds == null || excludedAuthorIds.isEmpty()) {
+			return getBooksByCategoryId(categoryId, pageable);
+		}
+		categoryRepository.findById(categoryId)
+				.orElseThrow(() -> new ResourceNotFoundException("Category not found with ID: " + categoryId));
+		Page<Book> booksPage = bookRepo.findByCategoryIdExcludingAuthors(categoryId, excludedAuthorIds, pageable);
+		return booksPage.map(book -> bookMapper.mapToDTO(book));
+	}
+
+	@Override
 	public Page<BookDTO> getBooksByAuthor(UUID authorId, Pageable pageable) {
 		Page<Book> booksPage = bookRepo.findByAuthorId(authorId, pageable);
+		return booksPage.map(book -> bookMapper.mapToDTO(book));
+	}
+
+	@Override
+	public Page<BookDTO> getBooksByAuthor(UUID authorId, Pageable pageable, Set<UUID> excludedAuthorIds) {
+		if (excludedAuthorIds == null || excludedAuthorIds.isEmpty()) {
+			return getBooksByAuthor(authorId, pageable);
+		}
+		Page<Book> booksPage = bookRepo.findByAuthorIdExcludingAuthors(authorId, excludedAuthorIds, pageable);
 		return booksPage.map(book -> bookMapper.mapToDTO(book));
 	}
 
@@ -108,9 +137,20 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
+	public Page<BookDTO> searchBooks(String title, Integer categoryId, List<Integer> tagIds, Pageable pageable,
+			Set<UUID> excludedAuthorIds) {
+		if (excludedAuthorIds == null || excludedAuthorIds.isEmpty()) {
+			return searchBooks(title, categoryId, tagIds, pageable);
+		}
+		Page<Book> booksPage = bookRepo.searchBooksExcludingAuthors(title, categoryId, tagIds, excludedAuthorIds,
+				pageable);
+		return booksPage.map(book -> bookMapper.mapToDTO(book));
+	}
+
+	@Override
 	public Page<BookDTO> searchBooksForAuthor(UUID authorId, String query, Pageable pageable) {
 		userRepository.findById(authorId)
-			.orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + authorId));
+				.orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + authorId));
 
 		Page<Book> booksPage;
 		if (!StringUtils.hasText(query)) {
@@ -125,15 +165,27 @@ public class BookServiceImpl implements BookService {
 	@Override
 	public Page<BookDTO> getFollowedBooksByUserId(UUID userId, Pageable pageable) {
 		userRepository.findById(userId)
-			.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+				.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
 		Page<BookFavourite> favouritesPage = bookFavouriteRepository.findByUserId(userId, pageable);
 		List<BookDTO> favouriteBooks = favouritesPage.getContent().stream()
-			.map(BookFavourite::getBook)
-			.map(bookMapper::mapToDTO)
-			.collect(Collectors.toList());
+				.map(BookFavourite::getBook)
+				.map(bookMapper::mapToDTO)
+				.collect(Collectors.toList());
 
 		return new PageImpl<>(favouriteBooks, pageable, favouritesPage.getTotalElements());
+	}
+
+	@Override
+	public Page<BookDTO> getFollowedBooksByUserId(UUID userId, Pageable pageable, Set<UUID> excludedAuthorIds) {
+		if (excludedAuthorIds == null || excludedAuthorIds.isEmpty()) {
+			return getFollowedBooksByUserId(userId, pageable);
+		}
+		userRepository.findById(userId)
+				.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+		Page<Book> booksPage = bookRepo.findFollowedBooksByUserIdExcludingAuthors(userId, excludedAuthorIds, pageable);
+		return booksPage.map(book -> bookMapper.mapToDTO(book));
 	}
 
 	@Override
@@ -149,10 +201,22 @@ public class BookServiceImpl implements BookService {
 
 	@Override
 	@Transactional
-	public BookDTO createBook(BookDTO bookDTO) throws IOException {
+	public BookDTO createBook(BookDTO bookDTO, UUID authorId) throws IOException {
+		if (authorId == null) {
+			throw new IllegalArgumentException("Author identifier is required to create a book.");
+		}
+		if (bookDTO == null) {
+			throw new IllegalArgumentException("Book payload must not be null.");
+		}
+
+		User author = userRepository.findById(authorId)
+				.orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + authorId));
+		if (bookDTO.getCategoryId() == null) {
+			throw new IllegalArgumentException("Category identifier is required to create a book.");
+		}
+
 		Book book = new Book();
-		book.setAuthor(userRepository.findById(bookDTO.getAuthor().getId()).orElseThrow(
-				() -> new ResourceNotFoundException("User not found with ID: " + bookDTO.getAuthor().getId())));
+		book.setAuthor(author);
 		book.setTitle(bookDTO.getTitle());
 		book.setAuthorName(bookDTO.getAuthorName());
 		book.setArtistName(bookDTO.getArtistName());
@@ -166,7 +230,8 @@ public class BookServiceImpl implements BookService {
 		book.setCategory(categoryRepository.findById(bookDTO.getCategoryId()).orElseThrow(
 				() -> new ResourceNotFoundException("Category not found with ID: " + bookDTO.getCategoryId())));
 
-		book.setTags(tagRepository.findAllById(bookDTO.getTagIds()));
+		List<Integer> tagIds = bookDTO.getTagIds() != null ? bookDTO.getTagIds() : Collections.emptyList();
+		book.setTags(tagRepository.findAllById(tagIds));
 
 		return bookMapper.mapToDTO(bookRepo.save(book));
 	}
@@ -185,7 +250,8 @@ public class BookServiceImpl implements BookService {
 		existingBook.setSuggested(bookDTO.isSuggested());
 		existingBook.setCategory(categoryRepository.findById(bookDTO.getCategoryId()).orElseThrow(
 				() -> new ResourceNotFoundException("Category not found with ID: " + bookDTO.getCategoryId())));
-		existingBook.setTags(tagRepository.findAllById(bookDTO.getTagIds()));
+		List<Integer> tagIds = bookDTO.getTagIds() != null ? bookDTO.getTagIds() : Collections.emptyList();
+		existingBook.setTags(tagRepository.findAllById(tagIds));
 		return bookMapper.mapToDTO(bookRepo.save(existingBook));
 	}
 
@@ -274,7 +340,7 @@ public class BookServiceImpl implements BookService {
 	@Override
 	public Set<UUID> getFavouriteBookIdsForUser(UUID userId) {
 		userRepository.findById(userId)
-			.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+				.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 		return new HashSet<>(bookFavouriteRepository.findBookIdsByUserId(userId));
 	}
 
@@ -292,7 +358,7 @@ public class BookServiceImpl implements BookService {
 	@Override
 	public boolean isBookLikedByUser(UUID userId, UUID bookId) {
 		userRepository.findById(userId)
-			.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+				.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 		getBookOrThrow(bookId);
 		return bookFavouriteRepository.existsByBookIdAndUserId(bookId, userId);
 	}
@@ -375,9 +441,9 @@ public class BookServiceImpl implements BookService {
 
 	private void updateDailyViewStats(Book book) {
 		LocalDateTime today = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
-		
+
 		Optional<BookViewHistory> existingHistory = bookViewHistoryRepository.findByBookAndDate(book, today);
-		
+
 		if (existingHistory.isPresent()) {
 			BookViewHistory history = existingHistory.get();
 			history.setDailyViewCount(history.getDailyViewCount() + 1);
@@ -390,7 +456,7 @@ public class BookServiceImpl implements BookService {
 
 	private Book getBookOrThrow(UUID bookId) {
 		return bookRepo.findById(bookId)
-			.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
+				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
 	}
 
 }

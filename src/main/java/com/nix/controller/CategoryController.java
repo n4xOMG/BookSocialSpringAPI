@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -73,13 +74,9 @@ public class CategoryController {
 	}
 
 	@PostMapping("/admin/categories")
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	public ResponseEntity<ApiResponseWithData<CategoryDTO>> addNewCategory(@RequestHeader("Authorization") String jwt,
 			@RequestBody Category category) throws Exception {
-		User user = userService.findUserByJwt(jwt);
-		if (!user.getRole().getName().equals("ADMIN") && !user.getRole().getName().equals("TRANSLATOR")) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN)
-					.body(new ApiResponseWithData<>("You do not have permission to manage categories.", false));
-		}
 		try {
 			Category newCategory = categoryService.addNewCategory(category);
 			CategoryDTO newCategoryDTO = categoryMapper.mapToDTO(newCategory);
@@ -93,13 +90,9 @@ public class CategoryController {
 	}
 
 	@PutMapping("/admin/categories/{categoryId}")
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	public ResponseEntity<ApiResponseWithData<CategoryDTO>> editCategory(@RequestHeader("Authorization") String jwt,
 			@PathVariable Integer categoryId, @RequestBody Category category) throws Exception {
-		User user = userService.findUserByJwt(jwt);
-		if (!user.getRole().getName().equals("ADMIN") && !user.getRole().getName().equals("TRANSLATOR")) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN)
-					.body(new ApiResponseWithData<>("You do not have permission to manage categories.", false));
-		}
 		try {
 			Category editCategory = categoryService.editCategory(categoryId, category);
 			CategoryDTO editCategoryDTO = categoryMapper.mapToDTO(editCategory);
@@ -113,13 +106,9 @@ public class CategoryController {
 	}
 
 	@DeleteMapping("/admin/categories/{categoryId}")
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	public ResponseEntity<ApiResponseWithData<String>> deleteTag(@RequestHeader("Authorization") String jwt,
 			@PathVariable Integer categoryId) throws Exception {
-		User user = userService.findUserByJwt(jwt);
-		if (!user.getRole().getName().equals("ADMIN") && !user.getRole().getName().equals("TRANSLATOR")) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN)
-					.body(new ApiResponseWithData<>("You do not have permission to manage categories.", false));
-		}
 		try {
 			String result = categoryService.deleteCategory(categoryId);
 			ApiResponseWithData<String> response = new ApiResponseWithData<>(

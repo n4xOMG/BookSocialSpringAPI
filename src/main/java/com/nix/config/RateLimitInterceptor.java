@@ -33,7 +33,6 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 			return true;
 		}
 
-		// Rate limit exceeded
 		response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
 		response.addHeader("X-Rate-Limit-Retry-After-Seconds",
 				String.valueOf(probe.getNanosToWaitForRefill() / 1_000_000_000));
@@ -41,9 +40,38 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 		return false;
 	}
 
+	/**
+	 * Get client identifier. Checks proxy headers to prevent bypass attempts.
+	 * Falls back to remote address if proxy headers are not present.
+	 */
 	private String getClientKey(HttpServletRequest request) {
-		String clientIp = request.getRemoteAddr();
+		// Check common proxy headers (in order of preference)
+		String[] headerNames = {
+				"X-Forwarded-For",
+				"X-Real-IP",
+				"Proxy-Client-IP",
+				"WL-Proxy-Client-IP",
+				"HTTP_X_FORWARDED_FOR",
+				"HTTP_X_FORWARDED",
+				"HTTP_X_CLUSTER_CLIENT_IP",
+				"HTTP_CLIENT_IP",
+				"HTTP_FORWARDED_FOR",
+				"HTTP_FORWARDED"
+		};
 
-		return clientIp;
+		for (String header : headerNames) {
+			String ip = request.getHeader(header);
+			if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+				// X-Forwarded-For can contain multiple IPs, take the first one (client IP)
+				int commaIndex = ip.indexOf(',');
+				if (commaIndex != -1) {
+					ip = ip.substring(0, commaIndex).trim();
+				}
+				return ip;
+			}
+		}
+
+		// Fallback to remote address
+		return request.getRemoteAddr();
 	}
 }

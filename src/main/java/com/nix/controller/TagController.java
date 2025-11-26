@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -77,16 +78,13 @@ public class TagController {
 	}
 
 	@PostMapping("/admin/books/tags")
+	@PreAuthorize("hasAnyRole('ADMIN', 'TRANSLATOR')")
 	public ResponseEntity<ApiResponseWithData<TagDTO>> addNewTag(@RequestHeader("Authorization") String jwt,
 			@RequestBody Tag tag) {
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
 				return this.<TagDTO>buildErrorResponse(HttpStatus.UNAUTHORIZED, "User not found.");
-			}
-			if (!user.getRole().getName().equals("ADMIN") && !user.getRole().getName().equals("TRANSLATOR")) {
-				return this.<TagDTO>buildErrorResponse(HttpStatus.FORBIDDEN,
-						"You do not have permission to manage tags.");
 			}
 			Tag newTag = tagService.addNewTag(tag);
 			return buildSuccessResponse(HttpStatus.CREATED, "Tag created successfully.", tagMapper.mapToDTO(newTag));
@@ -97,16 +95,13 @@ public class TagController {
 	}
 
 	@PutMapping("/admin/books/tags/{tagId}")
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	public ResponseEntity<ApiResponseWithData<TagDTO>> editTag(@RequestHeader("Authorization") String jwt,
 			@PathVariable Integer tagId, @RequestBody Tag tag) {
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
 				return this.<TagDTO>buildErrorResponse(HttpStatus.UNAUTHORIZED, "User not found.");
-			}
-			if (!user.getRole().getName().equals("ADMIN") && !user.getRole().getName().equals("TRANSLATOR")) {
-				return this.<TagDTO>buildErrorResponse(HttpStatus.FORBIDDEN,
-						"You do not have permission to manage tags.");
 			}
 			Tag editTag = tagService.editTag(tagId, tag);
 
@@ -118,16 +113,13 @@ public class TagController {
 	}
 
 	@DeleteMapping("/admin/books/tags/{tagId}")
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	public ResponseEntity<ApiResponseWithData<String>> deleteTag(@RequestHeader("Authorization") String jwt,
 			@PathVariable Integer tagId) {
 		try {
 			User user = userService.findUserByJwt(jwt);
 			if (user == null) {
 				return this.<String>buildErrorResponse(HttpStatus.UNAUTHORIZED, "User not found.");
-			}
-			if (!user.getRole().getName().equals("ADMIN") && !user.getRole().getName().equals("TRANSLATOR")) {
-				return this.<String>buildErrorResponse(HttpStatus.FORBIDDEN,
-						"You do not have permission to manage tags.");
 			}
 			String result = tagService.deleteTag(tagId);
 			return buildSuccessResponse("Tag deleted successfully.", result);

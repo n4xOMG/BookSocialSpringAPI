@@ -19,7 +19,7 @@ public interface BookService {
 
 	public BookDTO getBookById(UUID bookId);
 
-	public BookDTO createBook(BookDTO bookDTO) throws IOException;
+	public BookDTO createBook(BookDTO bookDTO, UUID authorId) throws IOException;
 
 	public BookDTO updateBook(UUID bookId, BookDTO bookDTO);
 
@@ -27,15 +27,27 @@ public interface BookService {
 
 	Page<BookDTO> getAllBooks(Pageable pageable);
 
+	// Overloaded methods with author exclusion for efficient filtering
+	Page<BookDTO> getAllBooks(Pageable pageable, Set<UUID> excludedAuthorIds);
+
 	Page<BookDTO> getBooksByCategoryId(Integer categoryId, Pageable pageable);
+
+	Page<BookDTO> getBooksByCategoryId(Integer categoryId, Pageable pageable, Set<UUID> excludedAuthorIds);
 
 	Page<BookDTO> getBooksByAuthor(UUID authorId, Pageable pageable);
 
+	Page<BookDTO> getBooksByAuthor(UUID authorId, Pageable pageable, Set<UUID> excludedAuthorIds);
+
 	Page<BookDTO> searchBooks(String title, Integer categoryId, List<Integer> tagIds, Pageable pageable);
+
+	Page<BookDTO> searchBooks(String title, Integer categoryId, List<Integer> tagIds, Pageable pageable,
+			Set<UUID> excludedAuthorIds);
 
 	Page<BookDTO> searchBooksForAuthor(UUID authorId, String query, Pageable pageable);
 
 	Page<BookDTO> getFollowedBooksByUserId(UUID userId, Pageable pageable);
+
+	Page<BookDTO> getFollowedBooksByUserId(UUID userId, Pageable pageable, Set<UUID> excludedAuthorIds);
 
 	Set<UUID> getFavouriteBookIdsForUser(UUID userId);
 
@@ -64,10 +76,10 @@ public interface BookService {
 	public boolean isBookLikedByUser(UUID userId, UUID bookId);
 
 	public Long getCommentCountForBook(UUID bookId);
-	
+
 	// Trending books functionality
 	List<BookDTO> getTrendingBooks(int hours, long minViews, int limit);
-	
+
 	// Book performance for author dashboard
 	List<BookPerformanceDTO> getAuthorBookPerformance(UUID authorId);
 }
