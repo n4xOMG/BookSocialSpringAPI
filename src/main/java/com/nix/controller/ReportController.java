@@ -27,6 +27,7 @@ import com.nix.service.ReportService;
 
 @RestController
 @RequestMapping("/api/reports")
+@org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
 public class ReportController {
 
     private static final Logger logger = LoggerFactory.getLogger(ReportController.class);
@@ -36,6 +37,7 @@ public class ReportController {
 
     // Create a new report
     @PostMapping
+    @org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponseWithData<ReportDTO>> createReport(@RequestHeader("Authorization") String jwt,
             @RequestBody ReportDTO reportDTO) {
         try {

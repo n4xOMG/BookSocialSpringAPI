@@ -24,7 +24,11 @@ public class ReadingProgressMapper implements Mapper<ReadingProgress, ReadingPro
 			if (progress.getChapter().getBook() != null) {
 				progressDTO.setBookId(progress.getChapter().getBook().getId());
 				progressDTO.setBookTitle(progress.getChapter().getBook().getTitle());
-				progressDTO.setBookCover(progress.getChapter().getBook().getBookCover());
+				if (progress.getChapter().getBook().getBookCover() != null) {
+					progressDTO.setBookCover(
+							new com.nix.dtos.ImageAttachmentDTO(progress.getChapter().getBook().getBookCover().getUrl(),
+									progress.getChapter().getBook().getBookCover().getIsMild()));
+				}
 				progressDTO.setBookAuthor(progress.getChapter().getBook().getAuthorName());
 				progressDTO.setBookArtist(progress.getChapter().getBook().getArtistName());
 			}

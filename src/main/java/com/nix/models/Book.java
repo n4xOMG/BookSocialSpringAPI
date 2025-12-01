@@ -45,7 +45,12 @@ public class Book implements Serializable {
 	private String artistName;
 	@Column(columnDefinition = "TEXT")
 	private String description;
-	private String bookCover;
+	@jakarta.persistence.Embedded
+	@jakarta.persistence.AttributeOverrides({
+			@jakarta.persistence.AttributeOverride(name = "url", column = @jakarta.persistence.Column(name = "book_cover")),
+			@jakarta.persistence.AttributeOverride(name = "isMild", column = @jakarta.persistence.Column(name = "is_mild"))
+	})
+	private ImageAttachment bookCover;
 	private LocalDateTime uploadDate;
 	private long viewCount;
 	private String language;

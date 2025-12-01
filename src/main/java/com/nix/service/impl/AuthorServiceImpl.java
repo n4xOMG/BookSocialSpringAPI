@@ -110,10 +110,14 @@ public class AuthorServiceImpl implements AuthorService {
 		AuthorDashboardDTO dashboard = new AuthorDashboardDTO();
 
 		// Earnings summary
-		dashboard.setTotalLifetimeEarnings(getLifetimeEarnings(author));
-		dashboard.setTotalUnpaidEarnings(getUnpaidEarnings(author));
-		dashboard.setTotalPaidOut(authorPayoutRepository.getTotalPaidOutForAuthor(author));
-		dashboard.setCurrentBalance(dashboard.getTotalUnpaidEarnings());
+		BigDecimal lifetimeEarnings = getLifetimeEarnings(author);
+		BigDecimal totalPaidOut = authorPayoutRepository.getTotalPaidOutForAuthor(author);
+		BigDecimal unpaidEarnings = lifetimeEarnings.subtract(totalPaidOut);
+
+		dashboard.setTotalLifetimeEarnings(lifetimeEarnings);
+		dashboard.setTotalUnpaidEarnings(unpaidEarnings);
+		dashboard.setTotalPaidOut(totalPaidOut);
+		dashboard.setCurrentBalance(unpaidEarnings);
 
 		// Monthly earnings comparison
 		LocalDateTime now = LocalDateTime.now();
@@ -186,7 +190,9 @@ public class AuthorServiceImpl implements AuthorService {
 
 	@Override
 	public BigDecimal getUnpaidEarnings(User author) {
-		return authorEarningRepository.getTotalUnpaidEarningsForAuthor(author);
+		BigDecimal lifetime = getLifetimeEarnings(author);
+		BigDecimal paidOut = authorPayoutRepository.getTotalPaidOutForAuthor(author);
+		return lifetime.subtract(paidOut);
 	}
 
 	@Override

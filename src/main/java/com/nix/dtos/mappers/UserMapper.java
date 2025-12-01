@@ -6,6 +6,9 @@ import java.util.stream.Collectors;
 import com.nix.dtos.UserDTO;
 import com.nix.models.User;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class UserMapper implements Mapper<User, UserDTO> {
 
 	RoleMapper roleMapper = new RoleMapper();

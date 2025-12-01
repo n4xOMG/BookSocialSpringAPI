@@ -359,6 +359,55 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	@Transactional
+	public User adminUpdateUser(UUID userId, com.nix.dtos.AdminUpdateUserDTO userDTO) {
+		User user = findUserById(userId);
+
+		if (userDTO.getUsername() != null)
+			user.setUsername(userDTO.getUsername());
+		if (userDTO.getEmail() != null)
+			user.setEmail(userDTO.getEmail());
+		if (userDTO.getFullname() != null)
+			user.setFullname(userDTO.getFullname());
+		if (userDTO.getGender() != null)
+			user.setGender(userDTO.getGender());
+		if (userDTO.getBirthdate() != null)
+			user.setBirthdate(userDTO.getBirthdate());
+		if (userDTO.getAvatarUrl() != null)
+			user.setAvatarUrl(userDTO.getAvatarUrl());
+		if (userDTO.getBio() != null)
+			user.setBio(userDTO.getBio());
+		if (userDTO.getIsVerified() != null)
+			user.setIsVerified(userDTO.getIsVerified());
+		if (userDTO.getIsSuspended() != null)
+			user.setIsSuspended(userDTO.getIsSuspended());
+		if (userDTO.getIsBanned() != null) {
+			user.setBanned(userDTO.getIsBanned());
+			if (userDTO.getIsBanned()) {
+				user.setBanDate(LocalDateTime.now());
+				user.setBanReason(userDTO.getBanReason());
+			} else {
+				user.setBanDate(null);
+				user.setBanReason(null);
+			}
+		}
+
+		return userRepo.save(user);
+	}
+
+	@Override
+	@Transactional
+	public List<User> banUsers(List<UUID> userIds, String banReason) {
+		List<User> users = userRepo.findAllById(userIds);
+		for (User user : users) {
+			user.setBanned(true);
+			user.setBanReason(banReason);
+			user.setBanDate(LocalDateTime.now());
+		}
+		return userRepo.saveAll(users);
+	}
+
+	@Override
+	@Transactional
 	public User updateUserRole(UUID userId, String roleName) {
 		User user = userRepo.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));

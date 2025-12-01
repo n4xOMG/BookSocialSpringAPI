@@ -20,7 +20,7 @@ public class ReadingProgressDTO {
 	private String chapterName;
 	private UUID bookId;
 	private String bookTitle;
-	private String bookCover;
+	private ImageAttachmentDTO bookCover;
 	private String bookAuthor;
 	private String bookArtist;
 	private Double progress;

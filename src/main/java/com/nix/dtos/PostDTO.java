@@ -19,20 +19,20 @@ public class PostDTO {
     private UserSummaryDTO user;
     private String content;
     private UUID sharedPostId;
-    private List<String> images = new ArrayList<>();
+    private List<ImageAttachmentDTO> images = new ArrayList<>();
     private Integer likes;
     private Integer commentCount;
     private LocalDateTime timestamp;
     private UserSummaryDTO sharedPostUser;
-    private List<String> sharedPostImages = new ArrayList<>();
+    private List<ImageAttachmentDTO> sharedPostImages = new ArrayList<>();
     private String sharedPostContent;
     private boolean likedByCurrentUser;
     private LocalDateTime sharedPostTimestamp;
-    
+
     private BookDTO sharedBook;
     private ChapterSummaryDTO sharedChapter;
     private PostType postType = PostType.STANDARD; // STANDARD, BOOK_SHARE, CHAPTER_SHARE
-    
+
     // Enum for post types
     public enum PostType {
         STANDARD, BOOK_SHARE, CHAPTER_SHARE

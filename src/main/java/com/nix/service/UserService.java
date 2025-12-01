@@ -43,6 +43,10 @@ public interface UserService {
 
 	public User updateUser(UUID userId, User user);
 
+	public User adminUpdateUser(UUID userId, com.nix.dtos.AdminUpdateUserDTO userDTO);
+
+	public List<User> banUsers(List<UUID> userIds, String banReason);
+
 	public String deleteUser(UUID userId);
 
 	public User updateUserPassword(String password, User user);

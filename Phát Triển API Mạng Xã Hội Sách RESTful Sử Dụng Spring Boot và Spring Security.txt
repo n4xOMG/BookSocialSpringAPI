@@ -1,0 +1,160 @@
+﻿Building A Social Networking Platform For Sharing And Writing Books Integrated With An AI-Based Inappropriate Image Censorship System   Nguyen Huynh Duy Tan*, Nguyen Hoai Thuong   Ho Chi Minh City University of Technology and Education, Vietnam
+*Corresponding author. Email: 21110852@student.hcmute.edu.vn   ARTICLE INFOABSTRACT   Received:    This paper presents the comprehensive design and implementation of a specialized social networking platform dedicated to book enthusiasts and aspiring authors, integrated with an advanced automated inappropriate image censorship system using Artificial Intelligence. In the rapidly evolving landscape of digital transformation within the education and entertainment sectors, the demand for dedicated online spaces that foster reading culture and creative writing is witnessing exponential growth. However, the proliferation of User-Generated Content (UGC) presents significant challenges in maintaining a healthy, safe, and civilized digital environment, particularly regarding the control of sensitive or inappropriate imagery. To address this, the proposed system is architected on a robust microservices-oriented foundation, utilizing the Spring Boot 3 framework for the backend to ensure high performance, maintainability, and scalability. Security is rigorously managed via the Spring Security framework combined with JWT (JSON Web Token) for stateless authentication. A distinguishing feature of this research is the integration of a deep learning model based on the CLIP (Contrastive Language-Image Pre-training) architecture, which has been fine-tuned on a massive dataset of 100,000 images. This model effectively classifies content into three distinct categories: Safe, Mild, and Explicit, achieving a validation accuracy of over 95%. The experimental results demonstrate that the system operates with high stability and low latency, providing a full suite of features including book composition, chapter management, social interaction (likes, comments, follows), and effective automated content moderation. This research contributes a practical solution to the problem of content safety in niche social networks, promoting a civilized online literary community.   Revised:       Accepted:      Published:       KEYWORDS   Artificial Intelligence;
+Students; 
+Dependence; 
+Education;
+Technology.   Xây Dựng Nền Tảng Mạng Xã Hội Chia Sẻ Và Sáng Tác Sách Tích Hợp Hệ Thống Kiểm Duyệt Hình Ảnh Không Phù Hợp Bằng AI   Nguyễn Huỳnh Duy Tân*, Nguyễn Hoài Thương   Đại học Sư phạm Kỹ thuật Thành phố Hồ Chí Minh, Việt Nam
+*Tác giả liên hệ. Email: 21110852student.hcmute.edu.vn   THÔNG TIN BÀI BÁOTÓM TẮT   Ngày nhận bài: Bài báo này trình bày một cách toàn diện về quy trình thiết kế và xây dựng một nền tảng mạng xã hội chuyên biệt dành cho cộng đồng người yêu sách và các tác giả trẻ, tích hợp hệ thống kiểm duyệt hình ảnh không phù hợp tự động sử dụng công nghệ Trí tuệ nhân tạo tiên tiến. Trong bối cảnh chuyển đổi số đang diễn ra mạnh mẽ trong các lĩnh vực giáo dục và giải trí, nhu cầu về các không gian trực tuyến nhằm thúc đẩy văn hóa đọc và khuyến khích sáng tác văn học đang gia tăng theo cấp số nhân. Tuy nhiên, sự bùng nổ của nội dung do người dùng tạo ra (User-Generated Content) đặt ra những thách thức to lớn trong việc duy trì một môi trường số lành mạnh, an toàn và văn minh, đặc biệt là trong việc kiểm soát các hình ảnh nhạy cảm. Để giải quyết vấn đề này, hệ thống đề xuất được xây dựng dựa trên kiến trúc hướng dịch vụ với backend sử dụng framework Spring Boot 3 mới nhất, đảm bảo hiệu năng xử lý cao, khả năng bảo trì và mở rộng linh hoạt. Vấn đề bảo mật được quản lý chặt chẽ thông qua Spring Security kết hợp với cơ chế xác thực JWT (JSON Web Token). Điểm đột phá của nghiên cứu là việc tích hợp mô hình học sâu dựa trên kiến trúc CLIP (Contrastive Language-Image Pre-training), được tinh chỉnh (fine-tune) trên tập dữ liệu lớn gồm 100.000 hình ảnh để phân loại nội dung thành ba mức độ: An toàn (Safe), Nhạy cảm nhẹ (Mild), và Nhạy cảm cao (Explicit), đạt độ chính xác kiểm thử trên 95%. Kết quả thực nghiệm cho thấy hệ thống hoạt động ổn định với độ trễ thấp, cung cấp đầy đủ các tính năng nghiệp vụ như sáng tác sách, quản lý chương, tương tác xã hội và kiểm duyệt nội dung tự động hiệu quả, góp phần xây dựng một cộng đồng văn học trực tuyến văn minh và hiện đại.   Ngày hoàn thiện:    Ngày chấp nhận đăng:   Ngày đăng:    TỪ KHÓA   Trí tuệ nhân tạo;
+Sinh viên;
+Phụ thuộc;
+Giáo dục;
+Công nghệ.      1. Giới thiệu
+   Trong kỷ nguyên số 4.0, sự bùng nổ của Internet và các thiết bị di động thông minh đã thay đổi căn bản thói quen tiếp cận tri thức và giải trí của con người. Mạng xã hội không chỉ đơn thuần là nơi kết nối bạn bè mà còn trở thành nền tảng chia sẻ thông tin, kiến thức và là nơi ươm mầm cho các hoạt động sáng tạo nội dung. Trong lĩnh vực văn học, nhu cầu về một không gian trực tuyến chuyên biệt – nơi các tác giả có thể tự do sáng tác, xuất bản tác phẩm của mình và độc giả có thể dễ dàng tiếp cận, thảo luận, đánh giá – là vô cùng lớn [1]. Các nền tảng hiện có trên thị trường như Goodreads hay Wattpad, mặc dù đã đạt được những thành công nhất định, vẫn còn tồn tại những hạn chế về khả năng tương tác xã hội sâu sắc, hoặc chưa hỗ trợ tối ưu cho các tác giả độc lập tại thị trường Việt Nam.
+   
+   Song song với cơ hội phát triển, sự tự do trong việc tạo nội dung trên mạng xã hội (User-Generated Content - UGC) cũng mang lại những rủi ro tiềm ẩn về nội dung độc hại. Đặc biệt, việc phát tán các hình ảnh khiêu dâm, bạo lực hoặc không phù hợp với thuần phong mỹ tục đang trở thành vấn nạn nhức nhối, ảnh hưởng tiêu cực đến trải nghiệm người dùng và đặc biệt là đối tượng độc giả trẻ tuổi [2]. Các phương pháp kiểm duyệt thủ công truyền thống, dựa vào đội ngũ nhân sự (moderators), đang trở nên quá tải và kém hiệu quả trước lượng dữ liệu khổng lồ được tải lên mỗi giây. Do đó, việc nghiên cứu và ứng dụng Trí tuệ nhân tạo (AI), cụ thể là các mô hình học sâu (Deep Learning), để tự động phát hiện và ngăn chặn các nội dung này ngay từ khâu đầu vào là một yêu cầu cấp thiết và mang tính thời sự cao [3].
+   
+   Nghiên cứu này tập trung vào việc giải quyết hai bài toán chính: (1) Xây dựng một hệ thống backend mạnh mẽ, linh hoạt cho mạng xã hội sách, đáp ứng các yêu cầu nghiệp vụ phức tạp về quản lý nội dung và tương tác người dùng; và (2) Tích hợp hiệu quả mô hình AI tiên tiến vào quy trình nghiệp vụ để tự động hóa việc kiểm duyệt hình ảnh. Chúng tôi đề xuất sử dụng Spring Boot 3 – framework Java phổ biến nhất hiện nay cho phát triển ứng dụng doanh nghiệp – kết hợp với mô hình CLIP (Contrastive Language-Image Pre-training) của OpenAI, được tinh chỉnh chuyên biệt cho bài toán nhận diện nội dung nhạy cảm (NSFW).
+
+2. Phương pháp nghiên cứu
+2.1. Kiến trúc hệ thống tổng thể
+   Hệ thống được thiết kế theo mô hình Client-Server với kiến trúc phân tầng (Layered Architecture) chặt chẽ, tuân thủ các nguyên lý thiết kế phần mềm hiện đại như SOLID và Separation of Concerns. Kiến trúc này giúp đảm bảo tính tách biệt giữa các thành phần, tạo điều kiện thuận lợi cho việc bảo trì, kiểm thử và mở rộng hệ thống trong tương lai.
+• Presentation Layer (Tầng Giao diện): Đóng vai trò là cổng giao tiếp với thế giới bên ngoài. Tầng này cung cấp các API RESTful chuẩn mực, cho phép các ứng dụng Client (Web App viết bằng ReactJS, Mobile App) gửi yêu cầu và nhận phản hồi dưới định dạng JSON. Các Controller trong Spring Boot đảm nhiệm vai trò này, thực hiện việc validate dữ liệu đầu vào và điều hướng yêu cầu đến các Service tương ứng.
+• Business Logic Layer (Tầng Nghiệp vụ): Đây là trái tim của hệ thống, nơi chứa toàn bộ logic xử lý nghiệp vụ phức tạp. Các Service Class thực hiện các quy trình như đăng ký người dùng, xử lý giao dịch thanh toán, quản lý trạng thái sách, và logic kiểm duyệt nội dung. Việc tách biệt logic nghiệp vụ giúp code trở nên rõ ràng và dễ tái sử dụng.
+• Data Access Layer (Tầng Truy cập Dữ liệu): Chịu trách nhiệm tương tác trực tiếp với cơ sở dữ liệu. Sử dụng Spring Data JPA và Hibernate, tầng này trừu tượng hóa các câu lệnh SQL phức tạp thành các phương thức thao tác trên đối tượng (Entity), giúp tăng tốc độ phát triển và giảm thiểu lỗi bảo mật như SQL Injection.
+
+2.2. Thiết kế hệ thống
+2.2.1. Thiết kế Cơ sở dữ liệu (ERD)
+   Cơ sở dữ liệu được thiết kế chuẩn hóa (Normalized) để đảm bảo toàn vẹn dữ liệu.
+   [Hình 2. Sơ đồ thực thể liên kết (ER Diagram)]
+   *Hình 2 thể hiện mối quan hệ giữa các thực thể chính:*
+   User: Quan hệ 1-n với Post, Comment, Order.
+   Book: Quan hệ n-n với Category, 1-n với Chapter.
+   Chapter: Chứa nội dung sách, có thuộc tính isLocked để xác định chương tính phí.
+   UserWallet: Quản lý số dư Credit của người dùng.
+   Post: Chứa nội dung bài đăng, liên kết với Image (lưu URL ảnh).
+   
+2.2.2. Biểu đồ lớp (Class Diagram)
+   Hệ thống được thiết kế theo hướng đối tượng, tận dụng tính kế thừa và đa hình.
+   
+   [Hình 3. Biểu đồ lớp cho module Quản lý Sách]
+   *Hình 3 minh họa chi tiết module Sách. `BookController` gọi `BookService`. `BookService` sử dụng `BookRepository` để truy vấn dữ liệu. `BookDTO` được sử dụng để truyền tải dữ liệu giữa Client và Server, tránh lộ các thông tin nhạy cảm của Entity.*
+
+2.2.3. Biểu đồ tuần tự (Sequence Diagram)
+*   Cơ chế Bảo mật và Xác thực:
+    Bảo mật là yếu tố sống còn của một mạng xã hội. Hệ thống sử dụng Spring Security, framework bảo mật tiêu chuẩn của hệ sinh thái Java. Thay vì sử dụng Session truyền thống, chúng tôi áp dụng cơ chế xác thực không trạng thái (Stateless Authentication) với JWT (JSON Web Token).
+    Quy trình hoạt động như sau:
+    1.  Người dùng gửi thông tin đăng nhập (email/password).
+    2.  Server xác thực thông tin qua `AuthenticationManager`.
+    3.  Nếu đúng, Server tạo một chuỗi JWT, bao gồm Header (thuật toán mã hóa), Payload (thông tin user, quyền hạn, thời gian hết hạn) và Signature (chữ ký số).
+    4.  Client lưu trữ JWT và gửi kèm trong header `Authorization: Bearer <token>` của mọi request tiếp theo.
+    5.  Server giải mã và xác thực token để cấp quyền truy cập tài nguyên.
+    Cơ chế này giúp hệ thống dễ dàng mở rộng (Scale Out) mà không gặp vấn đề đồng bộ Session giữa các server.
+
+[Hình 3. Biểu đồ tuần tự quy trình Đăng ký và Đăng nhập với JWT]
+[Figure 3. Sequence Diagram of Registration and Login with JWT]
+
+Xử lý ảnh và tối ưu hóa
+Trước khi lưu trữ, mọi hình ảnh đều được `ImageService` xử lý: chuyển đổi sang định dạng WebP để giảm dung lượng (giảm 30-50% so với JPEG/PNG mà vẫn giữ nguyên chất lượng), và loại bỏ metadata (EXIF) để bảo vệ quyền riêng tư của người dùng.
+
+2.3. Tích hợp Trí tuệ nhân tạo (AI) với CLIP
+   Để giải quyết bài toán kiểm duyệt nội dung, chúng tôi không sử dụng các mô hình CNN truyền thống (như ResNet, VGG) mà lựa chọn CLIP (Contrastive Language-Image Pre-training) của OpenAI, cụ thể là phiên bản `ViT-L/14` (Vision Transformer Large). CLIP là một mô hình đa phương thức (multimodal) có khả năng hiểu mối liên hệ giữa hình ảnh và văn bản cực kỳ tốt.
+   
+   Chúng tôi đã tinh chỉnh (fine-tune) mô hình CLIP trên tập dữ liệu chuyên biệt gồm 100,000 ảnh được gán nhãn kỹ lưỡng. Mô hình được huấn luyện để phân loại hình ảnh vào 3 lớp:
+   1.  Safe: Hình ảnh an toàn, phù hợp với mọi lứa tuổi.
+   2.  NSFW Mild: Hình ảnh có tính chất gợi cảm nhưng không trần trụi (ví dụ: đồ bơi), cần cảnh báo hoặc làm mờ.
+   3.  NSFW Explicit: Hình ảnh khiêu dâm, bạo lực, bị cấm hoàn toàn.
+   
+   Quá trình huấn luyện sử dụng thư viện PyTorch, với hàm tối ưu hóa AdamW và chiến lược điều chỉnh tốc độ học (learning rate) Cosine Annealing. Hàm mất mát (loss function) CrossEntropyLoss kết hợp với kỹ thuật Label Smoothing (làm trơn nhãn) giúp mô hình tránh hiện tượng quá khớp (overfitting) và tăng khả năng tổng quát hóa trên dữ liệu thực tế.
+   Mô hình AI được đóng gói thành một microservice riêng biệt sử dụng FastAPI (Python) để tận dụng thư viện PyTorch. Backend Spring Boot giao tiếp với AI Service này thông qua giao thức HTTP (REST Template). Khi người dùng upload ảnh, Spring Boot sẽ gửi ảnh sang FastAPI, nhận về kết quả phân loại và quyết định có cho phép lưu trữ ảnh hay không.
+   
+   Công thức tính xác suất (Softmax) được sử dụng ở lớp đầu ra của mô hình để xác định nhãn của hình ảnh:
+   
+   Trong đó: 
+• z_j(logit): Giá trị đầu ra chưa chuẩn hóa của mô hình cho lớp j. Đây thường là kết quả từ lớp Fully Connected sau khi xử lý đặc trưng ảnh.
+• K: Số lớp phân loại (ở đây là 3 lớp).
+• P(y=j∣x): Xác suất ảnh xthuộc lớp j. Softmax biến các logits thành phân phối xác suất (tổng bằng 1).
+
+3. Kết quả và bàn luận
+3.1. Kết quả
+3.1.1. Hiện thực hóa các tính năng nghiệp vụ
+   Sau quá trình phát triển và kiểm thử, hệ thống đã hoàn thiện và vận hành ổn định với đầy đủ các tính năng của một mạng xã hội sách hiện đại:
+• Phân hệ Xác thực và Người dùng:
+       		Hệ thống hỗ trợ quy trình đăng ký tài khoản bảo mật với xác thực email qua mã OTP (One-Time Password). Tính năng "Quên mật khẩu" và "Đổi mật khẩu" cũng được tích hợp đầy đủ. Người dùng có trang cá nhân (Profile) để quản lý thông tin, ảnh đại diện và xem lịch sử hoạt động.
+       
+• Phân hệ Sáng tác và Quản lý Sách:
+       		Đây là tính năng cốt lõi dành cho tác giả. Giao diện "Author Dashboard" cho phép tác giả tạo sách mới, thiết lập thông tin metadata (tiêu đề, tóm tắt, thể loại, tag). Trình soạn thảo chương sách (Chapter Editor) hỗ trợ định dạng văn bản phong phú (Rich Text), và soạn thảo đa người dùng (Collaborative Editing), cho phép nhiều tác giả có thể soạn thảo cùng nhau. Tác giả có thể quản lý trạng thái của từng chương (Nháp, Đã xuất bản, Riêng tư).
+   
+• Phân hệ Tương tác Xã hội:
+       		Độc giả có thể tương tác với sách và tác giả thông qua các hành động: Thích (Like), Bình luận (Comment), Đánh giá (Rating 1-5 sao), và Theo dõi (Follow). Hệ thống Notification thông báo cho người dùng khi có tương tác mới hoặc khi tác giả họ theo dõi ra chương mới.
+   
+• Phân hệ Thanh toán:
+       		Hệ thống ví điện tử (User Wallet) cho phép người dùng nạp tiền (Credit) thông qua PayPal hoặc Stripe. Credit này được dùng để mua các chương sách trả phí (Premium Chapters).
+   
+3.2. Đánh giá hiệu quả của hệ thống kiểm duyệt AI
+   Mô hình AI sau khi được tích hợp đã cho thấy hiệu quả rõ rệt trong việc kiểm soát nội dung.
+• Độ chính xác: Trên tập dữ liệu kiểm thử (Test Set) gồm 10.000 ảnh chưa từng xuất hiện trong quá trình huấn luyện, mô hình đạt độ chính xác (Accuracy) trên 95%. Khả năng phân biệt giữa lớp `Mild` và `Explicit` - vốn là một thách thức lớn đối với các mô hình cũ - đã được cải thiện đáng kể.
+• Hiệu năng: Thời gian phản hồi trung bình cho mỗi request kiểm duyệt (từ lúc Spring Boot gửi ảnh đến khi nhận kết quả từ FastAPI) là dưới 500ms trên hạ tầng phần cứng GPU tầm trung. Đây là mức độ trễ chấp nhận được, không gây ảnh hưởng tiêu cực đến trải nghiệm người dùng (UX).
+   
+   Quy trình xử lý nghiệp vụ tại `ImageController` diễn ra như sau:
+   1.  Người dùng upload ảnh (Avatar, Bìa sách).
+   2.  `ImageController` gọi `NsfwDetectionService`.
+   3.  Nếu kết quả là SAFE: Ảnh được lưu vào hệ thống file (hoặc Cloud Storage), đường dẫn ảnh được lưu vào Database.
+   4.  Nếu kết quả là MILD: Hệ thống vẫn cho phép lưu, nhưng đánh dấu cờ `isSensitive=true`. Khi hiển thị ra Frontend, ảnh sẽ bị làm mờ (Blur) và yêu cầu người dùng xác nhận trước khi xem.
+   5.  Nếu kết quả là EXPLICIT: Hệ thống từ chối lưu trữ, trả về lỗi cho người dùng và có thể tạm khóa tài khoản nếu vi phạm nhiều lần.
+   
+   [Hình 6. Biểu đồ quy trình xử lý ảnh tải lên]
+   [Figure 6. Flowchart of Uploaded Image Processing]
+
+3.3. Bàn luận
+   Kết quả nghiên cứu cho thấy việc tự xây dựng và tích hợp hệ thống AI vào backend Spring Boot là hoàn toàn khả thi và mang lại hiệu quả cao. So với việc sử dụng các API kiểm duyệt của bên thứ ba (như Amazon Rekognition hay Google Vision AI), giải pháp này giúp tiết kiệm chi phí vận hành đáng kể về lâu dài và đảm bảo quyền riêng tư dữ liệu người dùng (dữ liệu không bị gửi ra ngoài hệ thống).
+   
+   Tuy nhiên, hệ thống vẫn còn một số hạn chế cần khắc phục. Thứ nhất, mô hình AI đôi khi vẫn gặp lỗi nhận diện sai (False Positive) đối với các hình ảnh nghệ thuật trừu tượng hoặc hình ảnh y khoa, dẫn đến trải nghiệm không tốt cho người dùng. Thứ hai, chi phí phần cứng (GPU) để vận hành mô hình AI là một rào cản nếu muốn triển khai trên quy mô lớn. Giải pháp tiềm năng là sử dụng các kỹ thuật nén mô hình (Model Quantization) hoặc Knowledge Distillation để giảm nhẹ mô hình, cho phép chạy trên CPU với tốc độ chấp nhận được.
+
+4. Kết luận
+   Bài báo đã trình bày chi tiết quy trình nghiên cứu, thiết kế và hiện thực hóa một nền tảng mạng xã hội chia sẻ và sáng tác sách tích hợp AI. Hệ thống backend dựa trên Spring Boot 3 đã chứng minh được sự mạnh mẽ, ổn định và khả năng đáp ứng tốt các yêu cầu nghiệp vụ phức tạp. Việc tích hợp thành công mô hình CLIP để tự động hóa quy trình kiểm duyệt hình ảnh là một đóng góp quan trọng, giúp giải quyết bài toán kiểm soát nội dung số một cách hiệu quả và tiết kiệm chi phí.
+   
+   Kết quả của nghiên cứu không chỉ dừng lại ở một sản phẩm phần mềm, mà còn đề xuất một kiến trúc tham chiếu cho việc tích hợp các mô hình học sâu vào các ứng dụng web truyền thống. Trong tương lai, nhóm nghiên cứu dự định sẽ mở rộng hệ thống theo hướng: (1) Phát triển hệ thống gợi ý sách (Recommender System) sử dụng Collaborative Filtering để cá nhân hóa trải nghiệm người dùng; (2) Tối ưu hóa mô hình AI để chạy trên các thiết bị biên (Edge Devices); và (3) Nâng cấp kiến trúc sang Microservices hoàn chỉnh với Docker và Kubernetes để tăng khả năng mở rộng.
+Lời cám ơn
+   Chân thành cảm ơn TS. Mai Anh Thơ, giảng viên Trường Đại học Sư phạm Kỹ thuật Thành Phố Hồ Chí Minh, đã đồng hành và hỗ trợ nhóm tác giả trong quá trình thực hiện bài nghiên cứu này.
+Xung đột lợi ích
+   Các tác giả tuyên bố không có xung đột lợi ích trong bài báo này.
+TÀI LIỆU THAM KHẢO    
+[1] A. Haleem, M. Javaid, M. A. Qadri, and R. Suman, “Understanding the role of digital technologies in education: a review,” Sustain. Operat. Comp., vol. 3, pp. 275–285, 2022.
+[2] S. F. Ahmad et al., “Impact of artificial intelligence on human loss in decision making, laziness and safety in education,” Humanit. Soc. Sci. Commun., vol. 10, pp. 1–14, 2023.
+[3] A. Radford et al., "Learning Transferable Visual Models From Natural Language Supervision," in Proc. ICML, 2021, pp. 8748–8763.
+[4] L. Walls, E. D. Christl, and C. Steinbach, "Spring Boot in Action," Manning Publications, 2016.
+[5] J. Long, "Beginning Spring Boot 3," Apress, 2023.
+[6] OpenAI, "CLIP: Connecting Text and Images," [Online]. Available: https://openai.com/research/clip.
+[7] Spring IO, "Spring Security Architecture," [Online]. Available: https://spring.io/guides/topicals/spring-security-architecture.
+[8] R. Winch et al., "Spring Security Reference," VMware, Inc., 2023.
+
+Nguyen Van Thi is a final-year undergraduate student majoring in Software Engineering at the University of Technology and Education, Ho Chi Minh City, Vietnam. He began his academic program in 2021 and is expected to obtain his Bachelor's degree in 2025. His academic training has equipped him with comprehensive knowledge in programming, software design, database systems. His primary areas of interest include artificial intelligence, web development, front-end and back-end technologies.
+Phone: 0366114003
+Email: 21110306@student.hcmute.edu.vn   
+Phan Le Thanh Cong is currently an undergraduate student pursuing a Bachelor's degree in Software Engineering at the University of Technology and Education, Ho Chi Minh City, Vietnam. He began his studies in 2021 and is expected to graduate in 2025. Throughout his academic journey, he has built a solid foundation in web development, algorithms, data structures. His current research interests include web technologies, artificial intelligence.
+Phone: 0945052542
+Email: 21110146@student.hcmute.edu.vn   
+  
+
+  
+
+
+   
+   
+   
+   	
+
+   TNU JOURNAL OF SCIENCE AND TECHNOLOGY   226(01), ID 3528                               
+   
+
+
+ISSN: 1859-1272   TẠP CHÍ KHOA HỌC GIÁO DỤC KỸ THUẬT
+   Trường Đại học Sư phạm Kỹ thuật Thành phố Hồ Chí Minh
+   Website: https://jte.edu.vn 
+   Email: jte@hcmute.edu.vn                               
+   
+                                                                                                                 http://jst.tnu.edu.vn;Email: jst@tnu.edu.vn
+   
+
+JTE, Số xx, xx/20xx   1   
+   

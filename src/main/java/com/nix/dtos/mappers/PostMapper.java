@@ -2,6 +2,7 @@ package com.nix.dtos.mappers;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -25,7 +26,7 @@ public class PostMapper implements Mapper<Post, PostDTO> {
 		if (p.getId() != null) {
 			postDTO.setId(p.getId());
 		}
-		postDTO.setImages(p.getImages());
+		postDTO.setImages(mapToImageDTOs(p.getImages()));
 		postDTO.setContent(p.getContent());
 		postDTO.setCommentCount(p.getComments().size());
 		postDTO.setLikes(p.getLikes());
@@ -38,7 +39,7 @@ public class PostMapper implements Mapper<Post, PostDTO> {
 			postDTO.setSharedPostId(p.getSharedPost().getId());
 			postDTO.setSharedPostUser(userSummaryMapper.mapToDTO(p.getSharedPost().getUser()));
 			postDTO.setSharedPostContent(p.getSharedPost().getContent());
-			postDTO.setSharedPostImages(p.getSharedPost().getImages());
+			postDTO.setSharedPostImages(mapToImageDTOs(p.getSharedPost().getImages()));
 			postDTO.setSharedPostTimestamp(p.getSharedPost().getTimestamp());
 		}
 
@@ -76,5 +77,13 @@ public class PostMapper implements Mapper<Post, PostDTO> {
 
 	public List<PostDTO> mapToDTOs(List<Post> posts, User currentUser) {
 		return posts.stream().map(post -> mapToDTO(post, currentUser)).collect(Collectors.toList());
+	}
+
+	private List<com.nix.dtos.ImageAttachmentDTO> mapToImageDTOs(List<com.nix.models.ImageAttachment> images) {
+		if (images == null) {
+			return new ArrayList<>();
+		}
+		return images.stream().map(img -> new com.nix.dtos.ImageAttachmentDTO(img.getUrl(), img.getIsMild()))
+				.collect(Collectors.toList());
 	}
 }

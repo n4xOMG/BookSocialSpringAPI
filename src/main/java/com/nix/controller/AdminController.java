@@ -50,11 +50,11 @@ public class AdminController {
 	@Autowired
 	AdminService adminService;
 
-	UserMapper userMapper = new UserMapper();
+	@Autowired
+	UserMapper userMapper;
 
 	@GetMapping("/dashboard/users")
-	public ResponseEntity<ApiResponseWithData<UserAnalyticsDTO>> getUserAnalytics(
-			@RequestHeader("Authorization") String jwt) {
+	public ResponseEntity<ApiResponseWithData<UserAnalyticsDTO>> getUserAnalytics() {
 		try {
 			UserAnalyticsDTO userAnalytics = adminService.getUserAnalytics();
 			return buildSuccessResponse("User analytics retrieved successfully.", userAnalytics);
@@ -65,8 +65,7 @@ public class AdminController {
 	}
 
 	@GetMapping("/dashboard/revenue")
-	public ResponseEntity<ApiResponseWithData<RevenueAnalyticsDTO>> getRevenueAnalytics(
-			@RequestHeader("Authorization") String jwt) {
+	public ResponseEntity<ApiResponseWithData<RevenueAnalyticsDTO>> getRevenueAnalytics() {
 		try {
 
 			RevenueAnalyticsDTO revenueAnalytics = adminService.getRevenueAnalytics();
@@ -78,8 +77,7 @@ public class AdminController {
 	}
 
 	@GetMapping("/dashboard/content")
-	public ResponseEntity<ApiResponseWithData<ContentAnalyticsDTO>> getContentAnalytics(
-			@RequestHeader("Authorization") String jwt) {
+	public ResponseEntity<ApiResponseWithData<ContentAnalyticsDTO>> getContentAnalytics() {
 		try {
 			ContentAnalyticsDTO contentAnalytics = adminService.getContentAnalytics();
 			return buildSuccessResponse("Content analytics retrieved successfully.", contentAnalytics);
@@ -90,8 +88,7 @@ public class AdminController {
 	}
 
 	@GetMapping("/dashboard/platform")
-	public ResponseEntity<ApiResponseWithData<PlatformAnalyticsDTO>> getPlatformAnalytics(
-			@RequestHeader("Authorization") String jwt) {
+	public ResponseEntity<ApiResponseWithData<PlatformAnalyticsDTO>> getPlatformAnalytics() {
 		try {
 
 			PlatformAnalyticsDTO platformAnalytics = adminService.getPlatformAnalytics();
@@ -103,7 +100,7 @@ public class AdminController {
 	}
 
 	@GetMapping("/users")
-	public ResponseEntity<ApiResponseWithData<List<UserDTO>>> getAllUsers(@RequestHeader("Authorization") String jwt,
+	public ResponseEntity<ApiResponseWithData<List<UserDTO>>> getAllUsers(
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
 			@RequestParam(required = false) String searchTerm) {
 
@@ -120,17 +117,10 @@ public class AdminController {
 	// ===== Payouts (Admin) =====
 	@GetMapping("/payouts")
 	public ResponseEntity<ApiResponseWithData<Page<AuthorPayoutDTO>>> listPayouts(
-			@RequestHeader("Authorization") String jwt,
 			@RequestParam(required = false) com.nix.models.AuthorPayout.PayoutStatus status,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size,
 			@RequestParam(defaultValue = "requestedDate,desc") String sort) {
 		try {
-			User admin = userService.findUserByJwt(jwt);
-			if (admin == null) {
-				return buildErrorResponse(HttpStatus.UNAUTHORIZED,
-						"Authentication is required to manage payouts.");
-			}
-
 			String[] parts = sort.split(",");
 			String sortField = parts.length > 0 ? parts[0] : "requestedDate";
 			String sortDir = parts.length > 1 ? parts[1] : "desc";
@@ -147,14 +137,8 @@ public class AdminController {
 	}
 
 	@PostMapping("/payouts/{payoutId}/process")
-	public ResponseEntity<ApiResponseWithData<AuthorPayoutDTO>> processPayout(
-			@RequestHeader("Authorization") String jwt, @PathVariable UUID payoutId) {
+	public ResponseEntity<ApiResponseWithData<AuthorPayoutDTO>> processPayout(@PathVariable UUID payoutId) {
 		try {
-			User admin = userService.findUserByJwt(jwt);
-			if (admin == null) {
-				return buildErrorResponse(HttpStatus.UNAUTHORIZED,
-						"Authentication is required to process payouts.");
-			}
 			AuthorPayoutDTO updated = authorService.processPayout(payoutId);
 			return buildSuccessResponse("Payout processed successfully.", updated);
 		} catch (Exception e) {
@@ -163,44 +147,28 @@ public class AdminController {
 	}
 
 	@GetMapping("/users/total")
-	public ResponseEntity<ApiResponseWithData<Long>> getTotalUsers(@RequestHeader("Authorization") String jwt) {
-		User admin = userService.findUserByJwt(jwt);
-		if (admin == null) {
-			return buildErrorResponse(HttpStatus.UNAUTHORIZED, "Authentication is required to view totals.");
-		}
+	public ResponseEntity<ApiResponseWithData<Long>> getTotalUsers() {
 		return buildSuccessResponse("Total users retrieved successfully.", userService.getTotalUsers());
 	}
 
 	// Get banned users count
 	@GetMapping("/users/banned")
-	public ResponseEntity<ApiResponseWithData<Long>> getBannedUsersCount(
-			@RequestHeader("Authorization") String jwt) {
-		User admin = userService.findUserByJwt(jwt);
-		if (admin == null) {
-			return buildErrorResponse(HttpStatus.UNAUTHORIZED,
-					"Authentication is required to view banned user metrics.");
-		}
+	public ResponseEntity<ApiResponseWithData<Long>> getBannedUsersCount() {
 		return buildSuccessResponse("Banned users count retrieved successfully.", userService.getBannedUsersCount());
 	}
 
 	// Get suspended users count
 	@GetMapping("/users/suspended")
-	public ResponseEntity<ApiResponseWithData<Long>> getSuspendedUsersCount(
-			@RequestHeader("Authorization") String jwt) {
-		User admin = userService.findUserByJwt(jwt);
-		if (admin == null) {
-			return buildErrorResponse(HttpStatus.UNAUTHORIZED,
-					"Authentication is required to view suspended user metrics.");
-		}
+	public ResponseEntity<ApiResponseWithData<Long>> getSuspendedUsersCount() {
 		return buildSuccessResponse("Suspended users count retrieved successfully.",
 				userService.getSuspendedUsersCount());
 	}
 
 	@PutMapping("/users/update/{userId}")
 	public ResponseEntity<ApiResponseWithData<UserDTO>> updateUser(@PathVariable UUID userId,
-			@RequestBody User user) throws Exception {
+			@RequestBody com.nix.dtos.AdminUpdateUserDTO userDTO) throws Exception {
 		try {
-			UserDTO updateUser = userMapper.mapToDTO(userService.updateUser(userId, user));
+			UserDTO updateUser = userMapper.mapToDTO(userService.adminUpdateUser(userId, userDTO));
 
 			return buildSuccessResponse("User updated successfully.", updateUser);
 		} catch (Exception e) {
@@ -210,14 +178,8 @@ public class AdminController {
 	}
 
 	@DeleteMapping("/users/delete/{userId}")
-	public ResponseEntity<ApiResponseWithData<Void>> deleteUser(@RequestHeader("Authorization") String jwt,
-			@PathVariable UUID userId) throws Exception {
+	public ResponseEntity<ApiResponseWithData<Void>> deleteUser(@PathVariable UUID userId) throws Exception {
 		try {
-			User user = userService.findUserByJwt(jwt);
-			if (user == null) {
-				return buildErrorResponse(HttpStatus.UNAUTHORIZED,
-						"Authentication is required to delete users.");
-			}
 			userService.deleteUser(userId);
 			return buildSuccessResponse("User deleted successfully.", null);
 
@@ -228,14 +190,8 @@ public class AdminController {
 	}
 
 	@PatchMapping("/users/suspend/{userId}")
-	public ResponseEntity<ApiResponseWithData<UserDTO>> suspendUser(@RequestHeader("Authorization") String jwt,
-			@PathVariable UUID userId) throws Exception {
+	public ResponseEntity<ApiResponseWithData<UserDTO>> suspendUser(@PathVariable UUID userId) throws Exception {
 		try {
-			User user = userService.findUserByJwt(jwt);
-			if (user == null) {
-				return buildErrorResponse(HttpStatus.UNAUTHORIZED,
-						"Authentication is required to suspend users.");
-			}
 			User suspendedUser = userService.suspendUser(userId);
 			return buildSuccessResponse("User suspended successfully.", userMapper.mapToDTO(suspendedUser));
 
@@ -246,14 +202,8 @@ public class AdminController {
 	}
 
 	@PatchMapping("/users/unsuspend/{userId}")
-	public ResponseEntity<ApiResponseWithData<UserDTO>> unsuspendUser(@RequestHeader("Authorization") String jwt,
-			@PathVariable UUID userId) throws Exception {
+	public ResponseEntity<ApiResponseWithData<UserDTO>> unsuspendUser(@PathVariable UUID userId) throws Exception {
 		try {
-			User user = userService.findUserByJwt(jwt);
-			if (user == null) {
-				return buildErrorResponse(HttpStatus.UNAUTHORIZED,
-						"Authentication is required to unsuspend users.");
-			}
 			User unsuspendedUser = userService.unsuspendUser(userId);
 			return buildSuccessResponse("User unsuspended successfully.", userMapper.mapToDTO(unsuspendedUser));
 
@@ -264,14 +214,9 @@ public class AdminController {
 	}
 
 	@PatchMapping("/users/ban/{userId}")
-	public ResponseEntity<ApiResponseWithData<UserDTO>> banUser(@RequestHeader("Authorization") String jwt,
-			@RequestBody Map<String, String> request) throws Exception {
+	public ResponseEntity<ApiResponseWithData<UserDTO>> banUser(@RequestBody Map<String, String> request)
+			throws Exception {
 		try {
-			User user = userService.findUserByJwt(jwt);
-			if (user == null) {
-				return buildErrorResponse(HttpStatus.UNAUTHORIZED,
-						"Authentication is required to ban users.");
-			}
 			UUID userId = UUID.fromString(request.get("userId"));
 			String banReason = request.get("banReason");
 
@@ -284,15 +229,27 @@ public class AdminController {
 		}
 	}
 
-	@PatchMapping("/users/unban/{userId}")
-	public ResponseEntity<ApiResponseWithData<UserDTO>> unbanUser(@RequestHeader("Authorization") String jwt,
-			@PathVariable UUID userId) throws Exception {
+	@PatchMapping("/users/ban-batch")
+	public ResponseEntity<ApiResponseWithData<List<UserDTO>>> banUsersBatch(@RequestBody Map<String, Object> request) {
 		try {
-			User user = userService.findUserByJwt(jwt);
-			if (user == null) {
-				return buildErrorResponse(HttpStatus.UNAUTHORIZED,
-						"Authentication is required to unban users.");
-			}
+			@SuppressWarnings("unchecked")
+			List<String> userIdStrings = (List<String>) request.get("userIds");
+			String banReason = (String) request.get("banReason");
+
+			List<UUID> userIds = userIdStrings.stream().map(UUID::fromString).toList();
+
+			List<User> bannedUsers = userService.banUsers(userIds, banReason);
+			return buildSuccessResponse("Users banned successfully.", userMapper.mapToDTOs(bannedUsers));
+
+		} catch (Exception e) {
+			return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to ban users: " + e.getMessage());
+		}
+	}
+
+	@PatchMapping("/users/unban/{userId}")
+	public ResponseEntity<ApiResponseWithData<UserDTO>> unbanUser(@PathVariable UUID userId) throws Exception {
+		try {
 			User unbannedUser = userService.unbanUser(userId);
 			return buildSuccessResponse("User unbanned successfully.", userMapper.mapToDTO(unbannedUser));
 
@@ -321,4 +278,5 @@ public class AdminController {
 	private <T> ResponseEntity<ApiResponseWithData<T>> buildErrorResponse(HttpStatus status, String message) {
 		return ResponseEntity.status(status).body(new ApiResponseWithData<>(message, false));
 	}
+
 }

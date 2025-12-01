@@ -33,13 +33,18 @@ public class Message implements Serializable {
 	private String content;
 
 	private LocalDateTime timestamp;
-	private String imageUrl;
+	@jakarta.persistence.Embedded
+	@jakarta.persistence.AttributeOverrides({
+			@jakarta.persistence.AttributeOverride(name = "url", column = @jakarta.persistence.Column(name = "image_url")),
+			@jakarta.persistence.AttributeOverride(name = "isMild", column = @jakarta.persistence.Column(name = "is_mild"))
+	})
+	private ImageAttachment image;
 	private boolean isRead;
-	
+
 	@JsonIgnore
 	@ManyToOne
 	private User sender;
-	
+
 	@JsonIgnore
 	@ManyToOne
 	private User receiver;

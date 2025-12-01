@@ -221,7 +221,10 @@ public class BookServiceImpl implements BookService {
 		book.setAuthorName(bookDTO.getAuthorName());
 		book.setArtistName(bookDTO.getArtistName());
 		book.setDescription(bookDTO.getDescription());
-		book.setBookCover(bookDTO.getBookCover());
+		if (bookDTO.getBookCover() != null) {
+			book.setBookCover(new com.nix.models.ImageAttachment(bookDTO.getBookCover().getUrl(),
+					bookDTO.getBookCover().getIsMild()));
+		}
 		book.setLanguage(bookDTO.getLanguage());
 		book.setStatus(bookDTO.getStatus());
 		book.setUploadDate(LocalDateTime.now());
@@ -241,7 +244,10 @@ public class BookServiceImpl implements BookService {
 	public BookDTO updateBook(UUID bookId, BookDTO bookDTO) {
 		Book existingBook = getBookOrThrow(bookId);
 		existingBook.setTitle(bookDTO.getTitle());
-		existingBook.setBookCover(bookDTO.getBookCover());
+		if (bookDTO.getBookCover() != null) {
+			existingBook.setBookCover(new com.nix.models.ImageAttachment(bookDTO.getBookCover().getUrl(),
+					bookDTO.getBookCover().getIsMild()));
+		}
 		existingBook.setAuthorName(bookDTO.getAuthorName());
 		existingBook.setArtistName(bookDTO.getArtistName());
 		existingBook.setDescription(bookDTO.getDescription());
@@ -401,7 +407,10 @@ public class BookServiceImpl implements BookService {
 			BookPerformanceDTO performance = new BookPerformanceDTO();
 			performance.setBookId(book.getId());
 			performance.setTitle(book.getTitle());
-			performance.setBookCover(book.getBookCover());
+			if (book.getBookCover() != null) {
+				performance.setBookCover(new com.nix.dtos.ImageAttachmentDTO(book.getBookCover().getUrl(),
+						book.getBookCover().getIsMild()));
+			}
 			performance.setStatus(book.getStatus());
 			performance.setTotalChapters(book.getChapters().size());
 			performance.setLastUpdated(book.getUploadDate());

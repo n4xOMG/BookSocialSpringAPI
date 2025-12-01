@@ -13,7 +13,7 @@ public class MessageMapper implements Mapper<Message, MessageDTO> {
 	@Override
 	public MessageDTO mapToDTO(Message m) {
 		MessageDTO messageDTO = new MessageDTO();
-		if (m!=null) {
+		if (m != null) {
 			if (m.getId() != null) {
 				messageDTO.setId(m.getId());
 			}
@@ -21,7 +21,10 @@ public class MessageMapper implements Mapper<Message, MessageDTO> {
 			messageDTO.setSender(userSummaryMapper.mapToDTO(m.getSender()));
 			messageDTO.setReceiver(userSummaryMapper.mapToDTO(m.getSender()));
 			messageDTO.setContent(m.getContent());
-			messageDTO.setImageUrl(m.getImageUrl());
+			if (m.getImage() != null) {
+				messageDTO
+						.setImage(new com.nix.dtos.ImageAttachmentDTO(m.getImage().getUrl(), m.getImage().getIsMild()));
+			}
 			messageDTO.setTimestamp(m.getTimestamp());
 			messageDTO.setRead(m.isRead());
 		}

@@ -54,12 +54,15 @@ class AdminControllerTest {
     @Mock
     private AdminService adminService;
 
+    @Mock
+    private com.nix.dtos.mappers.UserMapper userMapper;
+
     @InjectMocks
     private AdminController adminController;
 
     @Test
     void getUserAnalytics_returnsAnalytics() {
-        String jwt = "Bearer admin-token";
+
         UserAnalyticsDTO analytics = new UserAnalyticsDTO();
         analytics.setTotalUsers(1000L);
         analytics.setActiveUsers(850L);
@@ -68,7 +71,7 @@ class AdminControllerTest {
 
         when(adminService.getUserAnalytics()).thenReturn(analytics);
 
-        ResponseEntity<ApiResponseWithData<UserAnalyticsDTO>> response = adminController.getUserAnalytics(jwt);
+        ResponseEntity<ApiResponseWithData<UserAnalyticsDTO>> response = adminController.getUserAnalytics();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         ApiResponseWithData<UserAnalyticsDTO> body = response.getBody();
@@ -96,7 +99,7 @@ class AdminControllerTest {
 
         when(adminService.getRevenueAnalytics()).thenReturn(analytics);
 
-        ResponseEntity<ApiResponseWithData<RevenueAnalyticsDTO>> response = adminController.getRevenueAnalytics(jwt);
+        ResponseEntity<ApiResponseWithData<RevenueAnalyticsDTO>> response = adminController.getRevenueAnalytics();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         ApiResponseWithData<RevenueAnalyticsDTO> body = response.getBody();
@@ -121,7 +124,7 @@ class AdminControllerTest {
 
         when(adminService.getContentAnalytics()).thenReturn(analytics);
 
-        ResponseEntity<ApiResponseWithData<ContentAnalyticsDTO>> response = adminController.getContentAnalytics(jwt);
+        ResponseEntity<ApiResponseWithData<ContentAnalyticsDTO>> response = adminController.getContentAnalytics();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         ApiResponseWithData<ContentAnalyticsDTO> body = response.getBody();
@@ -143,7 +146,7 @@ class AdminControllerTest {
 
         when(adminService.getPlatformAnalytics()).thenReturn(analytics);
 
-        ResponseEntity<ApiResponseWithData<PlatformAnalyticsDTO>> response = adminController.getPlatformAnalytics(jwt);
+        ResponseEntity<ApiResponseWithData<PlatformAnalyticsDTO>> response = adminController.getPlatformAnalytics();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         ApiResponseWithData<PlatformAnalyticsDTO> body = response.getBody();
@@ -162,7 +165,8 @@ class AdminControllerTest {
 
         when(userService.getAllUsers(0, 10, "test")).thenReturn(usersPage);
 
-        ResponseEntity<ApiResponseWithData<List<UserDTO>>> response = adminController.getAllUsers(jwt, 0, 10,
+        when(userMapper.mapToDTOs(any())).thenReturn(Collections.singletonList(new UserDTO()));
+        ResponseEntity<ApiResponseWithData<List<UserDTO>>> response = adminController.getAllUsers(0, 10,
                 "test");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -182,7 +186,8 @@ class AdminControllerTest {
 
         when(userService.getAllUsers(0, 10, null)).thenReturn(usersPage);
 
-        ResponseEntity<ApiResponseWithData<List<UserDTO>>> response = adminController.getAllUsers(jwt, 0, 10, null);
+        when(userMapper.mapToDTOs(any())).thenReturn(Collections.singletonList(new UserDTO()));
+        ResponseEntity<ApiResponseWithData<List<UserDTO>>> response = adminController.getAllUsers(0, 10, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         ApiResponseWithData<List<UserDTO>> body = response.getBody();
@@ -194,16 +199,13 @@ class AdminControllerTest {
 
     @Test
     void listPayouts_withStatus_returnsFilteredPayouts() {
-        String jwt = "Bearer admin-token";
-        User admin = buildAdmin();
         AuthorPayoutDTO payoutDTO = buildPayoutDTO();
         Page<AuthorPayoutDTO> payoutsPage = new PageImpl<>(Collections.singletonList(payoutDTO));
 
-        when(userService.findUserByJwt(jwt)).thenReturn(admin);
         when(authorService.listPayouts(eq(AuthorPayout.PayoutStatus.PENDING), any(Pageable.class)))
                 .thenReturn(payoutsPage);
 
-        ResponseEntity<ApiResponseWithData<Page<AuthorPayoutDTO>>> response = adminController.listPayouts(jwt,
+        ResponseEntity<ApiResponseWithData<Page<AuthorPayoutDTO>>> response = adminController.listPayouts(
                 AuthorPayout.PayoutStatus.PENDING, 0, 20, "requestedDate,desc");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -217,32 +219,14 @@ class AdminControllerTest {
     }
 
     @Test
-    void listPayouts_withoutAuth_returnsUnauthorized() {
-        String invalidJwt = "Bearer invalid-token";
-        when(userService.findUserByJwt(invalidJwt)).thenReturn(null);
-
-        ResponseEntity<ApiResponseWithData<Page<AuthorPayoutDTO>>> response = adminController.listPayouts(invalidJwt,
-                AuthorPayout.PayoutStatus.PENDING, 0, 20, "requestedDate,desc");
-
-        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        ApiResponseWithData<Page<AuthorPayoutDTO>> body = response.getBody();
-        assertNotNull(body);
-        assertFalse(body.isSuccess());
-        assertEquals("Authentication is required to manage payouts.", body.getMessage());
-    }
-
-    @Test
     void processPayout_withValidId_processesSuccessfully() throws Exception {
-        String jwt = "Bearer admin-token";
         UUID payoutId = UUID.randomUUID();
-        User admin = buildAdmin();
         AuthorPayoutDTO payoutDTO = buildPayoutDTO();
         payoutDTO.setStatus(AuthorPayout.PayoutStatus.COMPLETED);
 
-        when(userService.findUserByJwt(jwt)).thenReturn(admin);
         when(authorService.processPayout(payoutId)).thenReturn(payoutDTO);
 
-        ResponseEntity<ApiResponseWithData<AuthorPayoutDTO>> response = adminController.processPayout(jwt, payoutId);
+        ResponseEntity<ApiResponseWithData<AuthorPayoutDTO>> response = adminController.processPayout(payoutId);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         ApiResponseWithData<AuthorPayoutDTO> body = response.getBody();
@@ -255,30 +239,10 @@ class AdminControllerTest {
     }
 
     @Test
-    void processPayout_withoutAuth_returnsUnauthorized() {
-        UUID payoutId = UUID.randomUUID();
-        String invalidJwt = "Bearer invalid-token";
-        when(userService.findUserByJwt(invalidJwt)).thenReturn(null);
-
-        ResponseEntity<ApiResponseWithData<AuthorPayoutDTO>> response = adminController.processPayout(invalidJwt,
-                payoutId);
-
-        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        ApiResponseWithData<AuthorPayoutDTO> body = response.getBody();
-        assertNotNull(body);
-        assertFalse(body.isSuccess());
-        assertEquals("Authentication is required to process payouts.", body.getMessage());
-    }
-
-    @Test
     void getTotalUsers_returnsCount() {
-        String jwt = "Bearer admin-token";
-        User admin = buildAdmin();
-
-        when(userService.findUserByJwt(jwt)).thenReturn(admin);
         when(userService.getTotalUsers()).thenReturn(1500L);
 
-        ResponseEntity<ApiResponseWithData<Long>> response = adminController.getTotalUsers(jwt);
+        ResponseEntity<ApiResponseWithData<Long>> response = adminController.getTotalUsers();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         ApiResponseWithData<Long> body = response.getBody();
@@ -290,13 +254,9 @@ class AdminControllerTest {
 
     @Test
     void getBannedUsersCount_returnsCount() {
-        String jwt = "Bearer admin-token";
-        User admin = buildAdmin();
-
-        when(userService.findUserByJwt(jwt)).thenReturn(admin);
         when(userService.getBannedUsersCount()).thenReturn(25L);
 
-        ResponseEntity<ApiResponseWithData<Long>> response = adminController.getBannedUsersCount(jwt);
+        ResponseEntity<ApiResponseWithData<Long>> response = adminController.getBannedUsersCount();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         ApiResponseWithData<Long> body = response.getBody();
@@ -308,13 +268,9 @@ class AdminControllerTest {
 
     @Test
     void getSuspendedUsersCount_returnsCount() {
-        String jwt = "Bearer admin-token";
-        User admin = buildAdmin();
-
-        when(userService.findUserByJwt(jwt)).thenReturn(admin);
         when(userService.getSuspendedUsersCount()).thenReturn(15L);
 
-        ResponseEntity<ApiResponseWithData<Long>> response = adminController.getSuspendedUsersCount(jwt);
+        ResponseEntity<ApiResponseWithData<Long>> response = adminController.getSuspendedUsersCount();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         ApiResponseWithData<Long> body = response.getBody();
@@ -329,31 +285,30 @@ class AdminControllerTest {
         UUID userId = UUID.randomUUID();
         User user = buildUser();
         user.setId(userId);
+        com.nix.dtos.AdminUpdateUserDTO userDTO = new com.nix.dtos.AdminUpdateUserDTO();
+        userDTO.setUsername("testuser");
 
-        when(userService.updateUser(eq(userId), any(User.class))).thenReturn(user);
+        when(userService.adminUpdateUser(eq(userId), any(com.nix.dtos.AdminUpdateUserDTO.class))).thenReturn(user);
+        when(userMapper.mapToDTO(any(User.class))).thenReturn(new UserDTO());
 
-        ResponseEntity<ApiResponseWithData<UserDTO>> response = adminController.updateUser(userId, user);
+        ResponseEntity<ApiResponseWithData<UserDTO>> response = adminController.updateUser(userId, userDTO);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         ApiResponseWithData<UserDTO> body = response.getBody();
         assertNotNull(body);
         assertTrue(body.isSuccess());
         assertEquals("User updated successfully.", body.getMessage());
-        assertEquals(userId, body.getData().getId());
 
-        verify(userService).updateUser(eq(userId), any(User.class));
+        verify(userService).adminUpdateUser(eq(userId), any(com.nix.dtos.AdminUpdateUserDTO.class));
     }
 
     @Test
     void deleteUser_withAuth_deletesSuccessfully() throws Exception {
-        String jwt = "Bearer admin-token";
         UUID userId = UUID.randomUUID();
-        User admin = buildAdmin();
 
-        when(userService.findUserByJwt(jwt)).thenReturn(admin);
         when(userService.deleteUser(userId)).thenReturn("User deleted successfully");
 
-        ResponseEntity<ApiResponseWithData<Void>> response = adminController.deleteUser(jwt, userId);
+        ResponseEntity<ApiResponseWithData<Void>> response = adminController.deleteUser(userId);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         ApiResponseWithData<Void> body = response.getBody();
@@ -366,32 +321,17 @@ class AdminControllerTest {
     }
 
     @Test
-    void deleteUser_withoutAuth_returnsUnauthorized() throws Exception {
-        UUID userId = UUID.randomUUID();
-        String invalidJwt = "Bearer invalid-token";
-        when(userService.findUserByJwt(invalidJwt)).thenReturn(null);
-
-        ResponseEntity<ApiResponseWithData<Void>> response = adminController.deleteUser(invalidJwt, userId);
-
-        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        ApiResponseWithData<Void> body = response.getBody();
-        assertNotNull(body);
-        assertFalse(body.isSuccess());
-        assertEquals("Authentication is required to delete users.", body.getMessage());
-    }
-
-    @Test
     void suspendUser_withAuth_suspendsSuccessfully() throws Exception {
         String jwt = "Bearer admin-token";
         UUID userId = UUID.randomUUID();
-        User admin = buildAdmin();
+
         User suspendedUser = buildUser();
         suspendedUser.setIsSuspended(true);
 
-        when(userService.findUserByJwt(jwt)).thenReturn(admin);
         when(userService.suspendUser(userId)).thenReturn(suspendedUser);
+        when(userMapper.mapToDTO(any(User.class))).thenReturn(new UserDTO());
 
-        ResponseEntity<ApiResponseWithData<UserDTO>> response = adminController.suspendUser(jwt, userId);
+        ResponseEntity<ApiResponseWithData<UserDTO>> response = adminController.suspendUser(userId);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         ApiResponseWithData<UserDTO> body = response.getBody();
@@ -407,14 +347,14 @@ class AdminControllerTest {
     void unsuspendUser_withAuth_unsuspendsSuccessfully() throws Exception {
         String jwt = "Bearer admin-token";
         UUID userId = UUID.randomUUID();
-        User admin = buildAdmin();
+
         User unsuspendedUser = buildUser();
         unsuspendedUser.setIsSuspended(false);
 
-        when(userService.findUserByJwt(jwt)).thenReturn(admin);
         when(userService.unsuspendUser(userId)).thenReturn(unsuspendedUser);
+        when(userMapper.mapToDTO(any(User.class))).thenReturn(new UserDTO());
 
-        ResponseEntity<ApiResponseWithData<UserDTO>> response = adminController.unsuspendUser(jwt, userId);
+        ResponseEntity<ApiResponseWithData<UserDTO>> response = adminController.unsuspendUser(userId);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         ApiResponseWithData<UserDTO> body = response.getBody();
@@ -430,19 +370,19 @@ class AdminControllerTest {
     void banUser_withReason_bansSuccessfully() throws Exception {
         String jwt = "Bearer admin-token";
         UUID userId = UUID.randomUUID();
-        User admin = buildAdmin();
+
         User bannedUser = buildUser();
         bannedUser.setBanned(true);
         bannedUser.setBanReason("Violation of terms");
 
-        when(userService.findUserByJwt(jwt)).thenReturn(admin);
         when(userService.banUser(userId, "Violation of terms")).thenReturn(bannedUser);
+        when(userMapper.mapToDTO(any(User.class))).thenReturn(new UserDTO());
 
         Map<String, String> request = Map.of(
                 "userId", userId.toString(),
                 "banReason", "Violation of terms");
 
-        ResponseEntity<ApiResponseWithData<UserDTO>> response = adminController.banUser(jwt, request);
+        ResponseEntity<ApiResponseWithData<UserDTO>> response = adminController.banUser(request);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         ApiResponseWithData<UserDTO> body = response.getBody();
@@ -459,14 +399,14 @@ class AdminControllerTest {
     void unbanUser_withAuth_unbansSuccessfully() throws Exception {
         String jwt = "Bearer admin-token";
         UUID userId = UUID.randomUUID();
-        User admin = buildAdmin();
+
         User unbannedUser = buildUser();
         unbannedUser.setBanned(false);
 
-        when(userService.findUserByJwt(jwt)).thenReturn(admin);
         when(userService.unbanUser(userId)).thenReturn(unbannedUser);
+        when(userMapper.mapToDTO(any(User.class))).thenReturn(new UserDTO());
 
-        ResponseEntity<ApiResponseWithData<UserDTO>> response = adminController.unbanUser(jwt, userId);
+        ResponseEntity<ApiResponseWithData<UserDTO>> response = adminController.unbanUser(userId);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         ApiResponseWithData<UserDTO> body = response.getBody();
@@ -487,6 +427,7 @@ class AdminControllerTest {
         user.setRole(moderatorRole);
 
         when(userService.updateUserRole(userId, "MODERATOR")).thenReturn(user);
+        when(userMapper.mapToDTO(any(User.class))).thenReturn(new UserDTO());
 
         ResponseEntity<ApiResponseWithData<UserDTO>> response = adminController.updateUserRole(userId, "MODERATOR");
 

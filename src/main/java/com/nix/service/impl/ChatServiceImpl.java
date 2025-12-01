@@ -62,8 +62,9 @@ public class ChatServiceImpl implements ChatService {
 		newMessage.setSender(sender);
 		newMessage.setReceiver(receiver);
 		newMessage.setContent(message.getContent());
-		if (message.getImageUrl()!=null) {
-			newMessage.setImageUrl(message.getImageUrl());
+		if (message.getImage() != null) {
+			newMessage.setImage(
+					new com.nix.models.ImageAttachment(message.getImage().getUrl(), message.getImage().getIsMild()));
 		}
 		;
 		newMessage.setRead(false);

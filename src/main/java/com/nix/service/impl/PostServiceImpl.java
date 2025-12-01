@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -148,7 +150,7 @@ public class PostServiceImpl implements PostService {
 		newPost.setUser(user);
 		newPost.setContent(postDTO.getContent());
 		if (postDTO.getImages() != null) {
-			newPost.setImages(postDTO.getImages());
+			newPost.setImages(mapToImages(postDTO.getImages()));
 		}
 		newPost.setLikes(0);
 		newPost.setTimestamp(LocalDateTime.now());
@@ -173,7 +175,7 @@ public class PostServiceImpl implements PostService {
 		}
 
 		post.setContent(postDetails.getContent());
-		post.setImages(postDetails.getImages());
+		post.setImages(mapToImages(postDetails.getImages()));
 
 		Post savedPost = postRepository.save(post);
 		return postMapper.mapToDTO(savedPost, user);
@@ -280,5 +282,13 @@ public class PostServiceImpl implements PostService {
 	public boolean isPostLikedByCurrentUser(User user, UUID postId) {
 		Optional<Post> post = postRepository.findById(postId);
 		return post.isPresent() && user.getLikedPosts().contains(post.get());
+	}
+
+	private List<com.nix.models.ImageAttachment> mapToImages(List<com.nix.dtos.ImageAttachmentDTO> imageDTOs) {
+		if (imageDTOs == null) {
+			return new ArrayList<>();
+		}
+		return imageDTOs.stream().map(dto -> new com.nix.models.ImageAttachment(dto.getUrl(), dto.getIsMild()))
+				.collect(Collectors.toList());
 	}
 }

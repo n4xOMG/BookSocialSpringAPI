@@ -15,8 +15,8 @@ import lombok.Setter;
 public class BookPerformanceDTO {
     private UUID bookId;
     private String title;
-    private String bookCover;
-    
+    private ImageAttachmentDTO bookCover;
+
     private long currentViews;
     private long currentFavourites;
     private long currentComments;

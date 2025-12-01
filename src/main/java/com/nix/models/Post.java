@@ -10,6 +10,8 @@ import org.hibernate.annotations.UuidGenerator;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -52,8 +54,11 @@ public class Post implements Serializable {
 
 	@ElementCollection
 	@CollectionTable(name = "post_images", joinColumns = @JoinColumn(name = "post_id"))
-	@Column(name = "image_url")
-	private List<String> images = new ArrayList<>();
+	@AttributeOverrides({
+			@AttributeOverride(name = "url", column = @Column(name = "image_url")),
+			@AttributeOverride(name = "isMild", column = @Column(name = "is_mild"))
+	})
+	private List<ImageAttachment> images = new ArrayList<>();
 
 	private Integer likes = 0;
 

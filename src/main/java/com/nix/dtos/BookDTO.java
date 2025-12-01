@@ -19,7 +19,7 @@ public class BookDTO {
 	private UserSummaryDTO author;
 	private String authorName;
 	private String artistName;
-	private String bookCover;
+	private ImageAttachmentDTO bookCover;
 	private String description;
 	private String language;
 	private boolean isSuggested; // return suggested

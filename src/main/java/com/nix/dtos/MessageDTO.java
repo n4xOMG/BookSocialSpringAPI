@@ -22,14 +22,15 @@ public class MessageDTO implements Serializable {
 	private UUID chatId;
 	private UserSummaryDTO sender;
 	private UserSummaryDTO receiver;
-	private String imageUrl;
+	private ImageAttachmentDTO image;
 	private String content;
 	private LocalDateTime timestamp;
 	private boolean isRead;
-	
+
 	@Override
 	public String toString() {
-	    return "MessageDTO{id=" + id + ", content='" + content + "', senderId=" + sender.getId() + ", receiverId=" + receiver.getId() + "}";
+		return "MessageDTO{id=" + id + ", content='" + content + "', senderId=" + sender.getId() + ", receiverId="
+				+ receiver.getId() + "}";
 	}
 
 }

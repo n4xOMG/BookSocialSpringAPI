@@ -35,7 +35,10 @@ public class BookMapper implements Mapper<Book, BookDTO> {
 		bookDTO.setAuthor(userSummaryMapper.mapToDTO(book.getAuthor()));
 		bookDTO.setAuthorName(book.getAuthorName());
 		bookDTO.setArtistName(book.getArtistName());
-		bookDTO.setBookCover(book.getBookCover());
+		if (book.getBookCover() != null) {
+			bookDTO.setBookCover(
+					new com.nix.dtos.ImageAttachmentDTO(book.getBookCover().getUrl(), book.getBookCover().getIsMild()));
+		}
 		bookDTO.setDescription(book.getDescription());
 		bookDTO.setUploadDate(book.getUploadDate());
 		bookDTO.setSuggested(book.isSuggested());
