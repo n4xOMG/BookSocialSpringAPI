@@ -31,7 +31,7 @@ public class NsfwDetectionService {
     private final boolean enabled;
 
     public NsfwDetectionService(RestTemplate restTemplate,
-            @Value("${nsfw.detector.url:http://127.0.0.1:1111/predict}") String predictUrl,
+            @Value("${nsfw.detector.url}") String predictUrl,
             @Value("${nsfw.detector.enabled:true}") boolean enabled) {
         this.restTemplate = restTemplate;
         this.predictUrl = predictUrl;
