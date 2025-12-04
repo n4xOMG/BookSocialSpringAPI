@@ -6,7 +6,8 @@ services:
     image: booksocial-app:latest
     container_name: booksocial-app
     ports:
-      - "8181:8181"
+      - "8181:8181" # Keep for direct access
+      - "80:8181" # For domain access
     env_file: .env
     volumes:
       - ./uploads:/app/uploads
