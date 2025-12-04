@@ -123,9 +123,10 @@ jobs:
       - name: Health check
         run: |
           echo "🏥 Performing health check..."
-          sleep 45
+          echo "⏳ Waiting for application to fully start..."
+          sleep 60
 
-          for i in {1..5}; do
+          for i in {1..10}; do
             response=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.VPS_HOST }}:8181/actuator/health || echo "000")
             
             if [ "$response" = "200" ]; then
@@ -134,9 +135,10 @@ jobs:
               exit 0
             fi
             
-            echo "⏳ Attempt $i/5: Health check returned $response, retrying in 10s..."
-            sleep 10
+            echo "⏳ Attempt $i/10: Health check returned $response, retrying in 15s..."
+            sleep 15
           done
 
-          echo "❌ Health check failed after 5 attempts"
+          echo "❌ Health check failed after 10 attempts"
+          echo "Please check logs: ssh ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} 'cd /opt/booksocial && docker compose logs app'"
           exit 1
