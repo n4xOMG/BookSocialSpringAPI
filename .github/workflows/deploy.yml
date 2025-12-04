@@ -95,12 +95,18 @@ jobs:
             NSFW_DETECTOR_URL=${{ secrets.NSFW_DETECTOR_URL }}
             EOF
 
+            # Stop and clean up old containers
+            echo "🛑 Stopping existing containers..."
+            $COMPOSE down || true
+            docker rm -f booksocial-app booksocial-db 2>/dev/null || true
+            docker rmi booksocial-app:latest 2>/dev/null || true
+
             # Build and deploy with docker-compose
             echo "🔨 Building Docker image..."
             $COMPOSE build --no-cache
 
             echo "🚀 Deploying application..."
-            $COMPOSE up -d
+            $COMPOSE up -d --force-recreate
 
             # Wait for application to start
             echo "⏳ Waiting for application to start..."
