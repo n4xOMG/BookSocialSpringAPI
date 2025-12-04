@@ -29,25 +29,22 @@ jobs:
           script: |
             set -e
 
-            # Create deployment directory if it doesn't exist
-            if [ ! -d "${{ env.DEPLOY_PATH }}" ]; then
-              echo "📁 Creating deployment directory..."
-              sudo mkdir -p ${{ env.DEPLOY_PATH }}
+            # Setup deployment directory
+            if [ ! -d "${{ env.DEPLOY_PATH }}/.git" ]; then
+              echo "📥 Setting up repository for the first time..."
+              sudo rm -rf ${{ env.DEPLOY_PATH }}
+              sudo mkdir -p $(dirname ${{ env.DEPLOY_PATH }})
+              git clone https://github.com/${{ github.repository }}.git ${{ env.DEPLOY_PATH }}
               sudo chown -R $USER:$USER ${{ env.DEPLOY_PATH }}
+            else
+              echo "📥 Pulling latest code from GitHub..."
+              cd ${{ env.DEPLOY_PATH }}
+              git fetch origin
+              git reset --hard origin/main
             fi
 
             # Navigate to deployment directory
             cd ${{ env.DEPLOY_PATH }}
-
-            # Clone or pull latest code
-            if [ ! -d ".git" ]; then
-              echo "📥 Cloning repository for the first time..."
-              git clone https://github.com/${{ github.repository }}.git .
-            else
-              echo "📥 Pulling latest code from GitHub..."
-              git fetch origin
-              git reset --hard origin/main
-            fi
 
             # Determine Docker Compose command
             if docker compose version >/dev/null 2>&1; then
