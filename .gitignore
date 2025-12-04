@@ -33,5 +33,5 @@ build/
 .vscode/
 Dockerfile
 docker-compose.yml
-.github
 /uploads/
+.github/copilot-instructions.md

@@ -2061,3 +2061,352 @@ Caused by: java.net.ConnectException: Connection timed out: no further informati
 2025-12-03 13:33:16 [SpringApplicationShutdownHook] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean [user:] - Closing JPA EntityManagerFactory for persistence unit 'default'
 2025-12-03 13:33:16 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource [user:] - HikariPool-1 - Shutdown initiated...
 2025-12-03 13:33:16 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource [user:] - HikariPool-1 - Shutdown completed.
+2025-12-03 14:11:17 [restartedMain] INFO  com.nix.BookSocialApplication [user:] - Starting BookSocialApplication using Java 17.0.12 with PID 11928 (C:\Users\LENOVO\Documents\workspace-spring-tool-suite-4-4.22.1.RELEASE\book-social - Copy\target\classes started by LENOVO in C:\Users\LENOVO\Documents\workspace-spring-tool-suite-4-4.22.1.RELEASE\book-social - Copy)
+2025-12-03 14:11:17 [restartedMain] INFO  com.nix.BookSocialApplication [user:] - No active profile set, falling back to 1 default profile: "default"
+2025-12-03 14:11:17 [restartedMain] INFO  o.s.b.d.restart.ChangeableUrls [user:] - The Class-Path manifest attribute in C:\Users\LENOVO\.m2\repository\io\github\cdimascio\java-dotenv\5.2.2\java-dotenv-5.2.2.jar referenced one or more files that do not exist: file:/C:/Users/LENOVO/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-1.4.0.jar,file:/C:/Users/LENOVO/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-common-1.4.0.jar,file:/C:/Users/LENOVO/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/annotations-13.0.jar
+2025-12-03 14:11:17 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor [user:] - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2025-12-03 14:11:17 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor [user:] - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2025-12-03 14:11:19 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate [user:] - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-03 14:11:19 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate [user:] - Finished Spring Data repository scanning in 187 ms. Found 27 JPA repository interfaces.
+2025-12-03 14:11:20 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer [user:] - Tomcat initialized with port 8181 (http)
+2025-12-03 14:11:20 [restartedMain] INFO  o.a.catalina.core.StandardService [user:] - Starting service [Tomcat]
+2025-12-03 14:11:20 [restartedMain] INFO  o.a.catalina.core.StandardEngine [user:] - Starting Servlet engine: [Apache Tomcat/10.1.42]
+2025-12-03 14:11:20 [restartedMain] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] [user:] - Initializing Spring embedded WebApplicationContext
+2025-12-03 14:11:20 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext [user:] - Root WebApplicationContext: initialization completed in 2519 ms
+2025-12-03 14:11:20 [restartedMain] DEBUG com.nix.config.JwtValidator [user:] - Filter 'jwtValidator' configured for use
+2025-12-03 14:11:20 [restartedMain] INFO  o.h.jpa.internal.util.LogHelper [user:] - HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-12-03 14:11:20 [restartedMain] INFO  org.hibernate.Version [user:] - HHH000412: Hibernate ORM core version 6.5.3.Final
+2025-12-03 14:11:20 [restartedMain] INFO  o.h.c.i.RegionFactoryInitiator [user:] - HHH000026: Second-level cache disabled
+2025-12-03 14:11:21 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo [user:] - No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-12-03 14:11:21 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource [user:] - HikariPool-1 - Starting...
+2025-12-03 14:11:21 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool [user:] - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@3182aa68
+2025-12-03 14:11:21 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource [user:] - HikariPool-1 - Start completed.
+2025-12-03 14:11:21 [restartedMain] WARN  org.hibernate.orm.deprecation [user:] - HHH90000025: MySQL8Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-12-03 14:11:21 [restartedMain] WARN  org.hibernate.orm.deprecation [user:] - HHH90000026: MySQL8Dialect has been deprecated; use org.hibernate.dialect.MySQLDialect instead
+2025-12-03 14:11:22 [restartedMain] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator [user:] - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-12-03 14:11:23 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean [user:] - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-12-03 14:11:24 [restartedMain] INFO  o.s.d.j.r.query.QueryEnhancerFactory [user:] - Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-12-03 14:11:28 [restartedMain] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration [user:] - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-12-03 14:11:28 [restartedMain] INFO  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer [user:] - Global AuthenticationManager configured with UserDetailsService bean with name userDetailsService
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.s.s.WebSocketHandlerMapping [user:] - Patterns [/ws/**] in 'stompWebSocketHandlerMapping'
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.AdminController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.AuthController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.AuthorDashboardController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.BookController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.CategoryController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.ChapterController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.ChatController:
+	{[MESSAGE],[/chat/{groupId}]}: sendToUser(MessageDTO,String)
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.CommentController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.CreditPackageController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.ImageController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.LogController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.NotificationController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.PaymentController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.PostController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.ProgressController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.PurchaseController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.RatingController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.ReportController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.RoleController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.SensitiveWordController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.TagController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.UserController:
+	
+2025-12-03 14:11:28 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	o.s.b.a.w.s.e.BasicErrorController:
+	
+2025-12-03 14:11:28 [restartedMain] INFO  o.s.b.d.a.OptionalLiveReloadServer [user:] - LiveReload server is running on port 35729
+2025-12-03 14:11:29 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer [user:] - Tomcat started on port 8181 (http) with context path '/'
+2025-12-03 14:11:29 [restartedMain] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - clientOutboundChannel added SubProtocolWebSocketHandler[StompSubProtocolHandler[v10.stomp, v11.stomp, v12.stomp]]
+2025-12-03 14:11:29 [restartedMain] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - clientInboundChannel added WebSocketAnnotationMethodMessageHandler[prefixes=[/app/]]
+2025-12-03 14:11:29 [restartedMain] INFO  o.s.m.s.b.SimpleBrokerMessageHandler [user:] - Starting...
+2025-12-03 14:11:29 [restartedMain] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - clientInboundChannel added SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@6f877fce]
+2025-12-03 14:11:29 [restartedMain] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - brokerChannel added SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@6f877fce]
+2025-12-03 14:11:29 [restartedMain] INFO  o.s.m.s.b.SimpleBrokerMessageHandler [user:] - BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@6f877fce]]
+2025-12-03 14:11:29 [restartedMain] INFO  o.s.m.s.b.SimpleBrokerMessageHandler [user:] - Started.
+2025-12-03 14:11:29 [restartedMain] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - clientInboundChannel added UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
+2025-12-03 14:11:29 [restartedMain] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - brokerChannel added UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
+2025-12-03 14:11:29 [restartedMain] INFO  com.nix.BookSocialApplication [user:] - Started BookSocialApplication in 11.989 seconds (process running for 12.568)
+2025-12-03 14:11:49 [http-nio-8181-exec-2] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] [user:] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-12-03 14:11:49 [http-nio-8181-exec-2] INFO  o.s.web.servlet.DispatcherServlet [user:] - Initializing Servlet 'dispatcherServlet'
+2025-12-03 14:11:49 [http-nio-8181-exec-2] INFO  o.s.web.servlet.DispatcherServlet [user:] - Completed initialization in 6 ms
+2025-12-03 14:11:50 [http-nio-8181-exec-9] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:50 [http-nio-8181-exec-8] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:50 [http-nio-8181-exec-1] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:50 [http-nio-8181-exec-4] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:50 [http-nio-8181-exec-10] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:50 [http-nio-8181-exec-6] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:50 [http-nio-8181-exec-8] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed CategoryController.getAllCategories
+2025-12-03 14:11:50 [http-nio-8181-exec-1] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed TagController.getAllTags
+2025-12-03 14:11:50 [http-nio-8181-exec-1] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed TagController.getAllTags
+2025-12-03 14:11:50 [http-nio-8181-exec-9] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed BookController.getTop10BooksByLikes
+2025-12-03 14:11:50 [http-nio-8181-exec-10] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed BookController.getFeaturedBooks
+2025-12-03 14:11:50 [http-nio-8181-exec-6] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed UserController.getUserFromToken
+2025-12-03 14:11:50 [http-nio-8181-exec-4] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed BookController.getLatestUpdateBooks
+2025-12-03 14:11:50 [http-nio-8181-exec-6] DEBUG com.nix.controller.UserController [user:] - Getting user profile from JWT token
+2025-12-03 14:11:50 [http-nio-8181-exec-10] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed BookController.getFeaturedBooks
+2025-12-03 14:11:50 [http-nio-8181-exec-6] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed UserController.getUserFromToken
+2025-12-03 14:11:50 [http-nio-8181-exec-4] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed BookController.getLatestUpdateBooks
+2025-12-03 14:11:50 [http-nio-8181-exec-9] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed BookController.getTop10BooksByLikes
+2025-12-03 14:11:50 [http-nio-8181-exec-2] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:50 [http-nio-8181-exec-2] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed UserController.getUserFromToken
+2025-12-03 14:11:50 [http-nio-8181-exec-2] DEBUG com.nix.controller.UserController [user:] - Getting user profile from JWT token
+2025-12-03 14:11:50 [http-nio-8181-exec-8] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed CategoryController.getAllCategories
+2025-12-03 14:11:50 [http-nio-8181-exec-2] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed UserController.getUserFromToken
+2025-12-03 14:11:50 [http-nio-8181-exec-5] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:50 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed CategoryController.getAllCategories
+2025-12-03 14:11:50 [http-nio-8181-exec-6] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:50 [http-nio-8181-exec-10] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:50 [http-nio-8181-exec-1] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:50 [http-nio-8181-exec-4] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:50 [http-nio-8181-exec-7] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:50 [http-nio-8181-exec-6] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed ChatController.getUserChats
+2025-12-03 14:11:50 [http-nio-8181-exec-7] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed ProgressController.getReadingProgressByUser
+2025-12-03 14:11:50 [http-nio-8181-exec-10] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed BookController.getFeaturedBooks
+2025-12-03 14:11:50 [http-nio-8181-exec-1] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed BookController.getTop10BooksByLikes
+2025-12-03 14:11:50 [http-nio-8181-exec-4] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed BookController.getLatestUpdateBooks
+2025-12-03 14:11:50 [http-nio-8181-exec-6] DEBUG com.nix.controller.ChatController [user:] - Getting chats for user: Admin
+2025-12-03 14:11:50 [http-nio-8181-exec-10] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed BookController.getFeaturedBooks
+2025-12-03 14:11:50 [http-nio-8181-exec-7] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed ProgressController.getReadingProgressByUser
+2025-12-03 14:11:50 [http-nio-8181-exec-6] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed ChatController.getUserChats
+2025-12-03 14:11:50 [http-nio-8181-exec-4] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed BookController.getLatestUpdateBooks
+2025-12-03 14:11:50 [http-nio-8181-exec-10] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:50 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed CategoryController.getAllCategories
+2025-12-03 14:11:50 [http-nio-8181-exec-1] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed BookController.getTop10BooksByLikes
+2025-12-03 14:11:50 [http-nio-8181-exec-3] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:50 [http-nio-8181-exec-3] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed ProgressController.getReadingProgressByUser
+2025-12-03 14:11:50 [http-nio-8181-exec-9] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:50 [http-nio-8181-exec-10] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed NotificationController.getUserNotifications
+2025-12-03 14:11:51 [http-nio-8181-exec-9] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed ChatController.getUserChats
+2025-12-03 14:11:51 [http-nio-8181-exec-3] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed ProgressController.getReadingProgressByUser
+2025-12-03 14:11:51 [http-nio-8181-exec-9] DEBUG com.nix.controller.ChatController [user:] - Getting chats for user: Admin
+2025-12-03 14:11:51 [http-nio-8181-exec-9] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed ChatController.getUserChats
+2025-12-03 14:11:51 [http-nio-8181-exec-10] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed NotificationController.getUserNotifications
+2025-12-03 14:11:51 [http-nio-8181-exec-10] WARN  o.s.d.w.c.SpringDataJacksonConfiguration$PageModule$WarningLoggingModifier [user:] - Serializing PageImpl instances as-is is not supported, meaning that there is no guarantee about the stability of the resulting JSON structure!
+	For a stable JSON structure, please use Spring Data's PagedModel (globally via @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO))
+	or Spring HATEOAS and Spring Data's PagedResourcesAssembler as documented in https://docs.spring.io/spring-data/commons/reference/repositories/core-extensions.html#core.web.pageables.
+
+2025-12-03 14:11:51 [http-nio-8181-exec-2] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:51 [http-nio-8181-exec-2] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed NotificationController.getUserNotifications
+2025-12-03 14:11:51 [http-nio-8181-exec-2] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed NotificationController.getUserNotifications
+2025-12-03 14:11:51 [http-nio-8181-exec-5] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:51 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed ProgressController.getReadingProgressByUser
+2025-12-03 14:11:51 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed ProgressController.getReadingProgressByUser
+2025-12-03 14:11:52 [http-nio-8181-exec-4] DEBUG o.s.w.s.s.s.WebSocketHandlerMapping [user:] - Mapped to org.springframework.web.socket.sockjs.support.SockJsHttpRequestHandler@45d2741f
+2025-12-03 14:11:52 [http-nio-8181-exec-4] DEBUG o.s.w.s.s.t.h.DefaultSockJsService [user:] - Processing transport request: GET http://localhost:8181/ws/info?t=1764745912175
+2025-12-03 14:11:52 [http-nio-8181-exec-1] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:52 [http-nio-8181-exec-8] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:52 [http-nio-8181-exec-1] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed ChatController.getUserChats
+2025-12-03 14:11:52 [http-nio-8181-exec-8] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed NotificationController.getUserNotifications
+2025-12-03 14:11:52 [http-nio-8181-exec-1] DEBUG com.nix.controller.ChatController [user:] - Getting chats for user: Admin
+2025-12-03 14:11:52 [http-nio-8181-exec-1] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed ChatController.getUserChats
+2025-12-03 14:11:52 [http-nio-8181-exec-7] DEBUG o.s.w.s.s.s.WebSocketHandlerMapping [user:] - Mapped to org.springframework.web.socket.sockjs.support.SockJsHttpRequestHandler@45d2741f
+2025-12-03 14:11:52 [http-nio-8181-exec-2] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:52 [http-nio-8181-exec-2] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed ChatController.getUserChats
+2025-12-03 14:11:52 [http-nio-8181-exec-7] DEBUG o.s.w.s.s.t.h.DefaultSockJsService [user:] - Processing transport request: GET http://localhost:8181/ws/009/ytphtw3j/websocket
+2025-12-03 14:11:52 [http-nio-8181-exec-8] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed NotificationController.getUserNotifications
+2025-12-03 14:11:52 [http-nio-8181-exec-2] DEBUG com.nix.controller.ChatController [user:] - Getting chats for user: Admin
+2025-12-03 14:11:52 [http-nio-8181-exec-9] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:11:52 [http-nio-8181-exec-2] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed ChatController.getUserChats
+2025-12-03 14:11:52 [http-nio-8181-exec-9] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed NotificationController.getUserNotifications
+2025-12-03 14:11:52 [http-nio-8181-exec-9] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed NotificationController.getUserNotifications
+2025-12-03 14:11:52 [http-nio-8181-exec-7] DEBUG o.s.w.s.h.LoggingWebSocketHandlerDecorator [user:] - New WebSocketServerSockJsSession[id=ytphtw3j]
+2025-12-03 14:11:53 [ws-task-scheduler-3] DEBUG o.s.m.s.b.SimpleBrokerMessageHandler [user:] - Processing CONNECT session=ytphtw3j
+2025-12-03 14:11:53 [ws-task-scheduler-5] DEBUG o.s.m.s.b.SimpleBrokerMessageHandler [user:] - Processing SUBSCRIBE /user/Admin/notifications id=sub-0 session=ytphtw3j
+2025-12-03 14:12:29 [MessageBroker-2] INFO  o.s.w.s.c.WebSocketMessageBrokerStats [user:] - WebSocketSession[1 current WS(1)-HttpStream(0)-HttpPoll(0), 1 total, 0 closed abnormally (0 connect failure, 0 send limit, 0 transport error)], stompSubProtocol[processed CONNECT(1)-CONNECTED(1)-DISCONNECT(0)], stompBrokerRelay[null], inboundChannel[unknown], outboundChannel[unknown], sockJsScheduler[pool size = 8, active threads = 1, queued tasks = 1, completed tasks = 8]
+2025-12-03 14:14:59 [ws-task-scheduler-1] DEBUG o.s.w.s.s.t.s.WebSocketServerSockJsSession [user:] - Closing SockJS session ytphtw3j with CloseStatus[code=1002, reason=null]
+2025-12-03 14:14:59 [ws-task-scheduler-1] DEBUG o.s.w.s.a.NativeWebSocketSession [user:] - Closing StandardWebSocketSession[id=92ba0315-6112-78ef-912b-68121df50fdf, uri=ws://localhost:8181/ws/009/ytphtw3j/websocket]
+2025-12-03 14:14:59 [ws-task-scheduler-1] DEBUG o.s.w.s.h.LoggingWebSocketHandlerDecorator [user:] - WebSocketServerSockJsSession[id=ytphtw3j] closed with CloseStatus[code=1002, reason=null]
+2025-12-03 14:14:59 [ws-task-scheduler-1] DEBUG o.s.w.s.m.SubProtocolWebSocketHandler [user:] - Clearing session ytphtw3j
+2025-12-03 14:14:59 [ws-task-scheduler-4] DEBUG o.s.m.s.b.SimpleBrokerMessageHandler [user:] - Processing DISCONNECT session=ytphtw3j
+2025-12-03 14:14:59 [ws-task-scheduler-4] DEBUG o.s.w.s.m.SubProtocolWebSocketHandler [user:] - No session for GenericMessage [payload=byte[0], headers={simpMessageType=DISCONNECT_ACK, simpDisconnectMessage=GenericMessage [payload=byte[0], headers={simpMessageType=DISCONNECT, stompCommand=DISCONNECT, simpSessionAttributes={org.springframework.messaging.simp.SimpAttributes.COMPLETED=true}, simpSessionId=ytphtw3j}], simpSessionId=ytphtw3j}]
+2025-12-03 14:15:04 [http-nio-8181-exec-9] DEBUG o.s.w.s.s.s.WebSocketHandlerMapping [user:] - Mapped to org.springframework.web.socket.sockjs.support.SockJsHttpRequestHandler@45d2741f
+2025-12-03 14:15:04 [http-nio-8181-exec-9] DEBUG o.s.w.s.s.t.h.DefaultSockJsService [user:] - Processing transport request: GET http://localhost:8181/ws/info?t=1764746104354
+2025-12-03 14:15:04 [http-nio-8181-exec-7] DEBUG o.s.w.s.s.s.WebSocketHandlerMapping [user:] - Mapped to org.springframework.web.socket.sockjs.support.SockJsHttpRequestHandler@45d2741f
+2025-12-03 14:15:04 [http-nio-8181-exec-7] DEBUG o.s.w.s.s.t.h.DefaultSockJsService [user:] - Processing transport request: GET http://localhost:8181/ws/593/bujf4szo/websocket
+2025-12-03 14:15:04 [http-nio-8181-exec-7] DEBUG o.s.w.s.h.LoggingWebSocketHandlerDecorator [user:] - New WebSocketServerSockJsSession[id=bujf4szo]
+2025-12-03 14:15:04 [ws-task-scheduler-8] DEBUG o.s.m.s.b.SimpleBrokerMessageHandler [user:] - Processing CONNECT session=bujf4szo
+2025-12-03 14:15:04 [ws-task-scheduler-7] DEBUG o.s.m.s.b.SimpleBrokerMessageHandler [user:] - Processing SUBSCRIBE /user/Admin/notifications id=sub-0 session=bujf4szo
+2025-12-03 14:15:07 [MessageBroker-2] DEBUG o.s.w.s.s.t.h.DefaultSockJsService [user:] - Closed 1 sessions: [ytphtw3j]
+2025-12-03 14:16:39 [ws-task-scheduler-5] DEBUG o.s.w.s.s.t.s.WebSocketServerSockJsSession [user:] - Closing SockJS session bujf4szo with CloseStatus[code=1002, reason=null]
+2025-12-03 14:16:39 [ws-task-scheduler-5] DEBUG o.s.w.s.a.NativeWebSocketSession [user:] - Closing StandardWebSocketSession[id=7bd03a38-c16b-e417-9a54-e8f672aa14ca, uri=ws://localhost:8181/ws/593/bujf4szo/websocket]
+2025-12-03 14:16:39 [ws-task-scheduler-5] DEBUG o.s.w.s.h.LoggingWebSocketHandlerDecorator [user:] - WebSocketServerSockJsSession[id=bujf4szo] closed with CloseStatus[code=1002, reason=null]
+2025-12-03 14:16:39 [ws-task-scheduler-5] DEBUG o.s.w.s.m.SubProtocolWebSocketHandler [user:] - Clearing session bujf4szo
+2025-12-03 14:16:39 [ws-task-scheduler-9] DEBUG o.s.m.s.b.SimpleBrokerMessageHandler [user:] - Processing DISCONNECT session=bujf4szo
+2025-12-03 14:16:39 [ws-task-scheduler-2] DEBUG o.s.w.s.m.SubProtocolWebSocketHandler [user:] - No session for GenericMessage [payload=byte[0], headers={simpMessageType=DISCONNECT_ACK, simpDisconnectMessage=GenericMessage [payload=byte[0], headers={simpMessageType=DISCONNECT, stompCommand=DISCONNECT, simpSessionAttributes={org.springframework.messaging.simp.SimpAttributes.COMPLETED=true}, simpSessionId=bujf4szo}], simpSessionId=bujf4szo}]
+2025-12-03 14:16:47 [MessageBroker-2] DEBUG o.s.w.s.s.t.h.DefaultSockJsService [user:] - Closed 1 sessions: [bujf4szo]
+2025-12-03 14:26:46 [http-nio-8181-exec-7] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:46 [http-nio-8181-exec-5] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:46 [http-nio-8181-exec-9] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:46 [http-nio-8181-exec-6] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:46 [http-nio-8181-exec-6] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.getPlatformAnalytics
+2025-12-03 14:26:46 [http-nio-8181-exec-9] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.getUserAnalytics
+2025-12-03 14:26:46 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.getContentAnalytics
+2025-12-03 14:26:46 [http-nio-8181-exec-7] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.getRevenueAnalytics
+2025-12-03 14:26:47 [http-nio-8181-exec-9] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.getUserAnalytics
+2025-12-03 14:26:47 [http-nio-8181-exec-7] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.getRevenueAnalytics
+2025-12-03 14:26:47 [http-nio-8181-exec-6] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.getPlatformAnalytics
+2025-12-03 14:26:47 [http-nio-8181-exec-10] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:47 [http-nio-8181-exec-10] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.getUserAnalytics
+2025-12-03 14:26:47 [http-nio-8181-exec-1] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:47 [http-nio-8181-exec-4] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:47 [http-nio-8181-exec-1] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.getRevenueAnalytics
+2025-12-03 14:26:47 [http-nio-8181-exec-4] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.getPlatformAnalytics
+2025-12-03 14:26:47 [http-nio-8181-exec-10] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.getUserAnalytics
+2025-12-03 14:26:47 [http-nio-8181-exec-1] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.getRevenueAnalytics
+2025-12-03 14:26:47 [http-nio-8181-exec-4] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.getPlatformAnalytics
+2025-12-03 14:26:47 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.getContentAnalytics
+2025-12-03 14:26:47 [http-nio-8181-exec-5] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:47 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.getContentAnalytics
+2025-12-03 14:26:47 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.getContentAnalytics
+2025-12-03 14:26:48 [http-nio-8181-exec-9] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:48 [http-nio-8181-exec-3] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:48 [http-nio-8181-exec-8] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:48 [http-nio-8181-exec-6] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:48 [http-nio-8181-exec-5] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:48 [http-nio-8181-exec-9] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed BookController.getFeaturedBooks
+2025-12-03 14:26:48 [http-nio-8181-exec-3] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed TagController.getAllTags
+2025-12-03 14:26:48 [http-nio-8181-exec-2] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:48 [http-nio-8181-exec-8] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed CategoryController.getAllCategories
+2025-12-03 14:26:48 [http-nio-8181-exec-6] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed BookController.getTop10BooksByLikes
+2025-12-03 14:26:48 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed BookController.getBookCount
+2025-12-03 14:26:48 [http-nio-8181-exec-3] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed TagController.getAllTags
+2025-12-03 14:26:48 [http-nio-8181-exec-2] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed BookController.getAllBooks
+2025-12-03 14:26:48 [http-nio-8181-exec-9] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed BookController.getFeaturedBooks
+2025-12-03 14:26:48 [http-nio-8181-exec-7] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:48 [http-nio-8181-exec-7] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed TagController.getAllTags
+2025-12-03 14:26:48 [http-nio-8181-exec-7] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed TagController.getAllTags
+2025-12-03 14:26:48 [http-nio-8181-exec-6] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed BookController.getTop10BooksByLikes
+2025-12-03 14:26:48 [http-nio-8181-exec-8] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed CategoryController.getAllCategories
+2025-12-03 14:26:48 [http-nio-8181-exec-10] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:48 [http-nio-8181-exec-10] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed BookController.getFeaturedBooks
+2025-12-03 14:26:48 [http-nio-8181-exec-4] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:48 [http-nio-8181-exec-1] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:48 [http-nio-8181-exec-4] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed CategoryController.getAllCategories
+2025-12-03 14:26:48 [http-nio-8181-exec-1] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed BookController.getTop10BooksByLikes
+2025-12-03 14:26:48 [http-nio-8181-exec-10] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed BookController.getFeaturedBooks
+2025-12-03 14:26:48 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed BookController.getBookCount
+2025-12-03 14:26:48 [http-nio-8181-exec-3] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:48 [http-nio-8181-exec-4] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed CategoryController.getAllCategories
+2025-12-03 14:26:48 [http-nio-8181-exec-1] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed BookController.getTop10BooksByLikes
+2025-12-03 14:26:48 [http-nio-8181-exec-2] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed BookController.getAllBooks
+2025-12-03 14:26:48 [http-nio-8181-exec-3] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed BookController.getBookCount
+2025-12-03 14:26:48 [http-nio-8181-exec-9] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:48 [http-nio-8181-exec-9] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed BookController.getAllBooks
+2025-12-03 14:26:48 [http-nio-8181-exec-3] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed BookController.getBookCount
+2025-12-03 14:26:48 [http-nio-8181-exec-9] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed BookController.getAllBooks
+2025-12-03 14:26:53 [http-nio-8181-exec-7] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:53 [http-nio-8181-exec-7] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed CategoryController.getAllCategories
+2025-12-03 14:26:53 [http-nio-8181-exec-7] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed CategoryController.getAllCategories
+2025-12-03 14:26:53 [http-nio-8181-exec-6] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:53 [http-nio-8181-exec-6] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed CategoryController.getAllCategories
+2025-12-03 14:26:53 [http-nio-8181-exec-6] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed CategoryController.getAllCategories
+2025-12-03 14:26:54 [http-nio-8181-exec-5] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:54 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.listPayouts
+2025-12-03 14:26:54 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.listPayouts
+2025-12-03 14:26:54 [http-nio-8181-exec-4] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:54 [http-nio-8181-exec-4] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.listPayouts
+2025-12-03 14:26:54 [http-nio-8181-exec-4] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.listPayouts
+2025-12-03 14:26:54 [http-nio-8181-exec-1] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:54 [http-nio-8181-exec-1] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed TagController.getAllTags
+2025-12-03 14:26:54 [http-nio-8181-exec-1] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed TagController.getAllTags
+2025-12-03 14:26:54 [http-nio-8181-exec-2] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:54 [http-nio-8181-exec-2] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed TagController.getAllTags
+2025-12-03 14:26:54 [http-nio-8181-exec-2] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed TagController.getAllTags
+2025-12-03 14:26:55 [http-nio-8181-exec-7] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:55 [http-nio-8181-exec-7] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed CreditPackageController.getAllCreditPackages
+2025-12-03 14:26:55 [http-nio-8181-exec-7] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed CreditPackageController.getAllCreditPackages
+2025-12-03 14:26:55 [http-nio-8181-exec-6] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:55 [http-nio-8181-exec-6] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed CreditPackageController.getAllCreditPackages
+2025-12-03 14:26:55 [http-nio-8181-exec-6] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed CreditPackageController.getAllCreditPackages
+2025-12-03 14:26:56 [http-nio-8181-exec-5] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:56 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed ReportController.getAllReports
+2025-12-03 14:26:56 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed ReportController.getAllReports
+2025-12-03 14:26:56 [http-nio-8181-exec-4] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:56 [http-nio-8181-exec-4] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed ReportController.getAllReports
+2025-12-03 14:26:56 [http-nio-8181-exec-4] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed ReportController.getAllReports
+2025-12-03 14:26:57 [http-nio-8181-exec-1] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:57 [http-nio-8181-exec-1] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.listPayouts
+2025-12-03 14:26:57 [http-nio-8181-exec-1] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.listPayouts
+2025-12-03 14:26:57 [http-nio-8181-exec-2] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:57 [http-nio-8181-exec-2] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.listPayouts
+2025-12-03 14:26:57 [http-nio-8181-exec-2] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.listPayouts
+2025-12-03 14:26:59 [http-nio-8181-exec-7] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:59 [http-nio-8181-exec-3] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:59 [http-nio-8181-exec-6] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:59 [http-nio-8181-exec-3] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.getRevenueAnalytics
+2025-12-03 14:26:59 [http-nio-8181-exec-9] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:59 [http-nio-8181-exec-9] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.getUserAnalytics
+2025-12-03 14:26:59 [http-nio-8181-exec-6] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.getPlatformAnalytics
+2025-12-03 14:26:59 [http-nio-8181-exec-7] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.getContentAnalytics
+2025-12-03 14:26:59 [http-nio-8181-exec-3] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.getRevenueAnalytics
+2025-12-03 14:26:59 [http-nio-8181-exec-8] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:59 [http-nio-8181-exec-9] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.getUserAnalytics
+2025-12-03 14:26:59 [http-nio-8181-exec-8] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.getRevenueAnalytics
+2025-12-03 14:26:59 [http-nio-8181-exec-10] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:59 [http-nio-8181-exec-10] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.getUserAnalytics
+2025-12-03 14:26:59 [http-nio-8181-exec-8] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.getRevenueAnalytics
+2025-12-03 14:26:59 [http-nio-8181-exec-6] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.getPlatformAnalytics
+2025-12-03 14:26:59 [http-nio-8181-exec-5] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:59 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.getPlatformAnalytics
+2025-12-03 14:26:59 [http-nio-8181-exec-10] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.getUserAnalytics
+2025-12-03 14:26:59 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.getPlatformAnalytics
+2025-12-03 14:26:59 [http-nio-8181-exec-7] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.getContentAnalytics
+2025-12-03 14:26:59 [http-nio-8181-exec-4] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-03 14:26:59 [http-nio-8181-exec-4] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed AdminController.getContentAnalytics
+2025-12-03 14:27:00 [http-nio-8181-exec-4] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed AdminController.getContentAnalytics
+2025-12-03 14:35:38 [SpringApplicationShutdownHook] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - clientOutboundChannel removed SubProtocolWebSocketHandler[StompSubProtocolHandler[v10.stomp, v11.stomp, v12.stomp]]
+2025-12-03 14:35:38 [SpringApplicationShutdownHook] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - clientInboundChannel removed WebSocketAnnotationMethodMessageHandler[prefixes=[/app/]]
+2025-12-03 14:35:38 [SpringApplicationShutdownHook] INFO  o.s.m.s.b.SimpleBrokerMessageHandler [user:] - Stopping...
+2025-12-03 14:35:38 [SpringApplicationShutdownHook] INFO  o.s.m.s.b.SimpleBrokerMessageHandler [user:] - BrokerAvailabilityEvent[available=false, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@6f877fce]]
+2025-12-03 14:35:38 [SpringApplicationShutdownHook] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - clientInboundChannel removed SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@6f877fce]
+2025-12-03 14:35:38 [SpringApplicationShutdownHook] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - brokerChannel removed SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@6f877fce]
+2025-12-03 14:35:38 [SpringApplicationShutdownHook] INFO  o.s.m.s.b.SimpleBrokerMessageHandler [user:] - Stopped.
+2025-12-03 14:35:38 [SpringApplicationShutdownHook] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - clientInboundChannel removed UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
+2025-12-03 14:35:38 [SpringApplicationShutdownHook] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - brokerChannel removed UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
+2025-12-03 14:35:38 [SpringApplicationShutdownHook] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean [user:] - Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-12-03 14:35:38 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource [user:] - HikariPool-1 - Shutdown initiated...
+2025-12-03 14:35:39 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource [user:] - HikariPool-1 - Shutdown completed.
