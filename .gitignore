@@ -33,3 +33,4 @@ build/
 .vscode/
 /uploads/
 .github/copilot-instructions.md
+*.ppk

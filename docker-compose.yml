@@ -28,6 +28,8 @@ services:
     image: mysql:8.4
     container_name: booksocial-db
     env_file: .env
+    ports:
+      - "3306:3306"
     volumes:
       - db-data:/var/lib/mysql
     healthcheck:

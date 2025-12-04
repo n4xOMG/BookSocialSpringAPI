@@ -2410,3 +2410,188 @@ Caused by: java.net.ConnectException: Connection timed out: no further informati
 2025-12-03 14:35:38 [SpringApplicationShutdownHook] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean [user:] - Closing JPA EntityManagerFactory for persistence unit 'default'
 2025-12-03 14:35:38 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource [user:] - HikariPool-1 - Shutdown initiated...
 2025-12-03 14:35:39 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource [user:] - HikariPool-1 - Shutdown completed.
+2025-12-04 12:22:52 [restartedMain] INFO  com.nix.BookSocialApplication [user:] - Starting BookSocialApplication using Java 17.0.12 with PID 21088 (C:\Users\LENOVO\Documents\workspace-spring-tool-suite-4-4.22.1.RELEASE\book-social - Copy\target\classes started by LENOVO in C:\Users\LENOVO\Documents\workspace-spring-tool-suite-4-4.22.1.RELEASE\book-social - Copy)
+2025-12-04 12:22:52 [restartedMain] INFO  com.nix.BookSocialApplication [user:] - No active profile set, falling back to 1 default profile: "default"
+2025-12-04 12:22:52 [restartedMain] INFO  o.s.b.d.restart.ChangeableUrls [user:] - The Class-Path manifest attribute in C:\Users\LENOVO\.m2\repository\io\github\cdimascio\java-dotenv\5.2.2\java-dotenv-5.2.2.jar referenced one or more files that do not exist: file:/C:/Users/LENOVO/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-1.4.0.jar,file:/C:/Users/LENOVO/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-common-1.4.0.jar,file:/C:/Users/LENOVO/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/annotations-13.0.jar
+2025-12-04 12:22:52 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor [user:] - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2025-12-04 12:22:52 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor [user:] - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2025-12-04 12:22:54 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate [user:] - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-04 12:22:54 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate [user:] - Finished Spring Data repository scanning in 209 ms. Found 27 JPA repository interfaces.
+2025-12-04 12:22:56 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer [user:] - Tomcat initialized with port 8181 (http)
+2025-12-04 12:22:56 [restartedMain] INFO  o.a.catalina.core.StandardService [user:] - Starting service [Tomcat]
+2025-12-04 12:22:56 [restartedMain] INFO  o.a.catalina.core.StandardEngine [user:] - Starting Servlet engine: [Apache Tomcat/10.1.42]
+2025-12-04 12:22:56 [restartedMain] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] [user:] - Initializing Spring embedded WebApplicationContext
+2025-12-04 12:22:56 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext [user:] - Root WebApplicationContext: initialization completed in 3826 ms
+2025-12-04 12:22:56 [restartedMain] DEBUG com.nix.config.JwtValidator [user:] - Filter 'jwtValidator' configured for use
+2025-12-04 12:22:57 [restartedMain] INFO  o.h.jpa.internal.util.LogHelper [user:] - HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-12-04 12:22:57 [restartedMain] INFO  org.hibernate.Version [user:] - HHH000412: Hibernate ORM core version 6.5.3.Final
+2025-12-04 12:22:57 [restartedMain] INFO  o.h.c.i.RegionFactoryInitiator [user:] - HHH000026: Second-level cache disabled
+2025-12-04 12:22:57 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo [user:] - No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-12-04 12:22:58 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource [user:] - HikariPool-1 - Starting...
+2025-12-04 12:22:58 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool [user:] - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@23838182
+2025-12-04 12:22:58 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource [user:] - HikariPool-1 - Start completed.
+2025-12-04 12:22:58 [restartedMain] WARN  org.hibernate.orm.deprecation [user:] - HHH90000025: MySQL8Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-12-04 12:22:58 [restartedMain] WARN  org.hibernate.orm.deprecation [user:] - HHH90000026: MySQL8Dialect has been deprecated; use org.hibernate.dialect.MySQLDialect instead
+2025-12-04 12:23:00 [restartedMain] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator [user:] - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-12-04 12:23:01 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean [user:] - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-12-04 12:23:01 [restartedMain] INFO  o.s.d.j.r.query.QueryEnhancerFactory [user:] - Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-12-04 12:23:05 [restartedMain] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration [user:] - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-12-04 12:23:05 [restartedMain] INFO  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer [user:] - Global AuthenticationManager configured with UserDetailsService bean with name userDetailsService
+2025-12-04 12:23:05 [restartedMain] DEBUG o.s.w.s.s.s.WebSocketHandlerMapping [user:] - Patterns [/ws/**] in 'stompWebSocketHandlerMapping'
+2025-12-04 12:23:05 [restartedMain] INFO  o.s.b.a.e.web.EndpointLinksResolver [user:] - Exposing 2 endpoints beneath base path '/actuator'
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.AdminController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.AuthController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.AuthorDashboardController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.BookController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.CategoryController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.ChapterController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.ChatController:
+	{[MESSAGE],[/chat/{groupId}]}: sendToUser(MessageDTO,String)
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.CommentController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.CreditPackageController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.ImageController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.LogController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.NotificationController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.PaymentController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.PostController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.ProgressController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.PurchaseController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.RatingController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.ReportController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.RoleController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.SensitiveWordController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.TagController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	c.n.c.UserController:
+	
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.w.s.m.WebSocketAnnotationMethodMessageHandler [user:] - 
+	o.s.b.a.w.s.e.BasicErrorController:
+	
+2025-12-04 12:23:06 [restartedMain] INFO  o.s.b.d.a.OptionalLiveReloadServer [user:] - LiveReload server is running on port 35729
+2025-12-04 12:23:06 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer [user:] - Tomcat started on port 8181 (http) with context path '/'
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - clientOutboundChannel added SubProtocolWebSocketHandler[StompSubProtocolHandler[v10.stomp, v11.stomp, v12.stomp]]
+2025-12-04 12:23:06 [restartedMain] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - clientInboundChannel added WebSocketAnnotationMethodMessageHandler[prefixes=[/app/]]
+2025-12-04 12:23:07 [restartedMain] INFO  o.s.m.s.b.SimpleBrokerMessageHandler [user:] - Starting...
+2025-12-04 12:23:07 [restartedMain] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - clientInboundChannel added SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@594d7640]
+2025-12-04 12:23:07 [restartedMain] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - brokerChannel added SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@594d7640]
+2025-12-04 12:23:07 [restartedMain] INFO  o.s.m.s.b.SimpleBrokerMessageHandler [user:] - BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@594d7640]]
+2025-12-04 12:23:07 [restartedMain] INFO  o.s.m.s.b.SimpleBrokerMessageHandler [user:] - Started.
+2025-12-04 12:23:07 [restartedMain] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - clientInboundChannel added UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
+2025-12-04 12:23:07 [restartedMain] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - brokerChannel added UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
+2025-12-04 12:23:07 [restartedMain] INFO  com.nix.BookSocialApplication [user:] - Started BookSocialApplication in 15.381 seconds (process running for 16.228)
+2025-12-04 12:24:06 [MessageBroker-1] INFO  o.s.w.s.c.WebSocketMessageBrokerStats [user:] - WebSocketSession[0 current WS(0)-HttpStream(0)-HttpPoll(0), 0 total, 0 closed abnormally (0 connect failure, 0 send limit, 0 transport error)], stompSubProtocol[processed CONNECT(0)-CONNECTED(0)-DISCONNECT(0)], stompBrokerRelay[null], inboundChannel[unknown], outboundChannel[unknown], sockJsScheduler[pool size = 1, active threads = 1, queued tasks = 0, completed tasks = 0]
+2025-12-04 12:24:12 [http-nio-8181-exec-3] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] [user:] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-12-04 12:24:12 [http-nio-8181-exec-3] INFO  o.s.web.servlet.DispatcherServlet [user:] - Initializing Servlet 'dispatcherServlet'
+2025-12-04 12:24:12 [http-nio-8181-exec-3] INFO  o.s.web.servlet.DispatcherServlet [user:] - Completed initialization in 4 ms
+2025-12-04 12:24:12 [http-nio-8181-exec-3] INFO  com.nix.config.LoggingAspect [user:] - User=anonymousUser accessed TagController.getAllTags
+2025-12-04 12:24:12 [http-nio-8181-exec-2] INFO  com.nix.config.LoggingAspect [user:] - User=anonymousUser accessed CategoryController.getAllCategories
+2025-12-04 12:24:12 [http-nio-8181-exec-1] INFO  com.nix.config.LoggingAspect [user:] - User=anonymousUser accessed BookController.getFeaturedBooks
+2025-12-04 12:24:12 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=anonymousUser accessed BookController.getTop10BooksByLikes
+2025-12-04 12:24:12 [http-nio-8181-exec-4] INFO  com.nix.config.LoggingAspect [user:] - User=anonymousUser accessed BookController.getLatestUpdateBooks
+2025-12-04 12:24:12 [http-nio-8181-exec-3] INFO  com.nix.config.LoggingAspect [user:] - User=anonymousUser completed TagController.getAllTags
+2025-12-04 12:24:12 [http-nio-8181-exec-1] INFO  com.nix.config.LoggingAspect [user:] - User=anonymousUser completed BookController.getFeaturedBooks
+2025-12-04 12:24:12 [http-nio-8181-exec-4] INFO  com.nix.config.LoggingAspect [user:] - User=anonymousUser completed BookController.getLatestUpdateBooks
+2025-12-04 12:24:12 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=anonymousUser completed BookController.getTop10BooksByLikes
+2025-12-04 12:24:12 [http-nio-8181-exec-2] INFO  com.nix.config.LoggingAspect [user:] - User=anonymousUser completed CategoryController.getAllCategories
+2025-12-04 12:24:13 [http-nio-8181-exec-9] WARN  o.s.w.s.m.s.DefaultHandlerExceptionResolver [user:] - Resolved [org.springframework.web.context.request.async.AsyncRequestNotUsableException: ServletOutputStream failed to flush: java.io.IOException: An established connection was aborted by the software in your host machine]
+2025-12-04 12:25:53 [http-nio-8181-exec-6] DEBUG c.n.config.AuthRateLimitInterceptor [user:] - Using remote address: 0:0:0:0:0:0:0:1
+2025-12-04 12:25:54 [http-nio-8181-exec-6] INFO  com.nix.config.LoggingAspect [user:] - User=anonymousUser accessed AuthController.login
+2025-12-04 12:25:54 [http-nio-8181-exec-6] INFO  com.nix.config.LoggingAspect [user:] - User=anonymousUser completed AuthController.login
+2025-12-04 12:25:54 [http-nio-8181-exec-9] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-04 12:25:54 [http-nio-8181-exec-9] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed UserController.getUserFromToken
+2025-12-04 12:25:54 [http-nio-8181-exec-9] DEBUG com.nix.controller.UserController [user:] - Getting user profile from JWT token
+2025-12-04 12:25:54 [http-nio-8181-exec-9] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed UserController.getUserFromToken
+2025-12-04 12:25:55 [http-nio-8181-exec-12] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-04 12:25:55 [http-nio-8181-exec-9] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-04 12:25:55 [http-nio-8181-exec-5] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-04 12:25:55 [http-nio-8181-exec-3] DEBUG o.s.w.s.s.s.WebSocketHandlerMapping [user:] - Mapped to org.springframework.web.socket.sockjs.support.SockJsHttpRequestHandler@6aad4cb6
+2025-12-04 12:25:55 [http-nio-8181-exec-8] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-04 12:25:55 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed ProgressController.getReadingProgressByUser
+2025-12-04 12:25:55 [http-nio-8181-exec-9] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed ChatController.getUserChats
+2025-12-04 12:25:55 [http-nio-8181-exec-8] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed BookController.getFeaturedBooks
+2025-12-04 12:25:55 [http-nio-8181-exec-3] DEBUG o.s.w.s.s.t.h.DefaultSockJsService [user:] - Processing transport request: GET http://localhost:8181/ws/info?t=1764825955010
+2025-12-04 12:25:55 [http-nio-8181-exec-9] DEBUG com.nix.controller.ChatController [user:] - Getting chats for user: Admin
+2025-12-04 12:25:55 [http-nio-8181-exec-12] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed NotificationController.getUserNotifications
+2025-12-04 12:25:55 [http-nio-8181-exec-5] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed ProgressController.getReadingProgressByUser
+2025-12-04 12:25:55 [http-nio-8181-exec-8] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed BookController.getFeaturedBooks
+2025-12-04 12:25:55 [http-nio-8181-exec-1] DEBUG o.s.w.s.s.s.WebSocketHandlerMapping [user:] - Mapped to org.springframework.web.socket.sockjs.support.SockJsHttpRequestHandler@6aad4cb6
+2025-12-04 12:25:55 [http-nio-8181-exec-9] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed ChatController.getUserChats
+2025-12-04 12:25:55 [http-nio-8181-exec-1] DEBUG o.s.w.s.s.t.h.DefaultSockJsService [user:] - Processing transport request: GET http://localhost:8181/ws/995/xp4jdbf1/websocket
+2025-12-04 12:25:55 [http-nio-8181-exec-4] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-04 12:25:55 [http-nio-8181-exec-4] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed ProgressController.getReadingProgressByUser
+2025-12-04 12:25:55 [http-nio-8181-exec-10] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-04 12:25:55 [http-nio-8181-exec-12] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed NotificationController.getUserNotifications
+2025-12-04 12:25:55 [http-nio-8181-exec-4] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed ProgressController.getReadingProgressByUser
+2025-12-04 12:25:55 [http-nio-8181-exec-10] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed ChatController.getUserChats
+2025-12-04 12:25:55 [http-nio-8181-exec-12] WARN  o.s.d.w.c.SpringDataJacksonConfiguration$PageModule$WarningLoggingModifier [user:] - Serializing PageImpl instances as-is is not supported, meaning that there is no guarantee about the stability of the resulting JSON structure!
+	For a stable JSON structure, please use Spring Data's PagedModel (globally via @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO))
+	or Spring HATEOAS and Spring Data's PagedResourcesAssembler as documented in https://docs.spring.io/spring-data/commons/reference/repositories/core-extensions.html#core.web.pageables.
+
+2025-12-04 12:25:55 [http-nio-8181-exec-10] DEBUG com.nix.controller.ChatController [user:] - Getting chats for user: Admin
+2025-12-04 12:25:55 [http-nio-8181-exec-10] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed ChatController.getUserChats
+2025-12-04 12:25:55 [http-nio-8181-exec-1] DEBUG o.s.w.s.h.LoggingWebSocketHandlerDecorator [user:] - New WebSocketServerSockJsSession[id=xp4jdbf1]
+2025-12-04 12:25:55 [http-nio-8181-exec-7] DEBUG com.nix.config.JwtValidator [user:] - User with email: tanlmht859a@gmail.com has role: ADMIN
+2025-12-04 12:25:55 [http-nio-8181-exec-7] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com accessed NotificationController.getUserNotifications
+2025-12-04 12:25:55 [http-nio-8181-exec-7] INFO  com.nix.config.LoggingAspect [user:] - User=tanlmht859a@gmail.com completed NotificationController.getUserNotifications
+2025-12-04 12:25:56 [ws-task-scheduler-5] DEBUG o.s.m.s.b.SimpleBrokerMessageHandler [user:] - Processing CONNECT session=xp4jdbf1
+2025-12-04 12:25:56 [ws-task-scheduler-4] DEBUG o.s.m.s.b.SimpleBrokerMessageHandler [user:] - Processing SUBSCRIBE /user/Admin/notifications id=sub-0 session=xp4jdbf1
+2025-12-04 12:25:58 [ws-task-scheduler-6] DEBUG o.s.m.s.b.SimpleBrokerMessageHandler [user:] - Processing UNSUBSCRIBE id=sub-0 session=xp4jdbf1
+2025-12-04 12:25:58 [ws-task-scheduler-1] DEBUG o.s.m.s.b.SimpleBrokerMessageHandler [user:] - Processing DISCONNECT receipt=close-1 session=xp4jdbf1
+2025-12-04 12:25:58 [http-nio-8181-exec-1] DEBUG o.s.w.s.h.LoggingWebSocketHandlerDecorator [user:] - WebSocketServerSockJsSession[id=xp4jdbf1] closed with CloseStatus[code=1000, reason=null]
+2025-12-04 12:25:58 [http-nio-8181-exec-1] DEBUG o.s.w.s.m.SubProtocolWebSocketHandler [user:] - Clearing session xp4jdbf1
+2025-12-04 12:25:58 [ws-task-scheduler-2] DEBUG o.s.m.s.b.SimpleBrokerMessageHandler [user:] - Processing DISCONNECT session=xp4jdbf1
+2025-12-04 12:25:58 [ws-task-scheduler-4] DEBUG o.s.w.s.m.SubProtocolWebSocketHandler [user:] - No session for GenericMessage [payload=byte[0], headers={simpMessageType=DISCONNECT_ACK, simpDisconnectMessage=GenericMessage [payload=byte[0], headers={simpMessageType=DISCONNECT, stompCommand=DISCONNECT, simpSessionAttributes={org.springframework.messaging.simp.SimpAttributes.COMPLETED=true}, simpSessionId=xp4jdbf1}], simpSessionId=xp4jdbf1}]
+2025-12-04 12:26:05 [MessageBroker-3] DEBUG o.s.w.s.s.t.h.DefaultSockJsService [user:] - Closed 1 sessions: [xp4jdbf1]
+2025-12-04 12:26:10 [SpringApplicationShutdownHook] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - clientOutboundChannel removed SubProtocolWebSocketHandler[StompSubProtocolHandler[v10.stomp, v11.stomp, v12.stomp]]
+2025-12-04 12:26:10 [SpringApplicationShutdownHook] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - clientInboundChannel removed WebSocketAnnotationMethodMessageHandler[prefixes=[/app/]]
+2025-12-04 12:26:10 [SpringApplicationShutdownHook] INFO  o.s.m.s.b.SimpleBrokerMessageHandler [user:] - Stopping...
+2025-12-04 12:26:10 [SpringApplicationShutdownHook] INFO  o.s.m.s.b.SimpleBrokerMessageHandler [user:] - BrokerAvailabilityEvent[available=false, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@594d7640]]
+2025-12-04 12:26:10 [SpringApplicationShutdownHook] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - clientInboundChannel removed SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@594d7640]
+2025-12-04 12:26:10 [SpringApplicationShutdownHook] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - brokerChannel removed SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@594d7640]
+2025-12-04 12:26:10 [SpringApplicationShutdownHook] INFO  o.s.m.s.b.SimpleBrokerMessageHandler [user:] - Stopped.
+2025-12-04 12:26:10 [SpringApplicationShutdownHook] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - clientInboundChannel removed UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
+2025-12-04 12:26:10 [SpringApplicationShutdownHook] DEBUG o.s.m.s.ExecutorSubscribableChannel [user:] - brokerChannel removed UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
+2025-12-04 12:26:11 [SpringApplicationShutdownHook] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean [user:] - Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-12-04 12:26:11 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource [user:] - HikariPool-1 - Shutdown initiated...
+2025-12-04 12:26:11 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource [user:] - HikariPool-1 - Shutdown completed.
