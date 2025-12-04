@@ -9,10 +9,7 @@ services:
       - ./uploads:/app/uploads
       - ./logs:/app/logs
     depends_on:
-      db:
-        condition: service_healthy
-    healthcheck:
-      disable: true
+      - db
     restart: unless-stopped
     networks:
       - booksocial-network
