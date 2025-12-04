@@ -173,6 +173,7 @@ jobs:
             # Stop and remove existing containers (but keep volumes)
             echo "Stopping existing containers..."
             $COMPOSE down || true
+            docker rm -f booksocial-app || true
 
             # Remove old images (keep last 3)
             echo "Cleaning up old images..."
@@ -207,6 +208,8 @@ jobs:
           else
             echo "⚠️ Health check returned: $response"
             echo "Application may still be starting up. Please verify manually."
+            echo "Container Inspection:"
+            docker inspect booksocial-app || true
             echo "Logs:"
             $COMPOSE logs --tail=100 app
             exit 1
