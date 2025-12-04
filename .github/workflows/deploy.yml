@@ -116,6 +116,16 @@ jobs:
             # Navigate to application directory
             cd ${{ secrets.DEPLOY_PATH }}
 
+            # Determine Docker Compose command
+            if docker compose version >/dev/null 2>&1; then
+              COMPOSE="docker compose"
+            elif command -v docker-compose >/dev/null 2>&1; then
+              COMPOSE="docker-compose"
+            else
+              echo "Docker Compose is not available on the server." >&2
+              exit 1
+            fi
+
             # Create necessary directories
             mkdir -p uploads logs
 
@@ -162,7 +172,7 @@ jobs:
 
             # Stop and remove existing containers (but keep volumes)
             echo "Stopping existing containers..."
-            docker compose down || docker-compose down || true
+            $COMPOSE down || true
 
             # Remove old images (keep last 3)
             echo "Cleaning up old images..."
@@ -170,18 +180,18 @@ jobs:
 
             # Start new containers
             echo "Starting new containers..."
-            docker compose up -d || docker-compose up -d
+            $COMPOSE up -d
 
             # Wait for application to be healthy
             echo "Waiting for application to start..."
             sleep 10
 
             # Check container status
-            docker compose ps || docker-compose ps
+            $COMPOSE ps
 
             # Show recent logs
             echo "Recent application logs:"
-            docker compose logs --tail=50 app || docker-compose logs --tail=50 app
+            $COMPOSE logs --tail=50 app
 
             # Cleanup temporary files
             rm -rf /tmp/booksocial-deploy
