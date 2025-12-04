@@ -20,6 +20,7 @@ public class ChapterDTO {
 	private String title;
 	private String content;
 	private int price;
+	private UUID authorId;
 	private boolean isLocked;
 	private boolean isDraft;
 	private LocalDateTime uploadDate;

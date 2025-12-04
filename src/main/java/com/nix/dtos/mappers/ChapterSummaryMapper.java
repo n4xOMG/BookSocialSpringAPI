@@ -19,6 +19,7 @@ public class ChapterSummaryMapper implements Mapper<Chapter, ChapterSummaryDTO> 
 			chapterSummaryDTO.setChapterNum(c.getChapterNum());
 			chapterSummaryDTO.setLocked(c.isLocked());
 			chapterSummaryDTO.setPrice(c.getPrice());
+			chapterSummaryDTO.setAuthorId(c.getBook().getAuthor().getId());
 			chapterSummaryDTO.setTitle(c.getTitle());
 			chapterSummaryDTO.setUploadDate(c.getUploadDate());
 			return chapterSummaryDTO;

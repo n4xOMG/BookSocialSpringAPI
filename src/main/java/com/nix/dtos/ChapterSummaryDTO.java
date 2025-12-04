@@ -17,6 +17,7 @@ public class ChapterSummaryDTO {
 	private String chapterNum;
 	private String title;
 	private int price;
+	private UUID authorId;
 	private boolean isLocked;
 	private LocalDateTime uploadDate;
 	private UUID bookId;
