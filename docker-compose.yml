@@ -1,5 +1,8 @@
 services:
   app:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: booksocial-app:latest
     container_name: booksocial-app
     ports:
