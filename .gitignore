@@ -31,7 +31,5 @@ build/
 .env
 ### VS Code ###
 .vscode/
-Dockerfile
-docker-compose.yml
 /uploads/
 .github/copilot-instructions.md

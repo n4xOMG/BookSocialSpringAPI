@@ -1,0 +1,42 @@
+services:
+  app:
+    image: booksocial-app:latest
+    container_name: booksocial-app
+    ports:
+      - "8181:8181"
+    env_file: .env
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - booksocial-network
+
+  db:
+    image: mysql:8.4
+    container_name: booksocial-db
+    env_file: .env
+    # Đã có env_file lo rồi, không cần map lại environment thủ công nữa trừ khi tên biến khác nhau
+    # environment: ... (Đã xóa cho gọn)
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      # Lưu ý: mysqladmin ping cần mật khẩu viết liền sau -p (không có dấu cách)
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u${MYSQL_USER} -p${MYSQL_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - booksocial-network
+
+volumes:
+  db-data:
+
+networks:
+  booksocial-network:
+    driver: bridge
