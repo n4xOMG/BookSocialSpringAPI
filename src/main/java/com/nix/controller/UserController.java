@@ -28,6 +28,7 @@ import com.nix.service.UserService;
 
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 @RestController
 public class UserController {
@@ -94,7 +95,7 @@ public class UserController {
 
 	@PutMapping("/api/user/profile")
 	public ResponseEntity<ApiResponseWithData<UserDTO>> updateProfile(@RequestHeader("Authorization") String jwt,
-			@RequestBody User user,
+			@Valid @RequestBody User user,
 			HttpServletRequest httpRequest) throws Exception {
 
 		try {
@@ -121,7 +122,7 @@ public class UserController {
 		}
 	}
 
-	@PostMapping("/user/follow/{userIdToFollow}")
+	@PostMapping("/api/user/follow/{userIdToFollow}")
 	public ResponseEntity<ApiResponseWithData<UserSummaryDTO>> followUser(@RequestHeader("Authorization") String jwt,
 			@PathVariable UUID userIdToFollow) {
 		try {
@@ -142,7 +143,7 @@ public class UserController {
 		}
 	}
 
-	@PostMapping("/unfollow/{userIdToUnfollow}")
+	@PostMapping("/api/user/unfollow/{userIdToUnfollow}")
 	public ResponseEntity<ApiResponseWithData<UserSummaryDTO>> unFollowUser(@RequestHeader("Authorization") String jwt,
 			@PathVariable UUID userIdToUnfollow) {
 		try {
@@ -163,7 +164,7 @@ public class UserController {
 		}
 	}
 
-	@PostMapping("/user/block/{userIdToBlock}")
+	@PostMapping("/api/user/block/{userIdToBlock}")
 	public ResponseEntity<ApiResponseWithData<UserSummaryDTO>> blockUser(@RequestHeader("Authorization") String jwt,
 			@PathVariable UUID userIdToBlock) {
 		User currentUser = userService.findUserByJwt(jwt);
@@ -173,7 +174,7 @@ public class UserController {
 		return ResponseEntity.ok(new ApiResponseWithData<>("User blocked successfully.", true, dto));
 	}
 
-	@PostMapping("/user/unblock/{userIdToUnblock}")
+	@PostMapping("/api/user/unblock/{userIdToUnblock}")
 	public ResponseEntity<ApiResponseWithData<Void>> unblockUser(@RequestHeader("Authorization") String jwt,
 			@PathVariable UUID userIdToUnblock) {
 		User currentUser = userService.findUserByJwt(jwt);
@@ -201,7 +202,7 @@ public class UserController {
 		}
 	}
 
-	@GetMapping("/user/preferences")
+	@GetMapping("/api/user/preferences")
 	public ResponseEntity<ApiResponseWithData<UserDTO>> getUserPreferences(@RequestHeader("Authorization") String jwt) {
 		if (jwt == null || jwt.isBlank()) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

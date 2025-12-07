@@ -34,6 +34,7 @@ import com.nix.service.ChapterService;
 import com.nix.service.PaymentService;
 import com.nix.service.ReadingProgressService;
 import com.nix.service.UserService;
+import com.nix.util.SecurityUtils;
 
 @RestController
 public class ChapterController {
@@ -58,7 +59,7 @@ public class ChapterController {
 	ChapterSummaryMapper chapterSummaryMapper = new ChapterSummaryMapper();
 
 	private boolean isAdmin(User user) {
-		return user != null && user.getRole() != null && "ADMIN".equalsIgnoreCase(user.getRole().getName());
+		return SecurityUtils.isAdmin(user);
 	}
 
 	private User resolveCurrentUser(String jwt) {

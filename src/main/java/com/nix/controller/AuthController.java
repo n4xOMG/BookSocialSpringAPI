@@ -1,6 +1,7 @@
 package com.nix.controller;
 
 import java.io.UnsupportedEncodingException;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -43,6 +44,9 @@ public class AuthController {
 	@Autowired
 	private CustomUserDetailsService customUserDetails;
 
+	@Autowired
+	private JwtProvider jwtProvider;
+
 	@Value("${frontend.url}")
 	private String frontendUrl;
 
@@ -58,7 +62,7 @@ public class AuthController {
 		User newUser = userService.register(user);
 		Authentication auth = new UsernamePasswordAuthenticationToken(newUser.getEmail(), newUser.getPassword());
 
-		String token = JwtProvider.generateToken(auth, false);
+		String token = jwtProvider.generateToken(auth, false);
 
 		return ResponseEntity.ok(new ApiResponseWithData<>("Sign up succeeded!", true, token));
 	}
@@ -85,7 +89,7 @@ public class AuthController {
 					.body(new ApiResponseWithData<>("Invalid email/password!", false));
 		}
 
-		String token = JwtProvider.generateToken(auth, rememberMe);
+		String token = jwtProvider.generateToken(auth, rememberMe);
 		userService.updateUserLastLoginDate(loginReq.getEmail());
 
 		return ResponseEntity.ok(new ApiResponseWithData<>("Login succeeded!", true, token));
@@ -123,11 +127,22 @@ public class AuthController {
 		try {
 			User user = userService.findUserByEmail(request.get("email"));
 			String password = request.get("password");
+			String resetToken = request.get("resetToken");
+
 			if (user == null) {
 				return buildErrorResponse(HttpStatus.BAD_REQUEST, "User not found!");
 			}
 
-			userService.updateUserPassword(password, user);
+			// Validate password reset token (required after OTP verification)
+			if (resetToken == null || resetToken.isBlank()) {
+				return buildErrorResponse(HttpStatus.BAD_REQUEST, "Reset token is required.");
+			}
+
+			if (!userService.validatePasswordResetToken(user, resetToken)) {
+				return buildErrorResponse(HttpStatus.BAD_REQUEST, "Invalid or expired reset token.");
+			}
+
+			userService.resetPasswordWithToken(password, user);
 
 			return buildSuccessResponse("Password has been reset successfully.", null);
 		} catch (Exception e) {
@@ -137,7 +152,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/auth/verify-otp")
-	public ResponseEntity<ApiResponseWithData<Void>> verifyOtp(@RequestBody Map<String, String> request) {
+	public ResponseEntity<ApiResponseWithData<String>> verifyOtp(@RequestBody Map<String, String> request) {
 		String email = request.get("email");
 		String otp = request.get("otp");
 		VerificationContext context = VerificationContext.from(request.get("context"));
@@ -146,8 +161,14 @@ public class AuthController {
 			return buildErrorResponse(HttpStatus.BAD_REQUEST, "User not found!");
 		}
 
-		if (!otp.equals(user.getVerificationCode())) {
+		// Check if OTP matches
+		if (user.getVerificationCode() == null || !otp.equals(user.getVerificationCode())) {
 			return buildErrorResponse(HttpStatus.BAD_REQUEST, "Invalid or expired OTP!");
+		}
+
+		// Check if OTP has expired
+		if (user.getOtpExpiration() == null || LocalDateTime.now().isAfter(user.getOtpExpiration())) {
+			return buildErrorResponse(HttpStatus.BAD_REQUEST, "OTP has expired. Please request a new one.");
 		}
 
 		if (context == null) {
@@ -156,11 +177,16 @@ public class AuthController {
 
 		user.setIsVerified(true);
 		user.setVerificationCode(null);
+		user.setOtpExpiration(null); // Clear expiration
 		userService.updateUser(user.getId(), user);
 
 		return switch (context) {
 			case REGISTER -> buildSuccessResponse("OTP verified successfully. Registration complete.", null);
-			case RESET_PASSWORD -> buildSuccessResponse("OTP verified successfully. Please reset your password.", null);
+			case RESET_PASSWORD -> {
+				// Generate a secure password reset token (valid for 15 minutes)
+				String resetToken = userService.generatePasswordResetToken(user);
+				yield buildSuccessResponse("OTP verified. Use the token to reset your password.", resetToken);
+			}
 			case UPDATE_PROFILE -> buildSuccessResponse("OTP verified successfully. Update profile complete.", null);
 		};
 	}

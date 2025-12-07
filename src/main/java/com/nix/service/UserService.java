@@ -51,6 +51,13 @@ public interface UserService {
 
 	public User updateUserPassword(String password, User user);
 
+	// Password reset token methods
+	public String generatePasswordResetToken(User user);
+
+	public boolean validatePasswordResetToken(User user, String token);
+
+	public User resetPasswordWithToken(String newPassword, User user);
+
 	public User verifyUser(String verificationCode);
 
 	public User suspendUser(UUID userId);

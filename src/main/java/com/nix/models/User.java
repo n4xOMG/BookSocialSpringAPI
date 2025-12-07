@@ -55,7 +55,18 @@ public class User implements Serializable {
 	@Column(name = "verification_code", length = 64)
 	private String verificationCode;
 
+	// OTP expiration - OTPs are valid for a limited time
+	private LocalDateTime otpExpiration;
+
 	private Boolean isVerified;
+
+	// Password reset token - generated after OTP verification for RESET_PASSWORD
+	// context
+	@Column(name = "password_reset_token", length = 36)
+	private String passwordResetToken;
+
+	private LocalDateTime passwordResetTokenExpiry;
+
 	private String avatarUrl;
 
 	@Column(columnDefinition = "TEXT")

@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
+
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -52,6 +52,7 @@ import com.nix.repository.UserFollowRepository;
 import com.nix.repository.UserRepository;
 import com.nix.service.UserService;
 import com.nix.service.UserWalletService;
+import com.nix.util.SecurityUtils;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -59,6 +60,9 @@ import jakarta.mail.internet.MimeMessage;
 @Service
 public class UserServiceImpl implements UserService {
 	private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+
+	// OTP validity period in minutes
+	private static final int OTP_VALIDITY_MINUTES = 10;
 
 	@Autowired
 	private PasswordEncoder passEncoder;
@@ -99,6 +103,9 @@ public class UserServiceImpl implements UserService {
 	@Autowired
 	UserBlockRepository userBlockRepository;
 
+	@Autowired
+	JwtProvider jwtProvider;
+
 	@Override
 	public Page<User> getAllUsers(int page, int size, String searchTerm) {
 		Pageable pageable = PageRequest.of(page, size);
@@ -131,6 +138,7 @@ public class UserServiceImpl implements UserService {
 		String randomCode = generateRandomCode();
 
 		newUser.setVerificationCode(randomCode);
+		newUser.setOtpExpiration(LocalDateTime.now().plusMinutes(OTP_VALIDITY_MINUTES));
 
 		newUser.setRole(roleRepo.findByName("USER"));
 
@@ -149,6 +157,7 @@ public class UserServiceImpl implements UserService {
 		String randomCode = generateRandomCode();
 
 		user.setVerificationCode(randomCode);
+		user.setOtpExpiration(LocalDateTime.now().plusMinutes(OTP_VALIDITY_MINUTES));
 
 		User reqUser = userRepo.save(user);
 		sendMail(reqUser, "Your OTP Code", "Dear [[username]],<br>"
@@ -175,7 +184,7 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public User findUserByJwt(String jwt) {
-		String email = JwtProvider.getEmailFromJwtToken(jwt);
+		String email = jwtProvider.getEmailFromJwtToken(jwt);
 		return userRepo.findByEmail(email);
 	}
 
@@ -191,6 +200,7 @@ public class UserServiceImpl implements UserService {
 			user.setVerificationCode(otpCode);
 			user.setIsVerified(false);
 			userUpdate.setVerificationCode(otpCode);
+			userUpdate.setOtpExpiration(LocalDateTime.now().plusMinutes(OTP_VALIDITY_MINUTES));
 			userUpdate.setIsVerified(false); // Mark email as unverified until OTP is confirmed
 			userRepo.save(userUpdate);
 
@@ -287,15 +297,53 @@ public class UserServiceImpl implements UserService {
 		mailSender.send(message);
 	}
 
+	private static final java.security.SecureRandom SECURE_RANDOM = new java.security.SecureRandom();
+
 	public String generateRandomCode() {
-		Random random = new Random();
-		int otp = 100000 + random.nextInt(900000); // Generate a random 6-digit OTP
+		// Use SecureRandom for cryptographically secure OTP generation
+		int otp = 100000 + SECURE_RANDOM.nextInt(900000); // Generate a random 6-digit OTP
 		return String.valueOf(otp);
 	}
 
 	@Override
 	public User updateUserPassword(String newPassword, User user) {
 		user.setPassword(passEncoder.encode(newPassword));
+		return userRepo.save(user);
+	}
+
+	private static final int PASSWORD_RESET_TOKEN_VALIDITY_MINUTES = 15;
+
+	@Override
+	public String generatePasswordResetToken(User user) {
+		// Generate a secure random token using UUID
+		String token = UUID.randomUUID().toString();
+		user.setPasswordResetToken(token);
+		user.setPasswordResetTokenExpiry(LocalDateTime.now().plusMinutes(PASSWORD_RESET_TOKEN_VALIDITY_MINUTES));
+		userRepo.save(user);
+		return token;
+	}
+
+	@Override
+	public boolean validatePasswordResetToken(User user, String token) {
+		if (user.getPasswordResetToken() == null) {
+			return false;
+		}
+		if (!user.getPasswordResetToken().equals(token)) {
+			return false;
+		}
+		if (user.getPasswordResetTokenExpiry() == null ||
+				LocalDateTime.now().isAfter(user.getPasswordResetTokenExpiry())) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public User resetPasswordWithToken(String newPassword, User user) {
+		user.setPassword(passEncoder.encode(newPassword));
+		// Clear the reset token after successful use (single-use)
+		user.setPasswordResetToken(null);
+		user.setPasswordResetTokenExpiry(null);
 		return userRepo.save(user);
 	}
 
@@ -501,8 +549,8 @@ public class UserServiceImpl implements UserService {
 		User blocked = userRepo.findById(blockedUserId)
 				.orElseThrow(() -> new ResourceNotFoundException("User to block not found."));
 
-		boolean targetIsAdmin = "ADMIN".equalsIgnoreCase(blocked.getRole().getName());
-		boolean blockerIsAdmin = "ADMIN".equalsIgnoreCase(blocker.getRole().getName());
+		boolean targetIsAdmin = SecurityUtils.isAdmin(blocked);
+		boolean blockerIsAdmin = SecurityUtils.isAdmin(blocker);
 		if (targetIsAdmin && !blockerIsAdmin) {
 			throw new IllegalArgumentException("You cannot block an administrator account.");
 		}

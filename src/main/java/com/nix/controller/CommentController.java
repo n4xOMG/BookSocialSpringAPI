@@ -43,6 +43,7 @@ import com.nix.service.CommentService;
 import com.nix.service.NotificationService;
 import com.nix.service.PostService;
 import com.nix.service.UserService;
+import com.nix.util.SecurityUtils;
 import com.nix.response.ApiResponseWithData;
 
 @RestController
@@ -92,7 +93,7 @@ public class CommentController {
 		if (currentUser == null || ownerId == null) {
 			return;
 		}
-		if (currentUser.getRole() != null && "ADMIN".equalsIgnoreCase(currentUser.getRole().getName())) {
+		if (SecurityUtils.isAdmin(currentUser)) {
 			return;
 		}
 		if (userService.isBlockedBy(currentUser.getId(), ownerId)
@@ -123,7 +124,7 @@ public class CommentController {
 		if (currentUser == null || comments == null) {
 			return comments;
 		}
-		if (currentUser.getRole() != null && "ADMIN".equalsIgnoreCase(currentUser.getRole().getName())) {
+		if (SecurityUtils.isAdmin(currentUser)) {
 			return comments;
 		}
 		Set<UUID> hiddenUserIds = new HashSet<>(userService.getUserIdsBlocking(currentUser.getId()));

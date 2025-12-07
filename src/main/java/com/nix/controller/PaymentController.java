@@ -164,11 +164,31 @@ public class PaymentController {
 
 	/**
 	 * Capture PayPal order after user approval
+	 * Requires authentication and verifies user ownership of the order
 	 */
 	@PostMapping("/api/orders/{orderID}/capture")
-	public ResponseEntity<ApiResponseWithData<Order>> capturePaypalOrder(@PathVariable String orderID) {
+	public ResponseEntity<ApiResponseWithData<Order>> capturePaypalOrder(
+			@PathVariable String orderID,
+			@RequestHeader("Authorization") String jwt) {
 		try {
+			// Get the authenticated user
+			User user = userService.findUserByJwt(jwt);
+			if (user == null) {
+				return this.<Order>buildErrorResponse(HttpStatus.UNAUTHORIZED, "User not authenticated.");
+			}
+
+			// Capture the order
 			Order response = paymentService.capturePaypalOrders(orderID);
+
+			// Verify that the order belongs to the authenticated user
+			if (response.getPurchaseUnits() != null && !response.getPurchaseUnits().isEmpty()) {
+				String orderUserId = response.getPurchaseUnits().get(0).getCustomId();
+				if (orderUserId == null || !orderUserId.equals(user.getId().toString())) {
+					return this.<Order>buildErrorResponse(HttpStatus.FORBIDDEN,
+							"You are not authorized to capture this order.");
+				}
+			}
+
 			return buildSuccessResponse("PayPal order captured successfully.", response);
 		} catch (Exception e) {
 			return this.<Order>buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());

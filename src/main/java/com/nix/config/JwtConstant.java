@@ -9,7 +9,7 @@ import jakarta.annotation.PostConstruct;
 public class JwtConstant {
 	public static final String JWT_HEADER = "Authorization";
 
-	@Value("${jwt.secret.key:}")
+	@Value("${jwt.secret.key}")
 	private String jwtSecretKey;
 
 	private static String SECRET_KEY;

@@ -34,6 +34,7 @@ import com.nix.response.ApiResponseWithData;
 import com.nix.service.BookService;
 import com.nix.service.NotificationService;
 import com.nix.service.UserService;
+import com.nix.util.SecurityUtils;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -60,7 +61,7 @@ public class BookController {
 		if (currentUser == null) {
 			return Set.of();
 		}
-		if (currentUser.getRole() != null && "ADMIN".equalsIgnoreCase(currentUser.getRole().getName())) {
+		if (SecurityUtils.isAdmin(currentUser)) {
 			return Set.of();
 		}
 		Set<UUID> hiddenAuthorIds = new HashSet<>(userService.getUserIdsBlocking(currentUser.getId()));
@@ -85,7 +86,7 @@ public class BookController {
 		if (currentUser == null || ownerId == null) {
 			return false;
 		}
-		if (currentUser.getRole() != null && "ADMIN".equalsIgnoreCase(currentUser.getRole().getName())) {
+		if (SecurityUtils.isAdmin(currentUser)) {
 			return false;
 		}
 		return userService.isBlockedBy(currentUser.getId(), ownerId)
@@ -353,7 +354,7 @@ public class BookController {
 		BookDTO book = bookService.getBookById(bookId);
 		User user = userService.findUserByJwt(jwt);
 		UUID authorId = book.getAuthor() != null ? book.getAuthor().getId() : null;
-		boolean isAdmin = user.getRole() != null && "ADMIN".equalsIgnoreCase(user.getRole().getName());
+		boolean isAdmin = SecurityUtils.isAdmin(user);
 
 		if (!isAdmin && (authorId == null || !user.getId().equals(authorId))) {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseWithData<>(
@@ -378,7 +379,7 @@ public class BookController {
 		User user = userService.findUserByJwt(jwt);
 
 		UUID authorId = book.getAuthor() != null ? book.getAuthor().getId() : null;
-		boolean isAdmin = user.getRole() != null && "ADMIN".equalsIgnoreCase(user.getRole().getName());
+		boolean isAdmin = SecurityUtils.isAdmin(user);
 		if (!isAdmin && (authorId == null || !user.getId().equals(authorId))) {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseWithData<>(
 					"You do not have permission to delete this book.", false));

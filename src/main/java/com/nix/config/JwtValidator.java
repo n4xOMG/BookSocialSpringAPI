@@ -14,6 +14,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.nix.models.User;
+import com.nix.repository.UserRepository;
+
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -26,23 +29,50 @@ import jakarta.servlet.http.HttpServletResponse;
 public class JwtValidator extends OncePerRequestFilter {
     private static final Logger logger = LoggerFactory.getLogger(JwtValidator.class);
 
+    private final UserRepository userRepository;
+    private final JwtProvider jwtProvider;
+
+    public JwtValidator(UserRepository userRepository, JwtProvider jwtProvider) {
+        this.userRepository = userRepository;
+        this.jwtProvider = jwtProvider;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String jwt = request.getHeader(JwtConstant.JWT_HEADER);
         if (jwt != null) {
             try {
-                String email = JwtProvider.getEmailFromJwtToken(jwt);
-                String roleFromToken = JwtProvider.getRoleFromJwtToken(jwt);
+                String email = jwtProvider.getEmailFromJwtToken(jwt);
 
-                // Extract role name if it starts with "ROLE_" prefix, otherwise use as-is
-                String roleName = roleFromToken.startsWith("ROLE_")
-                        ? roleFromToken.substring(5)
-                        : roleFromToken;
+                // Fetch user from database to get current role and status
+                User user = userRepository.findByEmail(email);
+                if (user == null) {
+                    logger.warn("User not found for email: {}", email);
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "User not found");
+                    return;
+                }
 
-                logger.debug("User with email: {} has role: {}", email, roleName);
+                // Check if user is banned
+                if (user.isBanned()) {
+                    logger.warn("Banned user attempted access: {}", email);
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Account is banned");
+                    return;
+                }
 
-                // Build authorities directly from JWT without database call
+                // Check if user is suspended
+                if (Boolean.TRUE.equals(user.getIsSuspended())) {
+                    logger.warn("Suspended user attempted access: {}", email);
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Account is suspended");
+                    return;
+                }
+
+                // Use role from database, not from JWT - this prevents privilege escalation
+                String roleName = user.getRole() != null ? user.getRole().getName() : "USER";
+
+                logger.debug("User with email: {} has role: {} (from database)", email, roleName);
+
+                // Build authorities from database role
                 Collection<GrantedAuthority> authorities = new ArrayList<>();
                 authorities.add(new SimpleGrantedAuthority("ROLE_" + roleName));
 
