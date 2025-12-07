@@ -11,6 +11,8 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -86,6 +88,15 @@ public class ChatController {
 		}
 
 		return messageMapper.mapToDTOs(chat.getMessages());
+	}
+
+	@DeleteMapping("/{chatId}")
+	public ResponseEntity<String> deleteChat(@PathVariable UUID chatId,
+			@RequestHeader("Authorization") String jwt) throws AccessDeniedException {
+		User currentUser = userService.findUserByJwt(jwt);
+		logger.info("User {} deleting chat {}", currentUser.getUsername(), chatId);
+		chatService.deleteChat(chatId, currentUser);
+		return ResponseEntity.ok("Chat deleted successfully");
 	}
 
 	@MessageMapping("/chat/{groupId}")

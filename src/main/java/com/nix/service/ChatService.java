@@ -17,4 +17,6 @@ public interface ChatService {
 	List<Chat> getChatsForUser(User user);
 
 	Message saveMessage(Chat chat, MessageDTO message);
+
+	void deleteChat(UUID chatId, User currentUser) throws java.nio.file.AccessDeniedException;
 }

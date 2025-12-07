@@ -75,4 +75,18 @@ public class ChatServiceImpl implements ChatService {
 		return newMessage;
 	}
 
+	@Override
+	@Transactional
+	public void deleteChat(UUID chatId, User currentUser) throws java.nio.file.AccessDeniedException {
+		Chat chat = chatRepository.findById(chatId)
+				.orElseThrow(() -> new ResourceNotFoundException("Chat not found"));
+
+		// Verify the user is a participant
+		if (!chat.getUserOne().equals(currentUser) && !chat.getUserTwo().equals(currentUser)) {
+			throw new java.nio.file.AccessDeniedException("You are not a participant of this chat");
+		}
+
+		chatRepository.delete(chat);
+	}
+
 }
