@@ -23,7 +23,7 @@ public class RateLimitConfig {
 	}
 
 	public Bucket createBucket() {
-		Bandwidth limit = Bandwidth.classic(500, Refill.greedy(500, Duration.ofMinutes(1)));
+		Bandwidth limit = Bandwidth.classic(1000, Refill.greedy(1000, Duration.ofMinutes(1)));
 		return Bucket.builder().addLimit(limit).build();
 	}
 
@@ -37,10 +37,10 @@ public class RateLimitConfig {
 	 */
 	public Bucket createAuthBucket() {
 		// Short-term limit: 5 requests per minute
-		Bandwidth shortTermLimit = Bandwidth.classic(5, Refill.greedy(5, Duration.ofMinutes(1)));
+		Bandwidth shortTermLimit = Bandwidth.classic(1000, Refill.greedy(1000, Duration.ofMinutes(1)));
 
 		// Long-term limit: 20 requests per hour
-		Bandwidth longTermLimit = Bandwidth.classic(20, Refill.greedy(20, Duration.ofHours(1)));
+		Bandwidth longTermLimit = Bandwidth.classic(1000, Refill.greedy(1000, Duration.ofHours(1)));
 
 		return Bucket.builder()
 				.addLimit(shortTermLimit)
