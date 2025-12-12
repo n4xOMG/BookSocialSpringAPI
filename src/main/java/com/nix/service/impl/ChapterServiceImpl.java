@@ -12,17 +12,20 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.nix.enums.NotificationEntityType;
 import com.nix.exception.ResourceNotFoundException;
+import com.nix.models.AuthorEarning;
 import com.nix.models.Book;
 import com.nix.models.BookFavourite;
 import com.nix.models.Chapter;
 import com.nix.models.ChapterUnlockRecord;
 import com.nix.models.Report;
 import com.nix.models.User;
+import com.nix.repository.AuthorEarningRepository;
 import com.nix.repository.BookFavouriteRepository;
 import com.nix.repository.BookRepository;
 import com.nix.repository.ChapterRepository;
@@ -66,6 +69,9 @@ public class ChapterServiceImpl implements ChapterService {
 	private ChapterUnlockRecordRepository unlockRecordRepository;
 
 	@Autowired
+	private AuthorEarningRepository authorEarningRepository;
+
+	@Autowired
 	private AuthorService authorService;
 
 	@Autowired
@@ -83,12 +89,35 @@ public class ChapterServiceImpl implements ChapterService {
 
 	@Override
 	public List<Chapter> findChaptersByBookId(UUID bookId) {
-		return chapterRepo.findByBookId(bookId);
+		return chapterRepo.findByBookIdOrderByUploadDateAsc(bookId);
+	}
+
+	@Override
+	public List<Chapter> findChaptersByBookId(UUID bookId, String sortBy, String sortDir) {
+		Sort sort = createSort(sortBy, sortDir);
+		return chapterRepo.findByBookId(bookId, sort);
 	}
 
 	@Override
 	public List<Chapter> findNotDraftedChaptersByBookId(UUID bookId) {
 		return chapterRepo.findNotDraftedChaptersByBookId(bookId);
+	}
+
+	@Override
+	public List<Chapter> findNotDraftedChaptersByBookId(UUID bookId, String sortBy, String sortDir) {
+		Sort sort = createSort(sortBy, sortDir);
+		return chapterRepo.findNotDraftedChaptersByBookId(bookId, sort);
+	}
+
+	private Sort createSort(String sortBy, String sortDir) {
+		String field = switch (sortBy != null ? sortBy.toLowerCase() : "uploaddate") {
+			case "title", "name" -> "title";
+			case "chapternum", "number" -> "chapterNum";
+			case "price" -> "price";
+			default -> "uploadDate";
+		};
+		Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+		return Sort.by(direction, field);
 	}
 
 	@Override
@@ -172,6 +201,19 @@ public class ChapterServiceImpl implements ChapterService {
 				report.setChapter(null);
 				reportRepository.save(report);
 			}
+
+			// Handle author earnings - set chapter and unlockRecord references to null
+			// to preserve earnings history
+			List<AuthorEarning> earnings = authorEarningRepository.findByChapterId(chapterId);
+			for (AuthorEarning earning : earnings) {
+				earning.setChapter(null);
+				earning.setUnlockRecord(null);
+				authorEarningRepository.save(earning);
+			}
+
+			// Delete unlock records after removing references from author earnings
+			List<ChapterUnlockRecord> unlockRecords = unlockRecordRepository.findByChapterId(chapterId);
+			unlockRecordRepository.deleteAll(unlockRecords);
 
 			chapterRepo.delete(deleteChapter);
 

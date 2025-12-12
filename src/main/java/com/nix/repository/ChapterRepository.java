@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,10 +16,15 @@ import com.nix.models.Chapter;
 public interface ChapterRepository extends JpaRepository<Chapter, UUID> {
 	public Chapter findByTitle(String title);
 
-	public List<Chapter> findByBookId(UUID bookId);
+	public List<Chapter> findByBookIdOrderByUploadDateAsc(UUID bookId);
+
+	public List<Chapter> findByBookId(UUID bookId, Sort sort);
+
+	@Query("select c from Chapter c where c.isDraft=false and c.book.id=:bookId order by c.uploadDate asc")
+	public List<Chapter> findNotDraftedChaptersByBookId(@Param("bookId") UUID bookId);
 
 	@Query("select c from Chapter c where c.isDraft=false and c.book.id=:bookId")
-	public List<Chapter> findNotDraftedChaptersByBookId(UUID bookId);
+	public List<Chapter> findNotDraftedChaptersByBookId(@Param("bookId") UUID bookId, Sort sort);
 
 	Optional<Chapter> findByIdAndIsLocked(UUID id, boolean isLocked);
 

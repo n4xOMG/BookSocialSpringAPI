@@ -123,6 +123,8 @@ public class ChapterController {
 	@GetMapping("/books/{bookId}/chapters")
 	public ResponseEntity<ApiResponseWithData<List<ChapterSummaryDTO>>> getAllChaptersByBookId(
 			@PathVariable("bookId") UUID bookId,
+			@RequestParam(value = "sortBy", defaultValue = "uploadDate") String sortBy,
+			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir,
 			@RequestHeader(value = "Authorization", required = false) String jwt) {
 		User currentUser = resolveCurrentUser(jwt);
 		if (currentUser != null) {
@@ -131,7 +133,7 @@ public class ChapterController {
 			ensureNotBlocked(currentUser, ownerId);
 		}
 
-		List<Chapter> chapters = chapterService.findNotDraftedChaptersByBookId(bookId);
+		List<Chapter> chapters = chapterService.findNotDraftedChaptersByBookId(bookId, sortBy, sortDir);
 		List<ChapterSummaryDTO> chapterDTOs = chapterSummaryMapper.mapToDTOs(chapters);
 
 		boolean isAuthenticated = currentUser != null;
@@ -157,8 +159,10 @@ public class ChapterController {
 
 	@GetMapping("/api/books/{bookId}/chapters")
 	public ResponseEntity<ApiResponseWithData<List<ChapterDTO>>> manageChaptersByBookId(
-			@PathVariable("bookId") UUID bookId) {
-		List<Chapter> chapters = chapterService.findChaptersByBookId(bookId);
+			@PathVariable("bookId") UUID bookId,
+			@RequestParam(value = "sortBy", defaultValue = "uploadDate") String sortBy,
+			@RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
+		List<Chapter> chapters = chapterService.findChaptersByBookId(bookId, sortBy, sortDir);
 		List<ChapterDTO> chapterDTOs = chapterMapper.mapToDTOs(chapters);
 		ApiResponseWithData<List<ChapterDTO>> response = new ApiResponseWithData<>(
 				"Chapters retrieved successfully.", true, chapterDTOs);

@@ -18,7 +18,11 @@ public interface ChapterService {
 
 	public List<Chapter> findChaptersByBookId(UUID bookId);
 
+	public List<Chapter> findChaptersByBookId(UUID bookId, String sortBy, String sortDir);
+
 	public List<Chapter> findNotDraftedChaptersByBookId(UUID bookId);
+
+	public List<Chapter> findNotDraftedChaptersByBookId(UUID bookId, String sortBy, String sortDir);
 
 	public List<Chapter> getAllChapters();
 

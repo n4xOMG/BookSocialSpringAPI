@@ -18,6 +18,9 @@ import com.nix.models.User;
 @Repository
 public interface AuthorEarningRepository extends JpaRepository<AuthorEarning, UUID> {
 
+	// Find earnings by chapter
+	List<AuthorEarning> findByChapterId(UUID chapterId);
+
 	// Find earnings by author with pagination
 	Page<AuthorEarning> findByAuthorOrderByEarnedDateDesc(User author, Pageable pageable);
 

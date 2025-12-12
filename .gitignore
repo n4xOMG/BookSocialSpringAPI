@@ -34,3 +34,7 @@ build/
 /uploads/
 .github/copilot-instructions.md
 *.ppk
+logs/
+logs/app.log
+erd.png
+erdnoline.png

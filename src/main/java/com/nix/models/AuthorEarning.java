@@ -38,11 +38,11 @@ public class AuthorEarning implements Serializable {
 	private User author;
 
 	@ManyToOne
-	@JoinColumn(name = "chapter_id", nullable = false)
+	@JoinColumn(name = "chapter_id", nullable = true)
 	private Chapter chapter;
 
 	@ManyToOne
-	@JoinColumn(name = "unlock_record_id", nullable = false)
+	@JoinColumn(name = "unlock_record_id", nullable = true)
 	private ChapterUnlockRecord unlockRecord;
 
 	@Column(precision = 10, scale = 2, nullable = false)
