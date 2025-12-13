@@ -62,6 +62,7 @@ public class BookMapper implements Mapper<Book, BookDTO> {
 		// Map categoryIds
 		if (book.getCategory() != null) {
 			bookDTO.setCategoryId(book.getCategory().getId());
+			bookDTO.setCategoryName(book.getCategory().getName());
 		}
 
 		// Map tagIds and tagNames
