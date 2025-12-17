@@ -9,12 +9,15 @@ import org.hibernate.annotations.UuidGenerator;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = { "follower_id", "followed_id" }))
 @Getter
 @Setter
 @NoArgsConstructor
