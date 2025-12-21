@@ -216,15 +216,15 @@ public class AuthController {
 			throw new AccountException("Account is not verified. Please check your email.");
 		}
 
+		// Banned users cannot log in at all
 		if (user.isBanned()) {
 			handleFailedLoginAttempt(email);
 			throw new AccountException("Account is banned. Please contact the administrator.");
 		}
 
-		if (Boolean.TRUE.equals(user.getIsSuspended())) {
-			handleFailedLoginAttempt(email);
-			throw new AccountException("Account is suspended. Please contact the administrator.");
-		}
+		// Note: Suspended users CAN log in (browse, read content)
+		// They are only blocked from content creation activities by controller-level
+		// checks
 
 		if (user.getLoginAttempts() != null && user.getLoginAttempts() >= 5) {
 			handleFailedLoginAttempt(email);

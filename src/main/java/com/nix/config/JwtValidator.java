@@ -53,19 +53,16 @@ public class JwtValidator extends OncePerRequestFilter {
                     return;
                 }
 
-                // Check if user is banned
+                // Check if user is banned - banned users cannot access the site at all
                 if (user.isBanned()) {
                     logger.warn("Banned user attempted access: {}", email);
                     response.sendError(HttpServletResponse.SC_FORBIDDEN, "Account is banned");
                     return;
                 }
 
-                // Check if user is suspended
-                if (Boolean.TRUE.equals(user.getIsSuspended())) {
-                    logger.warn("Suspended user attempted access: {}", email);
-                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Account is suspended");
-                    return;
-                }
+                // Note: Suspended users CAN access the API (browse, read content)
+                // They are only blocked from content creation activities by controller-level
+                // checks
 
                 // Use role from database, not from JWT - this prevents privilege escalation
                 String roleName = user.getRole() != null ? user.getRole().getName() : "USER";

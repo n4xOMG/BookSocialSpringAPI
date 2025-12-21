@@ -357,8 +357,10 @@ public class ChapterController {
 			ensureNotBlocked(user, ownerId);
 
 			Boolean isLiked = chapterService.likeChapter(user.getId(), chapterId);
+			boolean isUnlocked = chapterService.isChapterUnlockedByUser(user.getId(), chapterId);
 			ChapterDTO chapterDTO = chapterMapper.mapToDTO(chapter);
 			chapterDTO.setLikedByCurrentUser(isLiked);
+			chapterDTO.setUnlockedByUser(isUnlocked);
 
 			String message = isLiked ? "Chapter liked successfully." : "Chapter unliked successfully.";
 			return ResponseEntity.ok(new ApiResponseWithData<>(message, true, chapterDTO));
