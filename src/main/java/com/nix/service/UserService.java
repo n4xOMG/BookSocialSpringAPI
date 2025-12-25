@@ -60,6 +60,13 @@ public interface UserService {
 
 	public User verifyUser(String verificationCode);
 
+	// Email change confirmation and rollback methods
+	public User confirmEmailChange(String jwt, String otp) throws UnsupportedEncodingException, MessagingException;
+
+	public String generateEmailRecoveryToken(User user);
+
+	public User rollbackEmail(String token);
+
 	public User suspendUser(UUID userId);
 
 	public User unsuspendUser(UUID userId);

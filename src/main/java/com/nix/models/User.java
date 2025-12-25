@@ -67,6 +67,19 @@ public class User implements Serializable {
 
 	private LocalDateTime passwordResetTokenExpiry;
 
+	// Pending email - stores the new email until verified via OTP
+	private String pendingEmail;
+
+	// Previous email - for rollback capability
+	private String previousEmail;
+
+	// Token for email recovery sent to the original email
+	@Column(length = 36)
+	private String emailRecoveryToken;
+
+	// Expiry for email recovery (48 hours from email change)
+	private LocalDateTime emailRecoveryTokenExpiry;
+
 	private String avatarUrl;
 
 	@Column(columnDefinition = "TEXT")

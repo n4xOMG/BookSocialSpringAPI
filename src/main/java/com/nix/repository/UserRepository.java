@@ -21,6 +21,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 	@Query("SELECT u FROM User u WHERE u.verificationCode = :code")
 	public User findByVerificationCode(String code);
 
+	@Query("SELECT u FROM User u WHERE u.emailRecoveryToken = :token")
+	public User findByEmailRecoveryToken(@Param("token") String token);
+
 	Page<User> findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(String username, String email,
 			Pageable pageable);
 

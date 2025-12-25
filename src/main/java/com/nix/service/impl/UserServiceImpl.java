@@ -106,6 +106,9 @@ public class UserServiceImpl implements UserService {
 	@Autowired
 	JwtProvider jwtProvider;
 
+	@org.springframework.beans.factory.annotation.Value("${frontend.url:http://localhost:8181}")
+	private String frontendUrl;
+
 	@Override
 	public Page<User> getAllUsers(int page, int size, String searchTerm) {
 		Pageable pageable = PageRequest.of(page, size);
@@ -194,21 +197,7 @@ public class UserServiceImpl implements UserService {
 
 		User userUpdate = findUserByJwt(jwt);
 
-		// Generate OTP if email is changed
-		if (user.getEmail() != null && !user.getEmail().equals(userUpdate.getEmail())) {
-			String otpCode = generateRandomCode();
-			user.setVerificationCode(otpCode);
-			user.setIsVerified(false);
-			userUpdate.setVerificationCode(otpCode);
-			userUpdate.setOtpExpiration(LocalDateTime.now().plusMinutes(OTP_VALIDITY_MINUTES));
-			userUpdate.setIsVerified(false); // Mark email as unverified until OTP is confirmed
-			userRepo.save(userUpdate);
-
-			sendMail(user, "Email Verification", "Please verify your email with this OTP: " + otpCode);
-			return userUpdate; // Return user without updating email yet
-		}
-
-		// Other profile updates (allowed directly)
+		// 1. ALWAYS update profile fields first (fix for early return bug)
 		if (user.getUsername() != null)
 			userUpdate.setUsername(user.getUsername());
 		if (user.getFullname() != null)
@@ -222,6 +211,33 @@ public class UserServiceImpl implements UserService {
 		if (user.getBio() != null)
 			userUpdate.setBio(user.getBio());
 
+		// Handle email change separately using pendingEmail
+		if (user.getEmail() != null && !user.getEmail().equals(userUpdate.getEmail())) {
+			// Check if new email is already taken by another user
+			User existingUser = userRepo.findByEmail(user.getEmail());
+			if (existingUser != null && !existingUser.getId().equals(userUpdate.getId())) {
+				throw new IllegalArgumentException("Email is already in use by another account.");
+			}
+
+			String otpCode = generateRandomCode();
+			userUpdate.setPendingEmail(user.getEmail());
+			userUpdate.setVerificationCode(otpCode);
+			userUpdate.setOtpExpiration(LocalDateTime.now().plusMinutes(OTP_VALIDITY_MINUTES));
+
+			// Send OTP to the NEW email address for verification
+			User tempUser = new User();
+			tempUser.setEmail(user.getEmail());
+			tempUser.setUsername(userUpdate.getUsername());
+			tempUser.setVerificationCode(otpCode);
+			sendMail(tempUser, "Email Change Verification",
+					"Dear [[username]],<br>" +
+							"Your OTP code to verify your new email address is: <b>[[OTP]]</b><br>" +
+							"This code will expire in " + OTP_VALIDITY_MINUTES + " minutes.<br>" +
+							"If you did not request this change, please ignore this email.<br>" +
+							"Thank you,<br>nixOMG.");
+		}
+
+		// Save once with all updates
 		return userRepo.save(userUpdate);
 	}
 
@@ -269,6 +285,128 @@ public class UserServiceImpl implements UserService {
 		user.setIsVerified(true);
 		userRepo.save(user);
 		return user;
+	}
+
+	// Email recovery token validity period in hours
+	private static final int EMAIL_RECOVERY_TOKEN_VALIDITY_HOURS = 48;
+
+	@Override
+	@Transactional
+	public User confirmEmailChange(String jwt, String otp) throws UnsupportedEncodingException, MessagingException {
+		User user = findUserByJwt(jwt);
+
+		// Validate OTP
+		if (user.getVerificationCode() == null || !user.getVerificationCode().equals(otp)) {
+			throw new IllegalArgumentException("Invalid OTP code.");
+		}
+
+		// Check OTP expiration
+		if (user.getOtpExpiration() == null || LocalDateTime.now().isAfter(user.getOtpExpiration())) {
+			throw new IllegalArgumentException("OTP has expired. Please request a new email change.");
+		}
+
+		// Check if there's a pending email
+		if (user.getPendingEmail() == null || user.getPendingEmail().isEmpty()) {
+			throw new IllegalArgumentException("No pending email change found.");
+		}
+
+		// Store the old email for rollback capability
+		String oldEmail = user.getEmail();
+		user.setPreviousEmail(oldEmail);
+
+		// Generate recovery token for the old email
+		String recoveryToken = generateEmailRecoveryToken(user);
+
+		// Apply the email change
+		user.setEmail(user.getPendingEmail());
+		user.setPendingEmail(null);
+		user.setVerificationCode(null);
+		user.setOtpExpiration(null);
+
+		User savedUser = userRepo.save(user);
+
+		// Send recovery email to the OLD email address
+		sendEmailRecoveryMail(savedUser, oldEmail, recoveryToken);
+
+		logger.info("Email changed from {} to {} for user {}", oldEmail, savedUser.getEmail(), savedUser.getId());
+
+		return savedUser;
+	}
+
+	@Override
+	public String generateEmailRecoveryToken(User user) {
+		String token = UUID.randomUUID().toString();
+		user.setEmailRecoveryToken(token);
+		user.setEmailRecoveryTokenExpiry(LocalDateTime.now().plusHours(EMAIL_RECOVERY_TOKEN_VALIDITY_HOURS));
+		userRepo.save(user);
+		return token;
+	}
+
+	@Override
+	@Transactional
+	public User rollbackEmail(String token) {
+		if (token == null || token.isEmpty()) {
+			throw new IllegalArgumentException("Recovery token is required.");
+		}
+
+		// Find user by recovery token
+		User user = userRepo.findByEmailRecoveryToken(token);
+		if (user == null) {
+			throw new ResourceNotFoundException("Invalid or expired recovery token.");
+		}
+
+		// Check token expiration
+		if (user.getEmailRecoveryTokenExpiry() == null ||
+				LocalDateTime.now().isAfter(user.getEmailRecoveryTokenExpiry())) {
+			throw new IllegalArgumentException("Recovery token has expired.");
+		}
+
+		// Check if there's a previous email to rollback to
+		if (user.getPreviousEmail() == null || user.getPreviousEmail().isEmpty()) {
+			throw new IllegalArgumentException("No previous email found for rollback.");
+		}
+
+		// Rollback email
+		String currentEmail = user.getEmail();
+		user.setEmail(user.getPreviousEmail());
+		user.setPreviousEmail(null);
+		user.setEmailRecoveryToken(null);
+		user.setEmailRecoveryTokenExpiry(null);
+
+		User savedUser = userRepo.save(user);
+
+		logger.info("Email rolled back from {} to {} for user {}", currentEmail, savedUser.getEmail(),
+				savedUser.getId());
+
+		return savedUser;
+	}
+
+	private void sendEmailRecoveryMail(User user, String oldEmail, String recoveryToken)
+			throws MessagingException, UnsupportedEncodingException {
+		String fromAddress = "testnixomg123@gmail.com";
+		String senderName = "nixOMG";
+
+		MimeMessage message = mailSender.createMimeMessage();
+		MimeMessageHelper helper = new MimeMessageHelper(message);
+
+		helper.setFrom(fromAddress, senderName);
+		helper.setTo(oldEmail);
+		helper.setSubject("Security Alert: Your Email Was Changed");
+
+		String username = user.getUsername() != null ? user.getUsername() : "User";
+		String content = "Dear " + username + ",<br><br>" +
+				"Your account email has been changed from <b>" + oldEmail + "</b> to <b>" + user.getEmail()
+				+ "</b>.<br><br>" +
+				"If you did not make this change, you can recover your account by using the following recovery link within "
+				+ EMAIL_RECOVERY_TOKEN_VALIDITY_HOURS + " hours:<br><br>" +
+				"<b>Recovery Link: " + frontendUrl + "/recover-email?token=" + recoveryToken
+				+ "</b><br><br>" +
+				"If you made this change, you can safely ignore this email.<br><br>" +
+				"Thank you,<br>nixOMG.";
+
+		helper.setText(content, true);
+		logger.info("Email recovery mail sent to: {}", oldEmail);
+		mailSender.send(message);
 	}
 
 	private void sendMail(User user, String subject, String content)

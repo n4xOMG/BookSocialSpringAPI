@@ -102,8 +102,69 @@ public class UserController {
 			UserDTO updateUser = userMapper
 					.mapToDTO(userService.updateCurrentSessionUser(jwt, user, getSiteURL(httpRequest)));
 			logger.info("Updated profile for user: {}", updateUser.getEmail());
-			return ResponseEntity.ok(new ApiResponseWithData<>("Profile updated successfully.", true, updateUser));
+
+			// Check if there's a pending email change
+			User currentUser = userService.findUserByJwt(jwt);
+			String message = currentUser.getPendingEmail() != null
+					? "Profile updated. Please check your new email for verification OTP."
+					: "Profile updated successfully.";
+
+			return ResponseEntity.ok(new ApiResponseWithData<>(message, true, updateUser));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body(new ApiResponseWithData<>(e.getMessage(), false));
 		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponseWithData<>(e.getMessage(), false));
+		}
+	}
+
+	@PostMapping("/api/user/confirm-email-change")
+	public ResponseEntity<ApiResponseWithData<UserDTO>> confirmEmailChange(
+			@RequestHeader("Authorization") String jwt,
+			@RequestBody java.util.Map<String, String> request) {
+		try {
+			String otp = request.get("otp");
+			if (otp == null || otp.isEmpty()) {
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+						.body(new ApiResponseWithData<>("OTP is required.", false));
+			}
+
+			User updatedUser = userService.confirmEmailChange(jwt, otp);
+			UserDTO userDTO = userMapper.mapToDTO(updatedUser);
+			logger.info("Email change confirmed for user: {}", updatedUser.getId());
+
+			return ResponseEntity.ok(new ApiResponseWithData<>(
+					"Email changed successfully. A recovery email has been sent to your previous address.",
+					true, userDTO));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body(new ApiResponseWithData<>(e.getMessage(), false));
+		} catch (Exception e) {
+			logger.error("Error confirming email change", e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponseWithData<>(e.getMessage(), false));
+		}
+	}
+
+	@PostMapping("/user/rollback-email")
+	public ResponseEntity<ApiResponseWithData<UserDTO>> rollbackEmail(@RequestParam String token) {
+		try {
+			User updatedUser = userService.rollbackEmail(token);
+			UserDTO userDTO = userMapper.mapToDTO(updatedUser);
+			logger.info("Email rolled back for user: {}", updatedUser.getId());
+
+			return ResponseEntity.ok(new ApiResponseWithData<>(
+					"Email has been successfully restored to your previous address.",
+					true, userDTO));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body(new ApiResponseWithData<>(e.getMessage(), false));
+		} catch (ResourceNotFoundException e) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(new ApiResponseWithData<>(e.getMessage(), false));
+		} catch (Exception e) {
+			logger.error("Error rolling back email", e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 					.body(new ApiResponseWithData<>(e.getMessage(), false));
 		}
