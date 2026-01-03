@@ -17,4 +17,6 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
 
 	Page<Post> findByUser_IdNotIn(List<UUID> userIds, Pageable pageable);
 
+	List<Post> findBySharedPost(Post sharedPost);
+
 }

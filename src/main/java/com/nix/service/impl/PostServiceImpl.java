@@ -191,11 +191,20 @@ public class PostServiceImpl implements PostService {
 			throw new ResourceNotFoundException("User is not authorized to delete this post.");
 		}
 
-		// Clean up liked users references
-		for (User likedUser : post.getLikedUsers()) {
-			likedUser.getLikedPosts().remove(post);
-			userRepository.save(likedUser);
+		// Clean up shared post references - find all posts that share this post and
+		// nullify the reference
+		List<Post> sharingPosts = postRepository.findBySharedPost(post);
+		for (Post sharingPost : sharingPosts) {
+			sharingPost.setSharedPost(null);
 		}
+		// Save all sharing posts and flush to database
+		if (!sharingPosts.isEmpty()) {
+			postRepository.saveAllAndFlush(sharingPosts);
+		}
+
+		// Clean up liked users references
+		post.getLikedUsers().clear();
+		postRepository.saveAndFlush(post);
 
 		postRepository.delete(post);
 	}
