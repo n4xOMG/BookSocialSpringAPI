@@ -330,6 +330,14 @@ public class PaymentServiceImpl implements PaymentService {
 	}
 
 	@Override
+	public Order getPaypalOrder(String orderID) throws IOException, ApiException {
+		OrdersController ordersController = client.getOrdersController();
+		ApiResponse<Order> apiResponse = ordersController.getOrder(
+				new com.paypal.sdk.models.GetOrderInput.Builder(orderID).build());
+		return apiResponse.getResult();
+	}
+
+	@Override
 	public Order capturePaypalOrders(String orderID) throws IOException, ApiException {
 		CaptureOrderInput ordersCaptureInput = new CaptureOrderInput.Builder(orderID, null).build();
 		OrdersController ordersController = client.getOrdersController();

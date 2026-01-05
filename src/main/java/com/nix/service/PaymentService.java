@@ -23,6 +23,11 @@ public interface PaymentService {
 	public Order createPaypalOrder(UUID userId, Long creditPackageId) throws IOException, ApiException;
 
 	/**
+	 * Get PayPal order details (includes customId for verification)
+	 */
+	public Order getPaypalOrder(String orderID) throws IOException, ApiException;
+
+	/**
 	 * Capture Paypal payment intent only.
 	 */
 	public Order capturePaypalOrders(String orderID) throws IOException, ApiException;
