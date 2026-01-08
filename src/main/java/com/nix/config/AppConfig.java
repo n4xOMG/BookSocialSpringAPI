@@ -56,9 +56,13 @@ public class AppConfig {
 			public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
 				CorsConfiguration cfg = new CorsConfiguration();
 				// Use allowedOriginPatterns for wildcard support
-				cfg.setAllowedOriginPatterns(Arrays.asList("http://127.0.0.1:8081", "http://*:3000",
-						"http://localhost:3000", "https://*.pages.dev"));
-				cfg.setAllowedMethods(Collections.singletonList("*"));
+				cfg.setAllowedOriginPatterns(Arrays.asList(
+						"http://127.0.0.1:8081",
+						"http://*:3000",
+						"http://localhost:3000",
+						"https://*.pages.dev",
+						"https://booksocialreact.pages.dev"));
+				cfg.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
 				cfg.setAllowCredentials(true);
 				cfg.setAllowedHeaders(Collections.singletonList("*"));
 				cfg.setExposedHeaders(Arrays.asList("Authorization"));

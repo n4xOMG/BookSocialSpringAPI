@@ -32,6 +32,7 @@ services:
       - "3306:3306"
     volumes:
       - db-data:/var/lib/mysql
+      - ./init-db:/docker-entrypoint-initdb.d
     healthcheck:
       # Lưu ý: mysqladmin ping cần mật khẩu viết liền sau -p (không có dấu cách)
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -u${MYSQL_USER} -p${MYSQL_PASSWORD}"]
