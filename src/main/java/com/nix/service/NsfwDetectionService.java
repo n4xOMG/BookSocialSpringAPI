@@ -45,10 +45,28 @@ public class NsfwDetectionService {
         }
 
         try {
+            // Resize image to max 300x300 for faster transmission and processing
+            // This prevents "hanging" on huge images while keeping enough detail for NSFW
+            // detection
+            java.io.ByteArrayOutputStream outputStream = new java.io.ByteArrayOutputStream();
+            net.coobird.thumbnailator.Thumbnails.of(file.getInputStream())
+                    .size(500, 500)
+                    .outputFormat("jpg")
+                    .toOutputStream(outputStream);
+
+            byte[] resizedBytes = outputStream.toByteArray();
+            org.springframework.core.io.Resource resource = new org.springframework.core.io.ByteArrayResource(
+                    resizedBytes) {
+                @Override
+                public String getFilename() {
+                    return file.getOriginalFilename();
+                }
+            };
+
             ResponseEntity<NsfwPredictionResponse> response = restTemplate.exchange(
                     predictUrl,
                     HttpMethod.POST,
-                    buildRequest(file),
+                    buildRequest(resource),
                     NsfwPredictionResponse.class);
 
             NsfwPredictionResponse prediction = response.getBody();
@@ -69,12 +87,12 @@ public class NsfwDetectionService {
         }
     }
 
-    private HttpEntity<MultiValueMap<String, Object>> buildRequest(MultipartFile file) throws IOException {
+    private HttpEntity<MultiValueMap<String, Object>> buildRequest(org.springframework.core.io.Resource resource) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("image", new MultipartInputStreamFileResource(file));
+        body.add("image", resource);
 
         return new HttpEntity<>(body, headers);
     }
