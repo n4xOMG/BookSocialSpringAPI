@@ -52,6 +52,9 @@ public class ImageService {
 		validateFile(file);
 		validateFolderName(folderName);
 
+		// Sanitize folder name to remove URL-unsafe characters
+		String sanitizedFolderName = sanitizeFolderName(folderName);
+
 		ImageSafetyAssessment safety = nsfwDetectionService.analyse(file);
 		if (safety.getLevel() != null && safety.getLevel().isRejected()) {
 			throw new IllegalArgumentException("Image rejected because it contains explicit content");
@@ -59,7 +62,7 @@ public class ImageService {
 
 		// Save to temporary directory: uploads/username/folderName
 		String uniqueFileName = UUID.randomUUID() + ".webp";
-		Path tempDir = Paths.get(uploadDir, username, folderName);
+		Path tempDir = Paths.get(uploadDir, username, sanitizedFolderName);
 		Files.createDirectories(tempDir);
 		Path filePath = tempDir.resolve(uniqueFileName);
 
@@ -74,7 +77,8 @@ public class ImageService {
 
 	public void deleteTempImages(String username, String folderName) throws IOException {
 		validateFolderName(folderName);
-		Path tempDir = Paths.get(uploadDir, username, folderName);
+		String sanitizedFolderName = sanitizeFolderName(folderName);
+		Path tempDir = Paths.get(uploadDir, username, sanitizedFolderName);
 		if (Files.exists(tempDir)) {
 			Files.walk(tempDir).sorted(Comparator.reverseOrder()).forEach(path -> {
 				try {
@@ -105,6 +109,35 @@ public class ImageService {
 		if (folderName.contains("..") || folderName.contains("/") || folderName.contains("\\")) {
 			throw new IllegalArgumentException("Invalid folder name. It must not contain '..', '/', or '\\'");
 		}
+	}
+
+	/**
+	 * Sanitizes a folder name by removing or replacing characters that are unsafe
+	 * for URLs and file systems. This prevents issues with special characters like
+	 * semicolons, commas, and spaces in book titles.
+	 * 
+	 * @param folderName the original folder name
+	 * @return a sanitized folder name safe for URLs and file systems
+	 */
+	private String sanitizeFolderName(String folderName) {
+		if (folderName == null) {
+			return "";
+		}
+		// Replace spaces with underscores
+		String sanitized = folderName.trim().replace(" ", "_");
+		// Remove characters that are unsafe for URLs: ; , ? : @ & = + $ # [ ] ! ' ( ) *
+		// %
+		// Keep only alphanumeric, underscore, hyphen, and period
+		sanitized = sanitized.replaceAll("[^a-zA-Z0-9_\\-.]", "");
+		// Remove consecutive underscores
+		sanitized = sanitized.replaceAll("_+", "_");
+		// Remove leading/trailing underscores
+		sanitized = sanitized.replaceAll("^_|_$", "");
+		// Ensure the result is not empty
+		if (sanitized.isEmpty()) {
+			sanitized = "unnamed";
+		}
+		return sanitized;
 	}
 
 	private boolean isValidImageType(String contentType) {
@@ -204,7 +237,8 @@ public class ImageService {
 
 	public void deleteEntityImages(String username, String folderName, String entityId) throws IOException {
 		validateFolderName(folderName);
-		Path entityDir = Paths.get(uploadDir, username, folderName, entityId);
+		String sanitizedFolderName = sanitizeFolderName(folderName);
+		Path entityDir = Paths.get(uploadDir, username, sanitizedFolderName, entityId);
 		if (Files.exists(entityDir)) {
 			Files.walk(entityDir).sorted(Comparator.reverseOrder()).forEach(path -> {
 				try {
