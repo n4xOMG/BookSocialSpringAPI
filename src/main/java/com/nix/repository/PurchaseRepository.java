@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -48,4 +49,9 @@ public interface PurchaseRepository extends JpaRepository<Purchase, UUID> {
 	List<Object[]> getDailyRevenue(@Param("startDate") LocalDateTime startDate);
 
 	List<Purchase> findByStatusAndPaymentProvider(PaymentStatus status, PaymentProvider provider);
+
+	@Query("SELECT p.user, SUM(p.amount) as totalSpent, COUNT(p) as txCount, SUM(p.creditsPurchased) as totalCredits " +
+			"FROM Purchase p WHERE p.status = 'COMPLETED' AND p.purchaseDate >= :startDate " +
+			"GROUP BY p.user ORDER BY totalSpent DESC")
+	List<Object[]> findTopSpendingUsersInPeriod(@Param("startDate") LocalDateTime startDate, Pageable pageable);
 }

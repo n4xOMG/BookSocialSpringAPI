@@ -12,6 +12,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.nix.dtos.ActiveUserAnalyticsDTO;
+import com.nix.dtos.BestBookAnalyticsDTO;
 import com.nix.dtos.CategoryStatsDTO;
 import com.nix.dtos.ContentAnalyticsDTO;
 import com.nix.dtos.DailyRevenueDTO;
@@ -21,6 +23,7 @@ import com.nix.dtos.PopularAuthorDTO;
 import com.nix.dtos.PopularBookDTO;
 import com.nix.dtos.PopularChapterDTO;
 import com.nix.dtos.RevenueAnalyticsDTO;
+import com.nix.dtos.TopSpenderAnalyticsDTO;
 import com.nix.dtos.UserAnalyticsDTO;
 import com.nix.dtos.UserGrowthDTO;
 import com.nix.enums.PaymentProvider;
@@ -31,8 +34,11 @@ import com.nix.repository.AuthorEarningRepository;
 import com.nix.repository.AuthorPayoutRepository;
 import com.nix.repository.BookFavouriteRepository;
 import com.nix.repository.BookRepository;
+import com.nix.repository.BookViewHistoryRepository;
 import com.nix.repository.ChapterRepository;
+import com.nix.repository.CommentRepository;
 import com.nix.repository.PurchaseRepository;
+import com.nix.repository.ReadingProgressRepository;
 import com.nix.repository.ReportRepository;
 import com.nix.repository.UserRepository;
 import com.nix.service.AdminService;
@@ -63,6 +69,15 @@ public class AdminServiceImpl implements AdminService {
 
 	@Autowired
 	private ReportRepository reportRepository;
+
+	@Autowired
+	private BookViewHistoryRepository bookViewHistoryRepository;
+
+	@Autowired
+	private CommentRepository commentRepository;
+
+	@Autowired
+	private ReadingProgressRepository readingProgressRepository;
 
 	@Override
 	public UserAnalyticsDTO getUserAnalytics() {
@@ -236,5 +251,113 @@ public class AdminServiceImpl implements AdminService {
 		platformAnalytics.setPendingReports(pendingReports);
 
 		return platformAnalytics;
+	}
+
+	@Override
+	public List<BestBookAnalyticsDTO> getBestBooks(String period, int limit) {
+		LocalDateTime startDate = calculateStartDate(period);
+		Pageable pageable = PageRequest.of(0, limit);
+
+		List<Object[]> topBooksData = bookViewHistoryRepository.findTopBooksByViewsInPeriod(startDate, pageable);
+
+		return topBooksData.stream().map(data -> {
+			Book book = (Book) data[0];
+			Long viewCount = ((Number) data[1]).longValue();
+			Long favouriteCount = bookFavouriteRepository.countByBookId(book.getId());
+
+			return new BestBookAnalyticsDTO(
+					book.getId(),
+					book.getTitle(),
+					book.getAuthorName(),
+					book.getBookCover() != null ? book.getBookCover().getUrl() : null,
+					viewCount,
+					favouriteCount,
+					0.0 // Average rating - can be extended
+			);
+		}).collect(Collectors.toList());
+	}
+
+	@Override
+	public List<ActiveUserAnalyticsDTO> getMostActiveUsers(String period, int limit) {
+		LocalDateTime startDate = calculateStartDate(period);
+		Pageable pageable = PageRequest.of(0, limit);
+
+		// Get top commenters
+		List<Object[]> topCommenters = commentRepository.findTopCommentingUsersInPeriod(startDate, pageable);
+		// Get top readers
+		List<Object[]> topReaders = readingProgressRepository.findMostActiveReadersInPeriod(startDate, pageable);
+
+		// Merge and calculate activity scores
+		java.util.Map<java.util.UUID, ActiveUserAnalyticsDTO> userActivityMap = new java.util.HashMap<>();
+
+		// Process commenters
+		for (Object[] data : topCommenters) {
+			User user = (User) data[0];
+			Long commentCount = ((Number) data[1]).longValue();
+
+			ActiveUserAnalyticsDTO dto = userActivityMap.computeIfAbsent(user.getId(), k -> new ActiveUserAnalyticsDTO(
+					user.getId(),
+					user.getUsername(),
+					user.getFullname(),
+					user.getAvatarUrl(),
+					0L, 0L, 0L));
+			dto.setCommentCount(commentCount);
+		}
+
+		// Process readers
+		for (Object[] data : topReaders) {
+			User user = (User) data[0];
+			Long readCount = ((Number) data[1]).longValue();
+
+			ActiveUserAnalyticsDTO dto = userActivityMap.computeIfAbsent(user.getId(), k -> new ActiveUserAnalyticsDTO(
+					user.getId(),
+					user.getUsername(),
+					user.getFullname(),
+					user.getAvatarUrl(),
+					0L, 0L, 0L));
+			dto.setReadCount(readCount);
+		}
+
+		// Calculate activity scores and sort
+		return userActivityMap.values().stream()
+				.peek(dto -> dto.setActivityScore(dto.getCommentCount() * 3 + dto.getReadCount()))
+				.sorted((a, b) -> Long.compare(b.getActivityScore(), a.getActivityScore()))
+				.limit(limit)
+				.collect(Collectors.toList());
+	}
+
+	@Override
+	public List<TopSpenderAnalyticsDTO> getTopSpenders(String period, int limit) {
+		LocalDateTime startDate = calculateStartDate(period);
+		Pageable pageable = PageRequest.of(0, limit);
+
+		List<Object[]> topSpendersData = purchaseRepository.findTopSpendingUsersInPeriod(startDate, pageable);
+
+		return topSpendersData.stream().map(data -> {
+			User user = (User) data[0];
+			BigDecimal totalSpent = data[1] instanceof BigDecimal ? (BigDecimal) data[1]
+					: BigDecimal.valueOf(((Number) data[1]).doubleValue());
+			Long transactionCount = ((Number) data[2]).longValue();
+			Long creditsPurchased = ((Number) data[3]).longValue();
+
+			return new TopSpenderAnalyticsDTO(
+					user.getId(),
+					user.getUsername(),
+					user.getFullname(),
+					user.getAvatarUrl(),
+					totalSpent,
+					transactionCount,
+					creditsPurchased);
+		}).collect(Collectors.toList());
+	}
+
+	private LocalDateTime calculateStartDate(String period) {
+		LocalDateTime now = LocalDateTime.now();
+		return switch (period.toLowerCase()) {
+			case "day" -> now.minusDays(1);
+			case "week" -> now.minusWeeks(1);
+			case "month" -> now.minusMonths(1);
+			default -> now.minusWeeks(1); // Default to week
+		};
 	}
 }

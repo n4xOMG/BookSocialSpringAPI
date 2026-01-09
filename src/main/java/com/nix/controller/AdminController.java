@@ -99,6 +99,45 @@ public class AdminController {
 		}
 	}
 
+	@GetMapping("/dashboard/best-books")
+	public ResponseEntity<ApiResponseWithData<List<com.nix.dtos.BestBookAnalyticsDTO>>> getBestBooks(
+			@RequestParam(defaultValue = "week") String period,
+			@RequestParam(defaultValue = "10") int limit) {
+		try {
+			List<com.nix.dtos.BestBookAnalyticsDTO> bestBooks = adminService.getBestBooks(period, limit);
+			return buildSuccessResponse("Best books retrieved successfully.", bestBooks);
+		} catch (Exception e) {
+			return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to retrieve best books: " + e.getMessage());
+		}
+	}
+
+	@GetMapping("/dashboard/active-users")
+	public ResponseEntity<ApiResponseWithData<List<com.nix.dtos.ActiveUserAnalyticsDTO>>> getMostActiveUsers(
+			@RequestParam(defaultValue = "week") String period,
+			@RequestParam(defaultValue = "10") int limit) {
+		try {
+			List<com.nix.dtos.ActiveUserAnalyticsDTO> activeUsers = adminService.getMostActiveUsers(period, limit);
+			return buildSuccessResponse("Most active users retrieved successfully.", activeUsers);
+		} catch (Exception e) {
+			return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to retrieve active users: " + e.getMessage());
+		}
+	}
+
+	@GetMapping("/dashboard/top-spenders")
+	public ResponseEntity<ApiResponseWithData<List<com.nix.dtos.TopSpenderAnalyticsDTO>>> getTopSpenders(
+			@RequestParam(defaultValue = "week") String period,
+			@RequestParam(defaultValue = "10") int limit) {
+		try {
+			List<com.nix.dtos.TopSpenderAnalyticsDTO> topSpenders = adminService.getTopSpenders(period, limit);
+			return buildSuccessResponse("Top spenders retrieved successfully.", topSpenders);
+		} catch (Exception e) {
+			return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to retrieve top spenders: " + e.getMessage());
+		}
+	}
+
 	@GetMapping("/users")
 	public ResponseEntity<ApiResponseWithData<List<UserDTO>>> getAllUsers(
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,

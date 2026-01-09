@@ -39,4 +39,8 @@ public interface BookViewHistoryRepository extends JpaRepository<BookViewHistory
 	@Transactional
 	@Query("DELETE FROM BookViewHistory bvh WHERE bvh.book = :book")
 	void deleteByBook(@Param("book") Book book);
+
+	@Query("SELECT bvh.book, SUM(bvh.dailyViewCount) as totalViews FROM BookViewHistory bvh " +
+			"WHERE bvh.viewDate >= :startDate GROUP BY bvh.book ORDER BY totalViews DESC")
+	List<Object[]> findTopBooksByViewsInPeriod(@Param("startDate") LocalDateTime startDate, Pageable pageable);
 }

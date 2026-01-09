@@ -1,5 +1,6 @@
 package com.nix.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,4 +39,8 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
 
 	@Query("SELECT COUNT(c) FROM Comment c WHERE c.book.id = :bookId")
 	public Long countCommentsByBookId(@Param("bookId") UUID bookId);
+
+	@Query("SELECT c.user, COUNT(c) as commentCount FROM Comment c " +
+			"WHERE c.createdAt >= :startDate GROUP BY c.user ORDER BY commentCount DESC")
+	List<Object[]> findTopCommentingUsersInPeriod(@Param("startDate") LocalDateTime startDate, Pageable pageable);
 }
