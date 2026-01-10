@@ -151,31 +151,27 @@ public class ImageService {
 
 	private byte[] processImage(MultipartFile file) throws IOException {
 		logger.debug("Processing image: contentType={}, size={}", file.getContentType(), file.getSize());
-		// Read original image
-		BufferedImage originalImage = ImageIO.read(file.getInputStream());
-		if (originalImage == null) {
-			logger.warn("Failed to read image file: contentType={}", file.getContentType());
-			throw new IOException("Failed to read image file");
-		}
-		logger.debug("Original image dimensions: {}x{}", originalImage.getWidth(), originalImage.getHeight());
 
-		// Normalize to RGB to handle JPEG color model issues (e.g., CMYK)
-		BufferedImage rgbImage = new BufferedImage(originalImage.getWidth(), originalImage.getHeight(),
-				BufferedImage.TYPE_INT_RGB);
-		Graphics2D g = rgbImage.createGraphics();
-		g.drawImage(originalImage, 0, 0, null);
-		g.dispose();
-		logger.debug("Converted image to RGB: {}x{}", rgbImage.getWidth(), rgbImage.getHeight());
+		// Get dimensions without loading the whole image
+		int[] originalDimensions;
+		try (java.io.InputStream is = file.getInputStream()) {
+			originalDimensions = getImageDimensions(is);
+		}
+		logger.debug("Original image dimensions: {}x{}", originalDimensions[0], originalDimensions[1]);
 
 		// Calculate optimal dimensions
-		int[] dimensions = calculateOptimalDimensions(rgbImage.getWidth(), rgbImage.getHeight());
+		int[] dimensions = calculateOptimalDimensions(originalDimensions[0], originalDimensions[1]);
 		logger.debug("Calculated dimensions: {}x{}", dimensions[0], dimensions[1]);
 
-		// Resize and convert to WebP using Thumbnails
+		// Resize and convert to WebP using Thumbnails directly from stream
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		try {
-			Thumbnails.of(rgbImage).size(dimensions[0], dimensions[1]).outputFormat("webp")
-					.outputQuality(COMPRESSION_QUALITY).useExifOrientation(false).toOutputStream(outputStream);
+		try (java.io.InputStream is = file.getInputStream()) {
+			Thumbnails.of(is)
+					.size(dimensions[0], dimensions[1])
+					.outputFormat("webp")
+					.outputQuality(COMPRESSION_QUALITY)
+					.useExifOrientation(false) // Handle orientation manually if needed, or trust Thumbnails
+					.toOutputStream(outputStream);
 		} catch (Exception e) {
 			logger.error("Failed to process image with Thumbnails: contentType={}", file.getContentType(), e);
 			throw new IOException("Failed to process image: " + e.getMessage(), e);
@@ -183,6 +179,25 @@ public class ImageService {
 		logger.debug("Image processed successfully, output size: {}", outputStream.size());
 
 		return outputStream.toByteArray();
+	}
+
+	private int[] getImageDimensions(java.io.InputStream inputStream) throws IOException {
+		try (javax.imageio.stream.ImageInputStream in = ImageIO.createImageInputStream(inputStream)) {
+			if (in == null) {
+				throw new IOException("Failed to create ImageInputStream");
+			}
+			final java.util.Iterator<javax.imageio.ImageReader> readers = ImageIO.getImageReaders(in);
+			if (readers.hasNext()) {
+				javax.imageio.ImageReader reader = readers.next();
+				try {
+					reader.setInput(in);
+					return new int[] { reader.getWidth(0), reader.getHeight(0) };
+				} finally {
+					reader.dispose();
+				}
+			}
+		}
+		throw new IOException("No image reader found for input");
 	}
 
 	private byte[] removeMetadata(byte[] imageData) throws IOException {
