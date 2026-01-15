@@ -19,4 +19,8 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
 
 	List<Post> findBySharedPost(Post sharedPost);
 
+	List<Post> findBySharedBook(com.nix.models.Book sharedBook);
+
+	List<Post> findBySharedChapter(com.nix.models.Chapter sharedChapter);
+
 }

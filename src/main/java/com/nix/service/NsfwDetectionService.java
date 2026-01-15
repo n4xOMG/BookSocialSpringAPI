@@ -50,7 +50,7 @@ public class NsfwDetectionService {
             // detection
             java.io.ByteArrayOutputStream outputStream = new java.io.ByteArrayOutputStream();
             net.coobird.thumbnailator.Thumbnails.of(file.getInputStream())
-                    .size(500, 500)
+                    .size(300, 300)
                     .outputFormat("jpg")
                     .toOutputStream(outputStream);
 

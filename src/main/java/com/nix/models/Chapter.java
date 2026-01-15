@@ -60,7 +60,7 @@ public class Chapter implements Serializable {
 	@OneToMany(mappedBy = "chapter", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ReadingProgress> progresses = new ArrayList<>();
 
-	@OneToMany(mappedBy = "chapter")
+	@OneToMany(mappedBy = "chapter", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ChapterUnlockRecord> unlockRecords = new ArrayList<>();
 	@JsonIgnore
 	@ManyToMany(mappedBy = "likedChapters")

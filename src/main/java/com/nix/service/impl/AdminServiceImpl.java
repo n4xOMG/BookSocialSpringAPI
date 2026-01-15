@@ -186,18 +186,16 @@ public class AdminServiceImpl implements AdminService {
 		contentAnalytics.setTotalChapters(chapterRepository.count());
 		contentAnalytics.setTotalUnlocks(chapterRepository.getTotalUnlocks());
 
-		// Popular books
 		Pageable topLimit = PageRequest.of(0, 10);
 		List<Book> mostViewedBooks = bookRepository.findMostViewedBooks(topLimit);
 		List<PopularBookDTO> popularBooks = mostViewedBooks.stream()
 				.map(book -> new PopularBookDTO(book.getId(), book.getTitle(), book.getAuthorName(),
-						book.getViewCount(), 0L, // Unlock count - simplified
-						0.0, // Rating - simplified
+						book.getViewCount(), 0L,
+						0.0,
 						bookFavouriteRepository.countByBookId(book.getId())))
 				.collect(Collectors.toList());
 		contentAnalytics.setPopularBooks(popularBooks);
 
-		// Popular chapters
 		List<Chapter> mostUnlockedChapters = chapterRepository.findMostUnlockedChapters(topLimit);
 		List<PopularChapterDTO> popularChapters = mostUnlockedChapters.stream()
 				.map(chapter -> new PopularChapterDTO(chapter.getId(), chapter.getTitle(), chapter.getBook().getTitle(),
@@ -206,7 +204,6 @@ public class AdminServiceImpl implements AdminService {
 				.collect(Collectors.toList());
 		contentAnalytics.setPopularChapters(popularChapters);
 
-		// Popular authors
 		List<Object[]> topAuthorsData = authorEarningRepository.getTopEarningAuthors(topLimit);
 		List<PopularAuthorDTO> popularAuthors = topAuthorsData.stream().map(data -> {
 			User author = (User) data[0];
@@ -217,7 +214,6 @@ public class AdminServiceImpl implements AdminService {
 		}).collect(Collectors.toList());
 		contentAnalytics.setPopularAuthors(popularAuthors);
 
-		// Category statistics
 		List<Object[]> categoryStatsData = bookRepository.getCategoryStats();
 		long totalBooksCount = bookRepository.count();
 		List<CategoryStatsDTO> categoryStats = categoryStatsData.stream().map(data -> {
@@ -272,8 +268,7 @@ public class AdminServiceImpl implements AdminService {
 					book.getBookCover() != null ? book.getBookCover().getUrl() : null,
 					viewCount,
 					favouriteCount,
-					0.0 // Average rating - can be extended
-			);
+					0.0);
 		}).collect(Collectors.toList());
 	}
 
@@ -282,15 +277,11 @@ public class AdminServiceImpl implements AdminService {
 		LocalDateTime startDate = calculateStartDate(period);
 		Pageable pageable = PageRequest.of(0, limit);
 
-		// Get top commenters
 		List<Object[]> topCommenters = commentRepository.findTopCommentingUsersInPeriod(startDate, pageable);
-		// Get top readers
 		List<Object[]> topReaders = readingProgressRepository.findMostActiveReadersInPeriod(startDate, pageable);
 
-		// Merge and calculate activity scores
 		java.util.Map<java.util.UUID, ActiveUserAnalyticsDTO> userActivityMap = new java.util.HashMap<>();
 
-		// Process commenters
 		for (Object[] data : topCommenters) {
 			User user = (User) data[0];
 			Long commentCount = ((Number) data[1]).longValue();
@@ -304,7 +295,6 @@ public class AdminServiceImpl implements AdminService {
 			dto.setCommentCount(commentCount);
 		}
 
-		// Process readers
 		for (Object[] data : topReaders) {
 			User user = (User) data[0];
 			Long readCount = ((Number) data[1]).longValue();
@@ -318,7 +308,6 @@ public class AdminServiceImpl implements AdminService {
 			dto.setReadCount(readCount);
 		}
 
-		// Calculate activity scores and sort
 		return userActivityMap.values().stream()
 				.peek(dto -> dto.setActivityScore(dto.getCommentCount() * 3 + dto.getReadCount()))
 				.sorted((a, b) -> Long.compare(b.getActivityScore(), a.getActivityScore()))

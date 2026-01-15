@@ -325,9 +325,15 @@ public class AuthorServiceImpl implements AuthorService {
 	// === HELPER METHODS ===
 	private AuthorPayoutSettings getOrCreatePayoutSettingsEntity(User author) {
 		return authorPayoutSettingsRepository.findByAuthor(author).orElseGet(() -> {
-			AuthorPayoutSettings settings = new AuthorPayoutSettings(author);
-			settings.setMinimumPayoutAmount(defaultMinimumPayoutAmount);
-			return authorPayoutSettingsRepository.save(settings);
+			try {
+				AuthorPayoutSettings settings = new AuthorPayoutSettings(author);
+				settings.setMinimumPayoutAmount(defaultMinimumPayoutAmount);
+				return authorPayoutSettingsRepository.saveAndFlush(settings);
+			} catch (Exception e) {
+				// Handle race condition where another thread created it
+				return authorPayoutSettingsRepository.findByAuthor(author).orElseThrow(
+						() -> new IllegalStateException("Could not get or create payout settings", e));
+			}
 		});
 	}
 

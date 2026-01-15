@@ -74,6 +74,12 @@ public class BookServiceImpl implements BookService {
 	ImageService imageService;
 
 	@Autowired
+	com.nix.repository.ReportRepository reportRepository;
+
+	@Autowired
+	com.nix.repository.PostRepository postRepository;
+
+	@Autowired
 	BookMapper bookMapper;
 
 	@Autowired
@@ -271,6 +277,21 @@ public class BookServiceImpl implements BookService {
 
 		// Remove this book from tags
 		existingBook.getTags().clear();
+
+		// Cleanup related reports and posts for the book and its chapters
+		for (com.nix.models.Chapter chapter : existingBook.getChapters()) {
+			List<com.nix.models.Report> chapterReports = reportRepository.findByChapterId(chapter.getId());
+			reportRepository.deleteAll(chapterReports);
+
+			List<com.nix.models.Post> chapterPosts = postRepository.findBySharedChapter(chapter);
+			postRepository.deleteAll(chapterPosts);
+		}
+
+		List<com.nix.models.Report> bookReports = reportRepository.findByBookId(bookId);
+		reportRepository.deleteAll(bookReports);
+
+		List<com.nix.models.Post> bookPosts = postRepository.findBySharedBook(existingBook);
+		postRepository.deleteAll(bookPosts);
 
 		bookRepo.delete(existingBook);
 	}

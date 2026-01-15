@@ -6,10 +6,12 @@ import java.util.UUID;
 
 import org.hibernate.annotations.UuidGenerator;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,7 +22,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ChapterUnlockRecord implements Serializable{
+public class ChapterUnlockRecord implements Serializable {
 	/**
 	 * 
 	 */
@@ -40,4 +42,7 @@ public class ChapterUnlockRecord implements Serializable{
 
 	private LocalDateTime unlockDate;
 	private int unlockCost;
+
+	@OneToMany(mappedBy = "unlockRecord", cascade = CascadeType.ALL, orphanRemoval = true)
+	private java.util.List<AuthorEarning> earnings = new java.util.ArrayList<>();
 }
